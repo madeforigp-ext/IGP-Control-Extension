@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { width: 290px; background: #f5f5f5; color: #1a1a1a; font-family: 'Inter', sans-serif; }
+
+    /* HEADER */
+    .header { background: #c0392b; padding: 14px 20px 0; }
+    .title { font-family: 'Bebas Neue', cursive; font-size: 24px; letter-spacing: 4px; color: #fff; }
+    .tagline { font-size: 8px; color: #f8b8b0; letter-spacing: 2px; margin-top: 1px; }
+
+    /* TABS */
+    .tabs { display: flex; margin-top: 10px; }
+    .tab-btn {
+      flex: 1; padding: 8px 0; font-size: 10px; font-weight: 600; letter-spacing: 1px;
+      text-align: center; cursor: pointer; border: none; background: #a93226; color: #f8b8b0;
+      transition: all 0.15s; text-transform: uppercase;
+    }
+    .tab-btn.active { background: #f5f5f5; color: #c0392b; }
+
+    /* CONTENT */
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* SECTIONS */
+    .section { padding: 12px 20px; border-bottom: 1px solid #eee; background: #fff; }
+    .section-label {
+      font-size: 9px; letter-spacing: 2px; color: #999; text-transform: uppercase;
+      margin-bottom: 10px; font-weight: 600; display: flex; align-items: center; justify-content: space-between;
+    }
+
+    /* TOGGLE */
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; }
+    .toggle-label { font-size: 11px; color: #333; font-weight: 500; }
+    .toggle { position: relative; width: 36px; height: 20px; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #ddd; border-radius: 20px; transition: 0.2s; }
+    .slider:before { position: absolute; content: ''; height: 14px; width: 14px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+    input:checked + .slider { background: #c0392b; }
+    input:checked + .slider:before { transform: translateX(16px); }
+
+    /* CREDENTIALS */
+    .input { width: 100%; background: #f9f9f9; border: 1px solid #ddd; color: #1a1a1a; font-family: 'Inter', sans-serif; font-size: 10px; padding: 7px 8px; outline: none; transition: border-color 0.2s; border-radius: 3px; margin-bottom: 5px; }
+    .input:focus { border-color: #c0392b; }
+    .input::placeholder { color: #bbb; }
+
+    /* TABGUARD */
+    .protected-list { max-height: 110px; overflow-y: auto; margin-bottom: 8px; margin-top: 8px; }
+    .protected-list::-webkit-scrollbar { width: 3px; }
+    .protected-list::-webkit-scrollbar-thumb { background: #c0392b; }
+    .tag { display: flex; align-items: center; justify-content: space-between; background: #f9f9f9; border: 1px solid #eee; padding: 5px 8px; margin-bottom: 3px; font-size: 10px; color: #444; border-radius: 3px; }
+    .tag span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 210px; }
+    .tag-remove { background: none; border: none; color: #c0392b; cursor: pointer; font-size: 12px; flex-shrink: 0; }
+    .empty-state { font-size: 9px; color: #bbb; text-align: center; padding: 8px 0; }
+
+    .input-row { display: flex; gap: 6px; margin-bottom: 6px; }
+    .input-row .input { margin-bottom: 0; }
+
+    /* BUTTONS */
+    .btn { cursor: pointer; border: none; font-family: 'Inter', sans-serif; font-weight: 600; transition: all 0.15s; border-radius: 3px; }
+    .btn-sm { background: #c0392b; color: #fff; font-size: 10px; padding: 7px 10px; letter-spacing: 1px; }
+    .btn-sm:hover { background: #a93226; }
+    .btn-full { width: 100%; background: #f5f5f5; color: #555; border: 1px solid #ddd; font-size: 10px; padding: 7px; margin-top: 4px; letter-spacing: 1px; }
+    .btn-full:hover { background: #eee; }
+    .btn-save { width: 100%; background: #c0392b; color: #fff; font-size: 11px; padding: 9px; margin-top: 4px; letter-spacing: 2px; }
+    .btn-save:hover { background: #a93226; }
+
+    .status { padding: 8px 20px; font-size: 9px; color: #aaa; min-height: 28px; display: flex; align-items: center; background: #fff; border-top: 1px solid #eee; }
+    .status.success { color: #27ae60; }
+    .status.error { color: #c0392b; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="title">IGP CONTROL</div>
+  <div class="tagline">SCANROUTER · TABGUARD · AUTOLOGIN</div>
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="controls">Controls</button>
+    <button class="tab-btn" data-tab="tabguard">TabGuard</button>
+  </div>
+</div>
+
+<!-- CONTROLS TAB -->
+<div class="tab-content active" id="tab-controls">
+
+  <div class="section">
+    <div class="section-label">
+      QC Panel
+      <label class="toggle"><input type="checkbox" id="toggle-qc" checked><span class="slider"></span></label>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">
+      Super QC
+      <label class="toggle"><input type="checkbox" id="toggle-sqc" checked><span class="slider"></span></label>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">
+      Intermesh
+      <label class="toggle"><input type="checkbox" id="toggle-intermesh" checked><span class="slider"></span></label>
+    </div>
+    <input class="input" id="associate" type="text" placeholder="Associate Name" />
+    <input class="input" id="user" type="text" placeholder="Username" />
+    <input class="input" id="pass" type="password" placeholder="Password" />
+    <button class="btn btn-save" id="saveCredBtn">SAVE CREDENTIALS</button>
+  </div>
+
+</div>
+
+<!-- TABGUARD TAB -->
+<div class="tab-content" id="tab-tabguard">
+
+  <div class="section">
+    <div class="section-label">
+      Tab Guard — Ctrl+Shift+G
+      <label class="toggle"><input type="checkbox" id="toggle-tabguard" checked><span class="slider"></span></label>
+    </div>
+    <div class="protected-list" id="protectedList">
+      <div class="empty-state" id="emptyState">NO TABS PROTECTED</div>
+    </div>
+    <div class="input-row">
+      <input class="input" id="titleInput" type="text" placeholder="Tab title..." />
+      <button class="btn btn-sm" id="addBtn">ADD</button>
+    </div>
+    <button class="btn btn-full" id="protectCurrentBtn">⚡ Protect Current Tab</button>
+  </div>
+
+</div>
+
+<div class="status" id="status">Ready.</div>
+
+<script src="popup.js"></script>
+</body>
+</html>

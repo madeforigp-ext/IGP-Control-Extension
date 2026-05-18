@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "IGP Control",
+  "version": "1.0",
+  "description": "ScanRouter + TabGuard + Auto-Login — All in one.",
+  "permissions": ["tabs", "storage", "scripting"],
+  "content_scripts": [
+    {
+      "matches": ["*://admin.joinventures.com/*"],
+      "js": ["qc.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["*://admin.indiangiftsportal.com/*"],
+      "js": ["intermesh.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "commands": {
+    "execute-tabguard": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+G"
+      },
+      "description": "Close all tabs except protected"
+    }
+  },
+  "action": {
+    "default_popup": "popup.html"
+  }
+}
