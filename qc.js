@@ -1,13 +1,11 @@
-// ─── IGP Control: QC & Super QC ─────────────────────────────────────────────
+// ─── IGP Control: QC & Super QC (Final Routing Fix) ──────────────────────────
 
 console.log('[IGP] QC Script Loaded.');
 
-let settings = { 
-  qc_enabled: true, 
-  sqc_enabled: true 
-};
+let settings = { qc_enabled: true, sqc_enabled: true };
+let lastDetectionTime = 0; 
+let isProcessing = false; // Flag to prevent double triggers
 
-// Robust storage access
 function updateSettings() {
   if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
     chrome.storage.local.get(['qc_enabled', 'sqc_enabled'], (data) => {
@@ -27,9 +25,9 @@ if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged)
 }
 
 function identifyData(val) {
-  val = val.trim();
+  val = (val || "").trim();
   if (/^\d{4}$/.test(val)) return 'TRAY';
-  if (/^12\d{6,9}$/.test(val)) return 'PKID';
+  if (/^12\d{6,12}$/.test(val)) return 'PKID';
   if (/^183\d+$/.test(val)) return 'OID';
   return null;
 }
@@ -38,119 +36,114 @@ function forceSetValue(el, val) {
   if (!el) return false;
   try {
     el.focus();
-    // Clear existing
     el.value = '';
-    // Use execCommand to simulate real typing (crucial for Angular Material validation)
     el.select();
     const ok = document.execCommand('insertText', false, val);
-    
     if (!ok) {
       const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-      if (setter) setter.call(el, val);
-      else el.value = val;
+      if (setter) setter.call(el, val); else el.value = val;
     }
-
-    el.dispatchEvent(new Event('input', { bubbles: true }));
-    el.dispatchEvent(new Event('change', { bubbles: true }));
-    el.dispatchEvent(new Event('blur', { bubbles: true }));
+    ['input', 'change', 'blur', 'keyup', 'keydown'].forEach(n => el.dispatchEvent(new Event(n, { bubbles: true })));
     return true;
   } catch (e) { return false; }
 }
 
-function clickSearch() {
-  const allButtons = Array.from(document.querySelectorAll('button, input[type="button"], input[type="submit"]'));
+function clickSearch(targetField) {
+  if (isProcessing) return;
+  isProcessing = true;
   
-  // 1. Look for an ENABLED search button (avoiding exports)
-  let btn = allButtons.find(b => {
-    const txt = (b.innerText || b.value || "").toLowerCase();
-    const isSearch = txt.includes('search') || b.classList.contains('search-btn');
-    const isExport = txt.includes('export') || txt.includes('download') || txt.includes('excel');
-    const isDisabled = b.disabled || b.classList.contains('mat-button-disabled');
-    return isSearch && !isExport && !isDisabled;
-  });
+  setTimeout(() => {
+    const allButtons = Array.from(document.querySelectorAll('button, input[type="button"], input[type="submit"]'));
+    const forbidden = ['profile', 'account', 'user', 'logout', 'settings', 'menu', 'export', 'download', 'excel'];
+    
+    const isGood = (b) => {
+      const txt = (b.innerText || b.value || b.getAttribute('aria-label') || "").toLowerCase();
+      return !forbidden.some(k => txt.includes(k)) && !b.disabled && !b.classList.contains('mat-button-disabled');
+    };
 
-  // 2. Fallback: Any ENABLED primary/submit button that isn't export
-  if (!btn) {
-    btn = allButtons.find(b => {
-      const txt = (b.innerText || b.value || "").toLowerCase();
-      const isExport = txt.includes('export') || txt.includes('download') || txt.includes('excel');
-      const isSubmit = b.type === 'submit' || b.classList.contains('mat-raised-button');
-      const isDisabled = b.disabled || b.classList.contains('mat-button-disabled');
-      return isSubmit && !isExport && !isDisabled;
+    // 1. Target "Scan Packet ID" or "Search"
+    let btn = allButtons.find(b => {
+      const txt = (b.innerText || "").toLowerCase();
+      return (txt.includes('scan packet id') || txt.includes('search')) && isGood(b);
     });
-  }
 
-  if (btn) {
-    console.log('[IGP] Clicking Search button:', btn);
-    btn.click();
-    return true;
-  }
-
-  // 3. Last Resort: Force submit the form if the button is still disabled
-  console.warn('[IGP] No enabled search button found. Trying form submit.');
-  const pkidField = findInput(['packet', 'pkid'], ['task']);
-  if (pkidField && pkidField.form) {
-    pkidField.form.submit();
-    return true;
-  }
-
-  return false;
-}
-
-function findInput(patterns, antiPatterns = []) {
-  const inputs = Array.from(document.querySelectorAll('input'));
-  const check = (str) => str && patterns.some(p => str.toLowerCase().includes(p)) && !antiPatterns.some(ap => str.toLowerCase().includes(ap));
-  for (let i of inputs) {
-    const attrText = `${i.id} ${i.name} ${i.placeholder} ${i.getAttribute('formcontrolname') || ''} ${i.getAttribute('aria-label') || ''}`;
-    if (check(attrText)) return i;
-  }
-  const labels = Array.from(document.querySelectorAll('label, mat-label, .mat-form-field-label'));
-  for (let l of labels) {
-    if (check(l.innerText)) {
-      const container = l.closest('mat-form-field, .form-group') || l.parentElement;
-      const input = container.querySelector('input');
-      if (input) return input;
+    // 2. Local button
+    if (!btn && targetField) {
+      const container = targetField.closest('form, mat-card, mat-form-field, .form-container') || document.body;
+      btn = Array.from(container.querySelectorAll('button')).find(isGood);
     }
-  }
-  return null;
+
+    if (btn) {
+      console.log('[IGP] Clicking:', btn.innerText || 'Submit');
+      btn.click();
+    } else if (targetField && targetField.form) {
+      console.log('[IGP] Form submit fallback');
+      targetField.form.submit();
+    }
+    
+    isProcessing = false;
+  }, 350);
 }
 
 function getFields() {
-  const pkid = findInput(['packet', 'pkid'], ['task', 'assignment', 'filter']);
-  const tray = findInput(['tray'], ['filter']);
-  const oid  = findInput(['order', 'oid'], ['packet', 'pkid', 'task', 'filter']);
+  const url = window.location.href;
+  const isSQC = url.includes('super-qc');
   
-  const allMat = Array.from(document.querySelectorAll('input.mat-input-element'));
+  const inputs = Array.from(document.querySelectorAll('input')).filter(i => i.type !== 'hidden' && i.offsetWidth > 0);
   
-  if (window.location.href.includes('super-qc')) {
+  const findByText = (patterns) => {
+    return inputs.find(i => {
+      const text = `${i.id} ${i.name} ${i.placeholder} ${i.getAttribute('aria-label') || ''}`.toLowerCase();
+      return patterns.some(p => text.includes(p));
+    });
+  };
+
+  // More aggressive label search for SQC
+  if (isSQC) {
+    const labels = Array.from(document.querySelectorAll('label, mat-label, .mat-form-field-label'));
+    let pkidInput = null;
+    for (let l of labels) {
+      if (l.innerText.toLowerCase().includes('packet')) {
+        const container = l.closest('mat-form-field, .form-group') || l.parentElement;
+        pkidInput = container.querySelector('input');
+        if (pkidInput) break;
+      }
+    }
     return {
-      tray: tray || null,
-      oid: oid || null,
-      pkid: pkid || allMat.find(i => i.placeholder?.toLowerCase().includes('packet')) || allMat[1] || allMat[0]
+      pkid: pkidInput || findByText(['packet', 'pkid']) || inputs[0],
+      tray: findByText(['tray']),
+      oid:  findByText(['order', 'oid'])
     };
   }
 
-  return { tray: tray || allMat[1], oid:  oid  || allMat[2], pkid: pkid || allMat[3] || allMat[1] };
+  const pkid = findByText(['packet', 'pkid']);
+  const tray = findByText(['tray']);
+  const oid  = findByText(['order', 'oid']);
+  const matInputs = inputs.filter(i => i.classList.contains('mat-input-element'));
+  
+  return {
+    tray: tray || matInputs[1],
+    oid:  oid  || matInputs[2],
+    pkid: pkid || matInputs[3] || matInputs[0]
+  };
 }
 
 function handleScan(val, type) {
   const f = getFields();
-  const isSQC = window.location.href.includes('order-mgmt-panel/super-qc');
   const target = (type === 'TRAY') ? f.tray : (type === 'OID' ? f.oid : f.pkid);
 
   if (target) {
-    if (document.activeElement === target && val.length < 8) return;
-    
-    // Clear other fields to avoid validation errors
-    if (!isSQC) {
-      if (f.tray && type !== 'TRAY') forceSetValue(f.tray, '');
-      if (f.oid && type !== 'OID')   forceSetValue(f.oid, '');
-      if (f.pkid && type !== 'PKID') forceSetValue(f.pkid, '');
+    // If ALREADY focused in the correct target field, do nothing and let native Enter work
+    if (document.activeElement === target) {
+      console.log('[IGP] Already in target field. Letting native events handle it.');
+      return;
     }
 
+    console.log(`[IGP] Redirecting ${type} to:`, target);
     forceSetValue(target, val);
-    // Increased delay to ensure the "Search" button enables after the value is set
-    setTimeout(() => clickSearch(), 300);
+    clickSearch(target);
+  } else {
+    console.error('[IGP] Could not find field for:', type);
   }
 }
 
@@ -159,11 +152,9 @@ let lastKeyTime = Date.now();
 
 document.addEventListener('keydown', (e) => {
   try { if (!chrome.runtime?.id) return; } catch (e) { return; }
-
   const url = window.location.href;
   const isQC = url.includes('personalization/qc-panel');
   const isSQC = url.includes('order-mgmt-panel/super-qc');
-
   if (!isQC && !isSQC) return;
   if (isQC && settings.qc_enabled === false) return;
   if (isSQC && settings.sqc_enabled === false) return;
@@ -173,6 +164,12 @@ document.addEventListener('keydown', (e) => {
   lastKeyTime = now;
 
   if (e.key === 'Enter') {
+    // Shield against scanner-sent Enter keys
+    if (now - lastDetectionTime < 600) {
+      e.preventDefault(); e.stopImmediatePropagation();
+      return;
+    }
+
     const val = scanBuffer.trim();
     const type = identifyData(val);
     if (type) {
@@ -190,13 +187,20 @@ document.addEventListener('keydown', (e) => {
     if (scanBuffer.length >= 8) {
       const type = identifyData(scanBuffer);
       if (type && type !== 'TRAY') {
-        const val = scanBuffer;
-        const isCorrect = (type === 'PKID' && document.activeElement.placeholder?.toLowerCase().includes('packet'));
-        if (!isCorrect) {
-          e.preventDefault(); e.stopImmediatePropagation();
-          scanBuffer = '';
-          handleScan(val, type);
+        const fields = getFields();
+        const target = (type === 'PKID') ? fields.pkid : (type === 'OID' ? fields.oid : null);
+        
+        // If we're already in the right place, don't hijack
+        if (document.activeElement === target) {
+          scanBuffer = ''; // Just clear buffer, let characters flow naturally
+          return;
         }
+
+        e.preventDefault(); e.stopImmediatePropagation();
+        const val = scanBuffer;
+        scanBuffer = '';
+        lastDetectionTime = Date.now();
+        handleScan(val, type);
       }
     }
   }
