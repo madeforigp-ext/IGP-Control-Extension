@@ -1,5 +1,6 @@
 {
-  "dependencies": {
-    "@google/genai": "^2.4.0"
-  }
+  "name": "igp-control",
+  "version": "1.0.0",
+  "description": "ScanRouter + TabGuard + Auto-Login — All in one.",
+  "dependencies": {}
 }

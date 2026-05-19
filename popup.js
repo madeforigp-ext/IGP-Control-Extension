@@ -53,6 +53,13 @@ document.getElementById('saveCredBtn').addEventListener('click', () => {
   }, () => setStatus('Credentials saved ✅', 'success'));
 });
 
+// Add Enter key support for saving credentials
+['associate', 'user', 'pass'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('saveCredBtn').click();
+  });
+});
+
 // ─── TABGUARD ────────────────────────────────────────────────────────────────
 
 let protectedTitles = [];

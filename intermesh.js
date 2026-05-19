@@ -1,15 +1,33 @@
 // ─── IGP Control: Intermesh ──────────────────────────────────────────────────
 
+let settings = { intermesh_enabled: true };
+chrome.storage.local.get(['intermesh_enabled'], (data) => {
+  if (data.intermesh_enabled !== undefined) settings.intermesh_enabled = data.intermesh_enabled;
+});
+
+chrome.storage.onChanged.addListener((changes) => {
+  if (changes.intermesh_enabled) settings.intermesh_enabled = changes.intermesh_enabled.newValue;
+});
+
 function identifyData(val) {
-  if (/^183\d{5}$/.test(val)) return 'OID';
-  if (/^121\d{5}$/.test(val)) return 'PKID';
+  if (/^\d{4}$/.test(val))      return 'TRAY';
+  if (/^183\d{5,}$/.test(val))  return 'OID';
+  if (/^121\d{5,}$/.test(val))  return 'PKID';
   return null;
 }
 
 function getFields() {
+  const inputs = Array.from(document.querySelectorAll('input[type="text"]'));
+  const findBy = (txt) => inputs.find(i => 
+    (i.name && i.name.toLowerCase().includes(txt)) || 
+    (i.id && i.id.toLowerCase().includes(txt)) ||
+    (i.placeholder && i.placeholder.toLowerCase().includes(txt))
+  );
+
   return {
-    pkid: document.querySelector('input[name="packetid"]') || null,
-    oid:  document.querySelectorAll('input[name="orders_id"]')[0] || null,
+    pkid: findBy('packet') || findBy('packetid') || document.querySelector('input[name="packetid"]') || null,
+    oid:  findBy('orders_id') || document.querySelectorAll('input[name="orders_id"]')[0] || null,
+    tray: findBy('tray') || null
   };
 }
 
@@ -17,7 +35,6 @@ function clickSearch(el) {
   const btn = el?.closest('td')?.querySelector('input[type="button"], button');
   if (btn) btn.click();
   else {
-    // fallback — find search input near field
     const inputs = document.querySelectorAll('input[type="button"][value="search"], input[type="submit"]');
     if (inputs[0]) inputs[0].click();
   }
@@ -33,6 +50,10 @@ function handleData(val, type) {
     f.oid.value = val;
     f.oid.focus();
     setTimeout(() => clickSearch(f.oid), 100);
+  } else if (type === 'TRAY' && f.tray) {
+    f.tray.value = val;
+    f.tray.focus();
+    setTimeout(() => clickSearch(f.tray), 100);
   }
 }
 
@@ -40,50 +61,42 @@ function handleData(val, type) {
 
 let scanBuffer  = '';
 let lastKeyTime = 0;
-let isScanner   = false;
 
 document.addEventListener('keydown', (e) => {
-  chrome.storage.local.get(['intermesh_enabled'], (data) => {
-    if (data.intermesh_enabled === false) return;
+  if (settings.intermesh_enabled === false) return;
 
-    const now = Date.now();
-    const gap = now - lastKeyTime;
+  const now = Date.now();
+  const gap = now - lastKeyTime;
+  lastKeyTime = now;
 
-    if (e.key === 'Enter') {
-      const val  = scanBuffer.trim();
-      scanBuffer = '';
-      isScanner  = false;
-      const type = identifyData(val);
-      if (type) {
+  if (e.key === 'Enter') {
+    const val  = scanBuffer.trim();
+    scanBuffer = '';
+    const type = identifyData(val);
+    if (type) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      handleData(val, type);
+    }
+    return;
+  }
+
+  if (e.key.length === 1) {
+    if (gap > 200) scanBuffer = '';
+    scanBuffer += e.key;
+
+    // Fast keystroke detection (scanner)
+    if (gap < 60) {
+      const detectedType = identifyData(scanBuffer);
+      if (detectedType && detectedType !== 'TRAY') {
+        const val = scanBuffer;
+        scanBuffer = '';
         e.preventDefault();
         e.stopImmediatePropagation();
-        handleData(val, type);
-      }
-      return;
-    }
-
-    if (e.key.length === 1) {
-      if (gap > 1000) { scanBuffer = ''; isScanner = false; }
-      if (gap < 50) {
-        isScanner = true;
-        e.preventDefault();
-      }
-      scanBuffer  += e.key;
-      lastKeyTime  = now;
-
-      if (isScanner) {
-        const detectedType = identifyData(scanBuffer);
-        if (detectedType) {
-          const val = scanBuffer;
-          scanBuffer = '';
-          isScanner  = false;
-          e.preventDefault();
-          e.stopImmediatePropagation();
-          handleData(val, detectedType);
-        }
+        handleData(val, detectedType);
       }
     }
-  });
+  }
 }, true);
 
 // ─── AUTO LOGIN ───────────────────────────────────────────────────────────────
