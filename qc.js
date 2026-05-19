@@ -1,10 +1,10 @@
-// ─── IGP Control: QC & Super QC (Final Routing Fix) ──────────────────────────
+// ─── IGP Control: QC & Super QC (Overwrite & Clear Fix) ─────────────────────
 
 console.log('[IGP] QC Script Loaded.');
 
 let settings = { qc_enabled: true, sqc_enabled: true };
-let lastDetectionTime = 0; 
-let isProcessing = false; // Flag to prevent double triggers
+let lastAutoSearchTime = 0; 
+let isProcessing = false;
 
 function updateSettings() {
   if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
@@ -26,26 +26,32 @@ if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged)
 
 function identifyData(val) {
   val = (val || "").trim();
-  if (/^\d{4}$/.test(val)) return 'TRAY';
   if (/^12\d{6,12}$/.test(val)) return 'PKID';
   if (/^183\d+$/.test(val)) return 'OID';
+  if (/^\d{4}$/.test(val)) return 'TRAY';
   return null;
 }
 
 function forceSetValue(el, val) {
   if (!el) return false;
+  console.log(`[IGP] Overwriting field with: "${val}"`);
   try {
     el.focus();
-    el.value = '';
+    el.value = ''; // Explicit clear
+    
+    // Trigger Angular / Material validation
+    ['input', 'change', 'blur', 'keyup', 'keydown'].forEach(n => {
+      el.dispatchEvent(new Event(n, { bubbles: true }));
+    });
+
+    // Deep set using execCommand
     el.select();
-    const ok = document.execCommand('insertText', false, val);
-    if (!ok) {
-      const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-      if (setter) setter.call(el, val); else el.value = val;
-    }
-    ['input', 'change', 'blur', 'keyup', 'keydown'].forEach(n => el.dispatchEvent(new Event(n, { bubbles: true })));
+    document.execCommand('insertText', false, val);
+    
     return true;
-  } catch (e) { return false; }
+  } catch (e) { 
+    return false; 
+  }
 }
 
 function clickSearch(targetField) {
@@ -57,93 +63,77 @@ function clickSearch(targetField) {
     const forbidden = ['profile', 'account', 'user', 'logout', 'settings', 'menu', 'export', 'download', 'excel'];
     
     const isGood = (b) => {
-      const txt = (b.innerText || b.value || b.getAttribute('aria-label') || "").toLowerCase();
-      return !forbidden.some(k => txt.includes(k)) && !b.disabled && !b.classList.contains('mat-button-disabled');
+      const txt = (b.innerText || b.value || "").toLowerCase();
+      const isVisible = b.offsetWidth > 0 && b.offsetHeight > 0;
+      return !forbidden.some(k => txt.includes(k)) && !b.disabled && isVisible;
     };
 
-    // 1. Target "Scan Packet ID" or "Search"
     let btn = allButtons.find(b => {
       const txt = (b.innerText || "").toLowerCase();
       return (txt.includes('scan packet id') || txt.includes('search')) && isGood(b);
     });
 
-    // 2. Local button
     if (!btn && targetField) {
-      const container = targetField.closest('form, mat-card, mat-form-field, .form-container') || document.body;
+      const container = targetField.closest('form, mat-card, .search-container') || document.body;
       btn = Array.from(container.querySelectorAll('button')).find(isGood);
     }
 
     if (btn) {
-      console.log('[IGP] Clicking:', btn.innerText || 'Submit');
+      console.log('[IGP] Triggering Search.');
+      lastAutoSearchTime = Date.now();
       btn.click();
     } else if (targetField && targetField.form) {
-      console.log('[IGP] Form submit fallback');
+      lastAutoSearchTime = Date.now();
       targetField.form.submit();
     }
-    
     isProcessing = false;
-  }, 350);
+  }, 400);
 }
 
 function getFields() {
-  const url = window.location.href;
-  const isSQC = url.includes('super-qc');
-  
+  const isSQC = window.location.href.includes('super-qc');
   const inputs = Array.from(document.querySelectorAll('input')).filter(i => i.type !== 'hidden' && i.offsetWidth > 0);
   
-  const findByText = (patterns) => {
+  const findInput = (patterns, antiPatterns = []) => {
     return inputs.find(i => {
-      const text = `${i.id} ${i.name} ${i.placeholder} ${i.getAttribute('aria-label') || ''}`.toLowerCase();
-      return patterns.some(p => text.includes(p));
+      const text = `${i.id} ${i.name} ${i.placeholder} ${i.getAttribute('aria-label') || ''} ${i.getAttribute('formcontrolname') || ''}`.toLowerCase();
+      const match = patterns.some(p => text.includes(p));
+      const badMatch = antiPatterns.some(ap => text.includes(ap));
+      return match && !badMatch;
     });
   };
 
-  // More aggressive label search for SQC
   if (isSQC) {
-    const labels = Array.from(document.querySelectorAll('label, mat-label, .mat-form-field-label'));
-    let pkidInput = null;
+    const labels = Array.from(document.querySelectorAll('label, mat-label, .mat-form-field-label, span'));
     for (let l of labels) {
-      if (l.innerText.toLowerCase().includes('packet')) {
-        const container = l.closest('mat-form-field, .form-group') || l.parentElement;
-        pkidInput = container.querySelector('input');
-        if (pkidInput) break;
+      const txt = l.innerText.toLowerCase();
+      if ((txt.includes('packet') || txt.includes('pkid')) && !txt.includes('task')) {
+        const inp = (l.closest('mat-form-field, .form-group') || l.parentElement).querySelector('input');
+        if (inp) return { pkid: inp, tray: findInput(['tray']), oid: findInput(['order', 'oid']) };
       }
     }
-    return {
-      pkid: pkidInput || findByText(['packet', 'pkid']) || inputs[0],
-      tray: findByText(['tray']),
-      oid:  findByText(['order', 'oid'])
-    };
+    return { pkid: findInput(['packet', 'pkid'], ['task', 'assignment', 'filter']), tray: findInput(['tray']), oid: findInput(['order', 'oid']) };
   }
 
-  const pkid = findByText(['packet', 'pkid']);
-  const tray = findByText(['tray']);
-  const oid  = findByText(['order', 'oid']);
+  const pkid = findInput(['packet', 'pkid', 'scan'], ['task', 'assignment', 'filter']);
+  const tray = findInput(['tray'], ['filter']);
+  const oid  = findInput(['order', 'oid'], ['filter']);
   const matInputs = inputs.filter(i => i.classList.contains('mat-input-element'));
   
   return {
     tray: tray || matInputs[1],
-    oid:  oid  || matInputs[2],
-    pkid: pkid || matInputs[3] || matInputs[0]
+    pkid: pkid || matInputs[3] || matInputs[0],
+    oid:  oid  || matInputs[2]
   };
 }
 
 function handleScan(val, type) {
   const f = getFields();
   const target = (type === 'TRAY') ? f.tray : (type === 'OID' ? f.oid : f.pkid);
-
   if (target) {
-    // If ALREADY focused in the correct target field, do nothing and let native Enter work
-    if (document.activeElement === target) {
-      console.log('[IGP] Already in target field. Letting native events handle it.');
-      return;
-    }
-
-    console.log(`[IGP] Redirecting ${type} to:`, target);
+    // ALWAYS force set value to ensure overwrite/clear
     forceSetValue(target, val);
     clickSearch(target);
-  } else {
-    console.error('[IGP] Could not find field for:', type);
   }
 }
 
@@ -153,23 +143,19 @@ let lastKeyTime = Date.now();
 document.addEventListener('keydown', (e) => {
   try { if (!chrome.runtime?.id) return; } catch (e) { return; }
   const url = window.location.href;
-  const isQC = url.includes('personalization/qc-panel');
-  const isSQC = url.includes('order-mgmt-panel/super-qc');
-  if (!isQC && !isSQC) return;
-  if (isQC && settings.qc_enabled === false) return;
-  if (isSQC && settings.sqc_enabled === false) return;
+  if (!url.includes('qc-panel') && !url.includes('super-qc')) return;
+  if (url.includes('qc-panel') && !settings.qc_enabled) return;
+  if (url.includes('super-qc') && !settings.sqc_enabled) return;
 
   const now = Date.now();
   const gap = now - lastKeyTime;
   lastKeyTime = now;
 
   if (e.key === 'Enter') {
-    // Shield against scanner-sent Enter keys
-    if (now - lastDetectionTime < 600) {
+    if (now - lastAutoSearchTime < 800) {
       e.preventDefault(); e.stopImmediatePropagation();
       return;
     }
-
     const val = scanBuffer.trim();
     const type = identifyData(val);
     if (type) {
@@ -181,25 +167,36 @@ document.addEventListener('keydown', (e) => {
   }
 
   if (e.key.length === 1) {
-    if (gap > 1000) scanBuffer = '';
+    if (gap > 800) scanBuffer = '';
+    
+    // We only skip hijacking if the user is typing SLOWLY (gap > 100ms)
+    // If it's a fast scanner (gap < 80ms), we MUST hijack even if focused
+    // to ensure the field is cleared and not appended.
+    const fields = getFields();
+    const isTargetFocused = (document.activeElement === fields.pkid || document.activeElement === fields.oid || document.activeElement === fields.tray);
+    
+    if (isTargetFocused && gap > 100) {
+      scanBuffer = ''; 
+      return; 
+    }
+
     scanBuffer += e.key;
 
-    if (scanBuffer.length >= 8) {
+    if (scanBuffer.length === 4) {
       const type = identifyData(scanBuffer);
-      if (type && type !== 'TRAY') {
-        const fields = getFields();
-        const target = (type === 'PKID') ? fields.pkid : (type === 'OID' ? fields.oid : null);
-        
-        // If we're already in the right place, don't hijack
-        if (document.activeElement === target) {
-          scanBuffer = ''; // Just clear buffer, let characters flow naturally
-          return;
-        }
-
+      if (type === 'TRAY') {
         e.preventDefault(); e.stopImmediatePropagation();
         const val = scanBuffer;
         scanBuffer = '';
-        lastDetectionTime = Date.now();
+        handleScan(val, 'TRAY');
+      }
+    }
+    else if (scanBuffer.length >= 8) {
+      const type = identifyData(scanBuffer);
+      if (type && type !== 'TRAY') {
+        e.preventDefault(); e.stopImmediatePropagation();
+        const val = scanBuffer;
+        scanBuffer = '';
         handleScan(val, type);
       }
     }

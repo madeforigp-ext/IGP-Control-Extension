@@ -3,7 +3,8 @@
   "name": "IGP Control",
   "version": "1.0",
   "description": "ScanRouter + TabGuard + Auto-Login — All in one.",
-  "permissions": ["tabs", "storage", "scripting"],
+  "permissions": ["tabs", "storage", "scripting", "activeTab"],
+  "host_permissions": ["*://*/*"],
   "content_scripts": [
     {
       "matches": ["*://admin.joinventures.com/*"],
@@ -20,9 +21,15 @@
     "service_worker": "background.js"
   },
   "commands": {
+    "toggle-protection": {
+      "suggested_key": {
+        "default": "Alt+Shift+G"
+      },
+      "description": "Protect/Unprotect current tab"
+    },
     "execute-tabguard": {
       "suggested_key": {
-        "default": "Ctrl+Shift+G"
+        "default": "Alt+Shift+X"
       },
       "description": "Close all tabs except protected"
     }

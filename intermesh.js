@@ -4,15 +4,17 @@ console.log('[IGP] Intermesh Script Loaded.');
 
 let settings = { 
   intermesh_enabled: true,
-  intermesh_global_enabled: true 
+  intermesh_global_enabled: true,
+  autologin_enabled: true
 };
 
 function updateSettings() {
   if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-    chrome.storage.local.get(['intermesh_enabled', 'intermesh_global_enabled'], (data) => {
+    chrome.storage.local.get(['intermesh_enabled', 'intermesh_global_enabled', 'autologin_enabled'], (data) => {
       if (chrome.runtime.lastError) return;
       if (data.intermesh_enabled !== undefined) settings.intermesh_enabled = data.intermesh_enabled;
       if (data.intermesh_global_enabled !== undefined) settings.intermesh_global_enabled = data.intermesh_global_enabled;
+      if (data.autologin_enabled !== undefined) settings.autologin_enabled = data.autologin_enabled;
     });
   }
 }
@@ -22,6 +24,7 @@ if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged)
   chrome.storage.onChanged.addListener((changes) => {
     if (changes.intermesh_enabled) settings.intermesh_enabled = changes.intermesh_enabled.newValue;
     if (changes.intermesh_global_enabled) settings.intermesh_global_enabled = changes.intermesh_global_enabled.newValue;
+    if (changes.autologin_enabled) settings.autologin_enabled = changes.autologin_enabled.newValue;
   });
 }
 
@@ -151,10 +154,32 @@ function checkAutoLogin() {
     chrome.storage.local.get(['autologin_enabled', 'igp_associate', 'igp_user', 'igp_pass', 'intermesh_enabled'], (data) => {
       if (chrome.runtime.lastError) return;
       if (data.intermesh_enabled === false) return; // Respect master toggle
-      
-      const isLoginPage = document.body.innerText.includes('Please enter your User Name');
-      if (!isLoginPage) return;
       if (data.autologin_enabled === false) return;
+      
+      const pageText = document.body.innerText;
+      const isLoginPage = pageText.includes('Please enter your User Name');
+      if (!isLoginPage) return;
+
+      // FAILURE DETECTION: Stop if page says "Invalid" or "Incorrect"
+      const failed = pageText.toLowerCase().includes('invalid') || 
+                     pageText.toLowerCase().includes('incorrect') || 
+                     pageText.toLowerCase().includes('failed');
+      
+      if (failed) {
+        console.warn('[IGP] Auto-Login detected failure. Disabling to prevent loop.');
+        chrome.storage.local.set({ autologin_enabled: false });
+        // Toast notification (injected via background context or local DOM)
+        const toast = document.createElement('div');
+        toast.textContent = '⛔ Auto-Login Failed. Toggle turned OFF.';
+        Object.assign(toast.style, {
+          position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)',
+          backgroundColor: '#c0392b', color: '#fff', padding: '15px 30px', borderRadius: '5px',
+          zIndex: '999999', fontWeight: 'bold', fontSize: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.5)'
+        });
+        document.body.appendChild(toast);
+        return;
+      }
+
       if (!data.igp_user || !data.igp_pass) return;
 
       const associateField = document.querySelectorAll('input[type="text"]')[0];
@@ -165,7 +190,7 @@ function checkAutoLogin() {
       if (associateField && data.igp_associate) associateField.value = data.igp_associate;
       if (userField) userField.value = data.igp_user;
       if (passField) passField.value = data.igp_pass;
-      setTimeout(() => { if (loginBtn) loginBtn.click(); }, 500);
+      setTimeout(() => { if (loginBtn) loginBtn.click(); }, 600);
     });
   }
 }

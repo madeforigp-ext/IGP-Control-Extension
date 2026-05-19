@@ -28,13 +28,13 @@
     /* SECTIONS */
     .section { padding: 12px 20px; border-bottom: 1px solid #eee; background: #fff; }
     .section-label {
-      font-size: 9px; letter-spacing: 2px; color: #999; text-transform: uppercase;
+      font-size: 9px; letter-spacing: 2px; color: #000; text-transform: uppercase;
       margin-bottom: 10px; font-weight: 600; display: flex; align-items: center; justify-content: space-between;
     }
 
     /* TOGGLE */
-    .toggle-row { display: flex; align-items: center; justify-content: space-between; }
-    .toggle-label { font-size: 11px; color: #333; font-weight: 500; }
+    .toggle-row { display: flex; align-items: center;  justify-content: space-between; }
+    .toggle-label { font-size: 11px; color: #666; font-weight: 500; }
     .toggle { position: relative; width: 36px; height: 20px; }
     .toggle input { opacity: 0; width: 0; height: 0; }
     .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #ddd; border-radius: 20px; transition: 0.2s; }
@@ -63,11 +63,11 @@
     .btn { cursor: pointer; border: none; font-family: 'Inter', sans-serif; font-weight: 600; transition: all 0.15s; border-radius: 3px; }
     .btn-sm { background: #c0392b; color: #fff; font-size: 10px; padding: 7px 10px; letter-spacing: 1px; }
     .btn-sm:hover { background: #a93226; }
-    .btn-full { width: 100%; background: #f5f5f5; color: #555; border: 1px solid #ddd; font-size: 10px; padding: 7px; margin-top: 4px; letter-spacing: 1px; }
-    .btn-full:hover { background: #eee; }
+    .btn-full { width: 100%; background: #c0392b ; color: #fff; border: 1px solid #ddd; font-size: 10px; padding: 7px; margin-top: 4px; letter-spacing: 1px; }
+    .btn-full:hover { background: #962d22; }
     .btn-save { width: 100%; background: #c0392b; color: #fff; font-size: 11px; padding: 9px; margin-top: 4px; letter-spacing: 2px; }
-    .btn-save:hover { background: #a93226; }
-
+    .btn-save:hover { background: #962d22; }
+    /*default color #c0392b IGP one ,default hover #a93226*/
     .status { padding: 8px 20px; font-size: 9px; color: #aaa; min-height: 28px; display: flex; align-items: center; background: #fff; border-top: 1px solid #eee; }
     .status.success { color: #27ae60; }
     .status.error { color: #c0392b; }
@@ -77,7 +77,7 @@
 
 <div class="header">
   <div class="title">IGP CONTROL</div>
-  <div class="tagline">SCANROUTER · TABGUARD · AUTOLOGIN</div>
+  <div class="tagline">ROUTING · TABGUARD </div>
   <div class="tabs">
     <button class="tab-btn active" data-tab="controls">Controls</button>
     <button class="tab-btn" data-tab="tabguard">TabGuard</button>
@@ -103,12 +103,16 @@
 
   <div class="section">
     <div class="section-label">
-      Intermesh Master
+      Intermesh
       <label class="toggle"><input type="checkbox" id="toggle-intermesh" checked><span class="slider"></span></label>
     </div>
-    <div class="toggle-row" style="margin-bottom: 8px;">
+    <div class="toggle-row" style="margin-bottom:1px;">
       <span class="toggle-label" style="font-size: 10px; color: #666;">Global Typing Detection</span>
       <label class="toggle" style="width: 30px; height: 16px;"><input type="checkbox" id="toggle-intermesh-global" checked><span class="slider" style="before: {height: 10px; width: 10px; left: 3px; bottom: 3px;}"></span></label>
+    </div>
+    <div class="toggle-row" style="margin-bottom: 8px;">
+      <span class="toggle-label" style="font-size: 10px; color: ##666;">Auto-Login</span>
+      <label class="toggle" style="width: 30px; height: 16px;"><input type="checkbox" id="toggle-autologin" checked><span class="slider"></span></label>
     </div>
     <input class="input" id="associate" type="text" placeholder="Associate Name" />
     <input class="input" id="user" type="text" placeholder="Username" />
@@ -123,9 +127,11 @@
 
   <div class="section">
     <div class="section-label">
-      Tab Guard — Ctrl+Shift+G
+      Tab Guard
       <label class="toggle"><input type="checkbox" id="toggle-tabguard" checked><span class="slider"></span></label>
     </div>
+    <div style="font-size: 8px; color: #999; margin-bottom: 8px; margin-top: -8px;">Shortcut: Alt+Shift+G to Protect Tab</div>
+    <div style="font-size: 8px; color: #999; margin-bottom: 8px; margin-top: -8px;">Shortcut: Add shortcut in Extension tab(Ctrl-w) to close</div>
     <div class="protected-list" id="protectedList">
       <div class="empty-state" id="emptyState">NO TABS PROTECTED</div>
     </div>
