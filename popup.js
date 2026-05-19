@@ -34,8 +34,9 @@ function setupToggle(id, storageKey) {
 
 setupToggle('toggle-qc',        'qc_enabled');
 setupToggle('toggle-sqc',       'sqc_enabled');
-setupToggle('toggle-intermesh', 'intermesh_enabled');
-setupToggle('toggle-tabguard',  'tabguard_enabled');
+setupToggle('toggle-intermesh',        'intermesh_enabled');
+setupToggle('toggle-intermesh-global', 'intermesh_global_enabled');
+setupToggle('toggle-tabguard',         'tabguard_enabled');
 
 // ─── CREDENTIALS ─────────────────────────────────────────────────────────────
 
