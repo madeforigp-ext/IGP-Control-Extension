@@ -33,32 +33,45 @@ let lastKeyTime = Date.now();
 let isRedirected = false;
 
 function identifyData(val) {
-  val = val.trim();
+  val = val.trim().toUpperCase();
   if (/^\d{4}$/.test(val)) return 'TRAY';
-  if (/^12\d{6,9}$/.test(val)) return 'PKID';
   if (/^183\d+$/.test(val)) return 'OID';
+  if (/^(12|IP)?\d{7,14}$/.test(val)) return 'PKID';
   return null;
 }
 
 function identifyPrefix(val) {
-  if (val === '120' || val === '121' || val === '12') return 'PKID';
+  val = val.toUpperCase();
+  if (val === '120' || val === '121' || val === '12' || val === 'IP') return 'PKID';
   if (val === '183') return 'OID';
   return null;
 }
 
 function getTargetField(type) {
   const patterns = {
-    PKID: ['packet', 'pkid', 'pkt'],
+    PKID: ['packet', 'pkid', 'pkt', 'ip', 'individual'],
     OID:  ['order', 'oid'],
     TRAY: ['tray']
   };
   const searchFor = patterns[type] || [];
-  const inputs = Array.from(document.querySelectorAll('input[type="text"], input:not([type])'));
+  const inputs = Array.from(document.querySelectorAll('input[type="text"], input:not([type])')).filter(i => i.offsetWidth > 0);
   
   let field = inputs.find(i => {
     const text = `${i.name} ${i.id} ${i.placeholder}`.toLowerCase();
     return searchFor.some(p => text.includes(p));
   });
+
+  if (!field) {
+    const labels = Array.from(document.querySelectorAll('label, mat-label, .mat-form-field-label, span, p'));
+    for (let l of labels) {
+      const txt = (l.innerText || l.textContent || "").toLowerCase();
+      if (searchFor.some(p => txt.includes(p))) {
+        const container = l.closest('mat-form-field, .form-group, .mat-form-field-wrapper, .mat-form-field-flex') || l.parentElement;
+        field = container.querySelector('input');
+        if (field) break;
+      }
+    }
+  }
 
   if (!field && type === 'PKID') {
     field = document.querySelector('input[name="packetid"]');

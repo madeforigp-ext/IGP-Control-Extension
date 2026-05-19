@@ -7,13 +7,11 @@
   "host_permissions": ["*://*/*"],
   "content_scripts": [
     {
-      "matches": ["*://admin.joinventures.com/*"],
+      "matches": [
+        "*://admin.joinventures.com/*",
+        "*://admin.indiangiftsportal.com/*"
+      ],
       "js": ["qc.js"],
-      "run_at": "document_idle"
-    },
-    {
-      "matches": ["*://admin.indiangiftsportal.com/*"],
-      "js": ["intermesh.js"],
       "run_at": "document_idle"
     }
   ],
