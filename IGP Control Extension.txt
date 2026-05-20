@@ -1,4 +1,4 @@
-1)QC PAGE 											[✔✔][❌❌❌❌❌❌][❌❌❌][❌➖➖]
+1)QC PAGE 											[✔✔][❌❌❌❌✔❌][❌❌❌][❌➖➖]
 	▶ Scan/Key Route 							       		
 		1)Global SCAN routes the ip to Tray Field					 ✔
 		2)Global KEY detection works,ips to tray field(4-digits)			 ✔
@@ -9,7 +9,7 @@
 		2)Detecting print pop up,[Auto print]					 	 ❌
 		3)[Auto Login] when session expires(with past login creds)		 	 ❌
 		4)[Auto Search] in Assembly							 ❌
-		5)Open Image Easily								 ❌
+		5)Open Image Easily (right click opens)						 ✔
 		6)Count Things									 ❌
 	ADVANCE FEATURE(damn sure noo!)
 		1)Making [panel view more] thorough (giving color grades to same SKU?)		 ❌
@@ -28,7 +28,7 @@
 			 feature(this feature got removed,coz of bug)
 
 
-2)INTERMESH PAGE										[✔✔✔❌❌❌]
+2)INTERMESH PAGE										[✔✔✔❌❌❌❌]
 	▶Scan/Key Route										
 		1)Global SCAN routes the ip to PKID field(Detects packet Pattern)		 ✔
 		2)Global KEY detection works,PKID(Type 12 it detects and 			 ✔
@@ -42,8 +42,9 @@
 		2)[Open Order Search] sidebar link,when session starts				 ❌
 		3)[Paste Detection](Pasting will detect PKID/OID pattern)			 ❌
 		  and it route to their feild
+		4)Open Image Easily (right click opens)						 ❌	
 
-3)SQC PAGE											[❌❌❌❌]
+3)SQC PAGE											[❌❌❌❌✔]
 	▶Scan Route
 		1)Global SCAN routes the ip to PKID field					 ❌
 
@@ -54,12 +55,20 @@
 		  in few seconds
 		3)[Scroll Detects],if page is scrollable it should prompt			 ❌
 		  (helps in SQC)													
-
+		4)Open Image Easily (right click opens)						 ✔
 
 4)Extension Feature										[✔]
 	▶Tab Gaurd
 		1)Protects the protected tab from closing,closes all unprotected tab at		 ✔
 		  once with a shortcut(customizable in Extension Tab)(like Ctrl-w) 
+
+HISTORY
+	6 40 pm 20/5/26 added -Right click image feature for QC,SQC(ALL OTHER FEATURE WORKING I GUESS :( )
+		TODO
+			Intermesh image feature not added
+		BUGS 
+			Toggle bugs out sometime	
+
 	
 
 

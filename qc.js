@@ -13,7 +13,17 @@
   };
 
   let state = {
-    settings: { qc_enabled: true, sqc_enabled: true, qc_rightclick_enabled: true, sqc_rightclick_enabled: true, intermesh_enabled: true, intermesh_global_enabled: true, autologin_enabled: true },
+    settings: { 
+      qc_enabled: true, 
+      qc_rightclick_enabled: true, 
+      qc_routing_enabled: true, 
+      qc_global_enabled: true,
+      sqc_enabled: true, 
+      sqc_rightclick_enabled: true, 
+      intermesh_enabled: true, 
+      intermesh_global_enabled: true, 
+      autologin_enabled: true 
+    },
     scanBuffer: '',
     lastKeyTime: Date.now(),
     lastAutoSearchTime: 0,
@@ -146,11 +156,13 @@
     return null;
   };
 
-  const handleAction = (val, type) => {
+  const handleAction = (val, type, isQCAction = false) => {
     const fields = findFields();
     const target = fields[type];
     if (target) {
       forceUpdate(target, val);
+      // Routing is ONLY blocked for standard QC if toggle is OFF.
+      if (isQCAction && !state.settings.qc_routing_enabled) return;
       triggerSearch(target);
     }
   };
@@ -207,14 +219,17 @@
         return;
       }
 
-      // If we redirected, the value is already in the box naturally. 
-      // We don't need to prevent default unless we want to force a specific search button.
       const val = state.scanBuffer.trim();
-      const type = identify(val);
+      
+      // Detection Logic: Gate identification by the Global toggle for QC
+      let type = null;
+      if (isIntermesh || isSQC || (isQC && state.settings.qc_global_enabled !== false)) {
+        type = identify(val);
+      }
       
       if (type) {
         e.preventDefault(); e.stopImmediatePropagation();
-        handleAction(val, type);
+        handleAction(val, type, isQC);
         state.scanBuffer = '';
         state.isRedirected = false;
         return;
@@ -241,8 +256,13 @@
       state.scanBuffer += e.key;
 
       // Prefix-based Jump/Focus
-      // Only if global typing is enabled
-      if (state.settings.intermesh_global_enabled !== false) {
+      // Global Typing Detection logic
+      let canJump = false;
+      if (isIntermesh && state.settings.intermesh_global_enabled !== false) canJump = true;
+      if (isSQC && state.settings.intermesh_global_enabled !== false) canJump = true; 
+      if (isQC && state.settings.qc_global_enabled !== false) canJump = true;
+
+      if (canJump) {
         const prefix = state.scanBuffer.toUpperCase();
         let jumpType = null;
         if (prefix === '12' || prefix === '183' || prefix === '120' || prefix === '121' || prefix === 'IP') {
@@ -265,15 +285,17 @@
       }
 
       // Fast auto-submit ONLY for Tray (4 digits)
-      const type = identify(state.scanBuffer);
-      if (type === 'tray' && state.scanBuffer.length === 4) {
+      let trayType = null;
+      if (isIntermesh || isSQC || (isQC && state.settings.qc_global_enabled !== false)) {
+        trayType = identify(state.scanBuffer);
+      }
+
+      if (trayType === 'tray' && state.scanBuffer.length === 4) {
         e.preventDefault(); e.stopImmediatePropagation();
-        handleAction(state.scanBuffer, 'tray');
+        handleAction(state.scanBuffer, 'tray', isQC);
         state.scanBuffer = '';
         state.isRedirected = false;
       }
-      // Note: PKID/OID (type !== 'tray') NO LONGER have fast-submit to prevent partial searches.
-      // They rely on the scanner's "Enter" key or reaching full length in buffer if they don't redirect.
     }
   }, true);
 
