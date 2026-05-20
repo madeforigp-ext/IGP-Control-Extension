@@ -1,0 +1,70 @@
+1)QC PAGE 											[✔✔][❌❌❌❌❌❌][❌❌❌][❌➖➖]
+	▶ Scan/Key Route 							       		
+		1)Global SCAN routes the ip to Tray Field					 ✔
+		2)Global KEY detection works,ips to tray field(4-digits)			 ✔
+		
+	FEATURE(maybe)							       		
+		1)[PKid Route](Added and Removed)					 	 ❌
+			NO need of PKID Route as Qc Panel doesn't gets PKID scans much.
+		2)Detecting print pop up,[Auto print]					 	 ❌
+		3)[Auto Login] when session expires(with past login creds)		 	 ❌
+		4)[Auto Search] in Assembly							 ❌
+		5)Open Image Easily								 ❌
+		6)Count Things									 ❌
+	ADVANCE FEATURE(damn sure noo!)
+		1)Making [panel view more] thorough (giving color grades to same SKU?)		 ❌
+		  (This Feature maybe helpful,When panel order increases)
+		2)Making [panel view more] thorough (giving color grades to same OID/PKID?)	 ❌
+		  [Both feature can't be activated at same time,coz it adds complexity]
+		3)[AUTO PASS](with a warning Msg box) Complicated Feature			 ❌
+	                                             	         
+
+	BUGS								        	
+		1)[SCAN BUG]Two refresh happens(Scan trigger and extension code	               	 ❌
+		  	  trigger both gets added ig)
+		2)[PKID BUG]Tray starting with 12 Gets into PKID field in PKID feature   	 ➖
+			 (this feature got removed,coz of bug)
+		3)[PKID BUG]Starting trolley with 12 Gets into PKID field in PKID       	 ➖
+			 feature(this feature got removed,coz of bug)
+
+
+2)INTERMESH PAGE										[✔✔✔❌❌❌]
+	▶Scan/Key Route										
+		1)Global SCAN routes the ip to PKID field(Detects packet Pattern)		 ✔
+		2)Global KEY detection works,PKID(Type 12 it detects and 			 ✔
+		  sends the IP to PKID field)
+	▶Auto Login
+		1)Logs in Automatically when session expires					 ✔									
+		  (Creds should be prefilled in Extension popup)
+	FEATURE(maybe)
+		1)Global [KEY detection] for OID(type 18)(maybe fragile if websites updates	 ❌
+		  or changes OID)
+		2)[Open Order Search] sidebar link,when session starts				 ❌
+		3)[Paste Detection](Pasting will detect PKID/OID pattern)			 ❌
+		  and it route to their feild
+
+3)SQC PAGE											[❌❌❌❌]
+	▶Scan Route
+		1)Global SCAN routes the ip to PKID field					 ❌
+
+	FEATURE(maybe)
+		1)Global [KEY detection] for PKID(Type 12 ,it detects and 			 ❌
+		  sends the IP to PKID field)
+		2)[Duplicate Checker],if duplicates it should back automatically		 ❌
+		  in few seconds
+		3)[Scroll Detects],if page is scrollable it should prompt			 ❌
+		  (helps in SQC)													
+
+
+4)Extension Feature										[✔]
+	▶Tab Gaurd
+		1)Protects the protected tab from closing,closes all unprotected tab at		 ✔
+		  once with a shortcut(customizable in Extension Tab)(like Ctrl-w) 
+	
+
+
+
+
+
+
+	

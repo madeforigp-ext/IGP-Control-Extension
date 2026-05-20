@@ -13,7 +13,7 @@
   };
 
   let state = {
-    settings: { qc_enabled: true, sqc_enabled: true, intermesh_enabled: true, intermesh_global_enabled: true, autologin_enabled: true },
+    settings: { qc_enabled: true, sqc_enabled: true, qc_rightclick_enabled: true, sqc_rightclick_enabled: true, intermesh_enabled: true, intermesh_global_enabled: true, autologin_enabled: true },
     scanBuffer: '',
     lastKeyTime: Date.now(),
     lastAutoSearchTime: 0,
@@ -154,6 +154,28 @@
       triggerSearch(target);
     }
   };
+
+  // ─── IMAGE ENHANCEMENT ─────────────────────────────────────────────────────
+
+  document.addEventListener('contextmenu', (e) => {
+    const url = window.location.href;
+    const isSQC = url.includes('super-qc');
+    const isQC = url.includes('qc-panel') && !isSQC;
+    
+    if (isSQC) {
+      if (!state.settings.sqc_enabled || !state.settings.sqc_rightclick_enabled) return;
+    } else if (isQC) {
+      if (!state.settings.qc_enabled || !state.settings.qc_rightclick_enabled) return;
+    } else {
+      return;
+    }
+
+    const img = e.target.closest('img');
+    if (img && img.src && !img.src.startsWith('data:')) {
+      e.preventDefault();
+      window.open(img.src, '_blank');
+    }
+  }, true);
 
   // ─── EVENT LISTENERS ───────────────────────────────────────────────────────
 
