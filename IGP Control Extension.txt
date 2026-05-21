@@ -1,14 +1,15 @@
-1)QC PAGE 											[✔✔][❌❌❌❌✔❌][❌❌❌][❌➖➖]
+1)QC PAGE 											[✔✔][❌➖❌➖✔❌][❌❌❌][❌✔✔]
 	▶ Scan/Key Route 							       		
-		1)Global SCAN routes the ip to Tray Field					 ✔
-		2)Global KEY detection works,ips to tray field(4-digits)			 ✔
+		1)Global SCAN routes the ip to Tray Field(unique toggle)			 ✔
+		2)Global KEY detection works,ips to tray field(4-digits)(unique toggle)		 ✔
 		
 	FEATURE(maybe)							       		
-		1)[PKid Route](Added and Removed)					 	 ❌
+		1)[PKid Route](Added and Removed)					 	 ➖
 			NO need of PKID Route as Qc Panel doesn't gets PKID scans much.
-		2)Detecting print pop up,[Auto print]					 	 ❌
+		2)Detecting print pop up,[Auto print] Complicated Feature					 	 ❌
 		3)[Auto Login] when session expires(with past login creds)		 	 ❌
-		4)[Auto Search] in Assembly							 ❌
+		4)[Auto Search] in Assembly(natively impossible for even extension,failed to
+		  implement via debugger access to)						 ➖
 		5)Open Image Easily (right click opens)						 ✔
 		6)Count Things									 ❌
 	ADVANCE FEATURE(damn sure noo!)
@@ -22,10 +23,10 @@
 	BUGS								        	
 		1)[SCAN BUG]Two refresh happens(Scan trigger and extension code	               	 ❌
 		  	  trigger both gets added ig)
-		2)[PKID BUG]Tray starting with 12 Gets into PKID field in PKID feature   	 ➖
-			 (this feature got removed,coz of bug)
-		3)[PKID BUG]Starting trolley with 12 Gets into PKID field in PKID       	 ➖
-			 feature(this feature got removed,coz of bug)
+		2)[PKID BUG]Tray starting with 12 Gets into PKID field in PKID feature   	 ✔
+			 (this feature got removed,coz of bug,but bug remains)(fixed)
+		3)[PKID BUG]Starting trolley with 12 Gets into PKID field in PKID       	 ✔
+			 feature(this feature got removed,coz of bug)(fixed)
 
 
 2)INTERMESH PAGE										[✔✔✔❌❌❌❌]
@@ -63,11 +64,20 @@
 		  once with a shortcut(customizable in Extension Tab)(like Ctrl-w) 
 
 HISTORY
-	6 40 pm 20/5/26 added -Right click image feature for QC,SQC(ALL OTHER FEATURE WORKING I GUESS :( )
+	6 40 pm 20/5/26 
+			1)added -Right click image feature for QC,SQC(ALL OTHER FEATURE WORKING I GUESS :( )
 		TODO
 			Intermesh image feature not added
 		BUGS 
-			Toggle bugs out sometime	
+			QC Toggle bugs out sometime
+	
+	10 50 am 21/5/26 
+			1)removed PKID GLobal detection from QC(Which was bugging out coz
+			  of 12 pattern in PKID and TrayNO.
+			2)fixed bug (QC Toggle bugs out sometime) 
+			3)fixed bug (Intermesh auto login bugged out)
+		BUGS 
+			Intermesh auto login bugged out (fixed)	
 
 	
 

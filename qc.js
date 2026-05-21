@@ -39,7 +39,8 @@
     chrome.storage.local.get(keys, (data) => {
       Object.assign(state.settings, data);
     });
-    chrome.storage.onChanged.addListener((changes) => {
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area !== 'local') return;
       for (let key in changes) {
         if (state.settings[key] !== undefined) state.settings[key] = changes[key].newValue;
       }
@@ -56,7 +57,8 @@
     const patterns = {
       pkid: { pos: ['packet', 'pkid', 'pkt', 'scan', 'packetid', 'ip', 'individual'], neg: ['task', 'assignment', 'filter'] },
       tray: { pos: ['tray'], neg: ['filter'] },
-      oid:  { pos: ['order', 'oid'], neg: ['filter'] }
+      oid:  { pos: ['order', 'oid'], neg: ['filter'] },
+      taskid: { pos: ['task', 'taskid'], neg: ['filter'] }
     };
 
     const findByPattern = (type) => {
@@ -70,6 +72,7 @@
     let pkid = findByPattern('pkid');
     let tray = findByPattern('tray');
     let oid  = findByPattern('oid');
+    let taskid = findByPattern('taskid');
 
     // Robust label-based search for Super QC (Angular Material)
     if (isSQC) {
@@ -90,6 +93,7 @@
       if (!pkid) pkid = findByLabel('pkid');
       if (!tray) tray = findByLabel('tray');
       if (!oid)  oid  = findByLabel('oid');
+      if (!taskid) taskid = findByLabel('taskid');
     }
 
     // Fallback for standard QC Panel
@@ -98,9 +102,10 @@
       pkid = pkid || mats[3] || mats[0];
       tray = tray || mats[1];
       oid = oid || mats[2];
+      taskid = taskid || mats[0]; // Default taskid to first input if not found?
     }
 
-    return { pkid, tray, oid };
+    return { pkid, tray, oid, taskid };
   };
 
   const forceUpdate = (el, val) => {
@@ -157,12 +162,13 @@
   };
 
   const handleAction = (val, type, isQCAction = false) => {
+    // If routing is disabled for standard QC, block everything (fill & search)
+    if (isQCAction && !state.settings.qc_routing_enabled) return;
+    
     const fields = findFields();
     const target = fields[type];
     if (target) {
       forceUpdate(target, val);
-      // Routing is ONLY blocked for standard QC if toggle is OFF.
-      if (isQCAction && !state.settings.qc_routing_enabled) return;
       triggerSearch(target);
     }
   };
@@ -194,8 +200,8 @@
   document.addEventListener('keydown', (e) => {
     const url = window.location.href;
     const isSQC = url.includes('super-qc');
-    const isQC = url.includes('qc-panel') && !isSQC;
-    const isIntermesh = url.includes('indiangiftsportal.com');
+    const isQC = (url.includes('qc-panel') || url.includes('/qc/')) && !isSQC;
+    const isIntermesh = url.includes('indiangiftsportal.com') && !isQC && !isSQC;
     
     // Strict site-specific toggle enforcement
     if (isSQC && !state.settings.sqc_enabled) return;
@@ -221,10 +227,17 @@
 
       const val = state.scanBuffer.trim();
       
-      // Detection Logic: Gate identification by the Global toggle for QC
+      // Detection Logic: Identification on Enter is independent of the Global toggle for QC
       let type = null;
-      if (isIntermesh || isSQC || (isQC && state.settings.qc_global_enabled !== false)) {
-        type = identify(val);
+      if (isIntermesh || isSQC || isQC) {
+        // If routing is disabled for standard QC, skip identification
+        if (isQC && !state.settings.qc_routing_enabled) {
+          type = null;
+        } else {
+          type = identify(val);
+          // OID and PKId detection disabled for standard QC
+          if (isQC && (type === 'pkid' || type === 'oid')) type = null;
+        }
       }
       
       if (type) {
@@ -265,8 +278,14 @@
       if (canJump) {
         const prefix = state.scanBuffer.toUpperCase();
         let jumpType = null;
-        if (prefix === '12' || prefix === '183' || prefix === '120' || prefix === '121' || prefix === 'IP') {
-          jumpType = (prefix === '183') ? 'oid' : 'pkid';
+
+        if (isQC) {
+          // QC: All global keystrokes pass to tray
+          jumpType = 'tray';
+        } else {
+          if (prefix === '12' || prefix === '183' || prefix === '120' || prefix === '121' || prefix === 'IP') {
+            jumpType = (prefix === '183') ? 'oid' : 'pkid';
+          }
         }
 
         if (jumpType) {
@@ -276,7 +295,7 @@
             target.focus();
             target.value = prefix;
             // Set cursor to end
-            if (target.setSelectionRange) target.setSelectionRange(prefix.length, prefix.length);
+            if (target.setSelectionRange) target.setSelectionRange((prefix || '').length, (prefix || '').length);
             state.isRedirected = true;
             e.preventDefault();
             return;
@@ -286,11 +305,15 @@
 
       // Fast auto-submit ONLY for Tray (4 digits)
       let trayType = null;
-      if (isIntermesh || isSQC || (isQC && state.settings.qc_global_enabled !== false)) {
+      if (isIntermesh || isSQC) {
         trayType = identify(state.scanBuffer);
+      } else if (isQC) {
+        // QC: Fast auto-submit is removed to eliminate all global typing detection.
+        // Trays will only route on Enter (scanners) or via the Global toggle jump above.
+        trayType = null;
       }
 
-      if (trayType === 'tray' && state.scanBuffer.length === 4) {
+      if (trayType === 'tray' && state.scanBuffer && state.scanBuffer.length === 4) {
         e.preventDefault(); e.stopImmediatePropagation();
         handleAction(state.scanBuffer, 'tray', isQC);
         state.scanBuffer = '';
@@ -316,19 +339,26 @@
 
       chrome.storage.local.get(['igp_associate', 'igp_user', 'igp_pass'], (d) => {
         if (!d.igp_user || !d.igp_pass) return;
-        const inputs = document.querySelectorAll('input');
-        const user = Array.from(inputs).find(i => i.type === 'text' && i.name?.includes('user'));
-        const pass = document.querySelector('input[type="password"]');
-        const assoc = Array.from(inputs).find(i => i.type === 'text' && !i.name?.includes('user'));
         
-        if (assoc && d.igp_associate) assoc.value = d.igp_associate;
-        if (user) user.value = d.igp_user;
-        if (pass) pass.value = d.igp_pass;
+        const assoc = document.querySelector('input[name="v_name"]');
+        const user  = document.querySelector('input[name="usr_name"]');
+        const pass  = document.querySelector('input[name="usr_pass"]');
+        
+        const setValue = (el, val) => {
+          if (!el || !val) return;
+          el.value = val;
+          el.dispatchEvent(new Event('input', { bubbles: true }));
+          el.dispatchEvent(new Event('change', { bubbles: true }));
+        };
+
+        if (assoc) setValue(assoc, d.igp_associate);
+        if (user) setValue(user, d.igp_user);
+        if (pass) setValue(pass, d.igp_pass);
         
         setTimeout(() => {
-          const btn = document.querySelector('input[type="submit"], button');
+          const btn = document.querySelector('input[name="Submit1"]');
           if (btn) btn.click();
-        }, 600);
+        }, 800);
       });
     };
     checkLogin();
