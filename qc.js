@@ -208,6 +208,9 @@
     if (isQC && !state.settings.qc_enabled) return;
     if (isIntermesh && !state.settings.intermesh_enabled) return;
 
+    // Ignore shortcuts (Ctrl, Alt, Meta) to prevent breaking browser/app functionality
+    if (e.ctrlKey || e.altKey || e.metaKey) return;
+
     const now = Date.now();
     const gap = now - state.lastKeyTime;
     state.lastKeyTime = now;
@@ -219,7 +222,7 @@
     }
 
     if (e.key === 'Enter') {
-      // Shield against rapid scanner enters
+      // ... shield logic ...
       if (now - state.lastAutoSearchTime < CONFIG.SHIELD_TIME) {
         e.preventDefault(); e.stopImmediatePropagation();
         return;
@@ -258,12 +261,20 @@
       // If we already redirected this burst, let characters fall through naturally to focused field
       if (state.isRedirected) return;
 
-      const isFocused = document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA';
+      const activeTag = document.activeElement.tagName;
+      const isFocused = activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT';
       
       // If focused and typing slow (> 100ms gap), it's a human. Let them type.
       if (isFocused && gap > 100) {
         state.scanBuffer = '';
         return;
+      }
+
+      // Allow standard keyboard navigation: don't intercept 'Space' to jump focus 
+      // if it's the first key pressed (lets you click buttons/checkboxes via spacebar)
+      if (e.key === ' ') {
+        if (state.scanBuffer.length === 0) return;
+        // If buffer isn't empty, space is part of a string, but we still shouldn't JUMP because of a space.
       }
 
       state.scanBuffer += e.key;
@@ -276,7 +287,9 @@
       if (isQC && state.settings.qc_global_enabled !== false) canJump = true;
 
       if (canJump) {
-        const prefix = state.scanBuffer.toUpperCase();
+        const prefix = state.scanBuffer.toUpperCase().trim();
+        if (prefix.length === 0) return; // Don't jump on pure whitespace
+        
         let jumpType = null;
 
         if (isQC) {
