@@ -36,6 +36,11 @@
   const initSettings = () => {
     if (typeof chrome === 'undefined' || !chrome.storage) return;
     const keys = Object.keys(state.settings);
+    // Add new QC autologin key
+    if (!keys.includes('qc_autologin_enabled')) {
+      state.settings.qc_autologin_enabled = true;
+      keys.push('qc_autologin_enabled');
+    }
     chrome.storage.local.get(keys, (data) => {
       Object.assign(state.settings, data);
     });
@@ -375,6 +380,51 @@
       });
     };
     checkLogin();
+  }
+
+  // ─── AUTO LOGIN (JoinVentures) ──────────────────────────────────────────
+
+  if (window.location.href.includes('admin.joinventures.com')) {
+    const checkQCLogin = () => {
+      if (!state.settings.qc_enabled || !state.settings.qc_autologin_enabled) return;
+      
+      // Look for the specific login button or email field to confirm we are on login page
+      const emailField = document.querySelector('input[formcontrolname="email"]');
+      const passField = document.querySelector('input[formcontrolname="password"]');
+      
+      if (emailField && passField) {
+        chrome.storage.local.get(['qc_user', 'qc_pass'], (d) => {
+          if (!d.qc_user || !d.qc_pass) return;
+
+          const setValue = (el, val) => {
+            if (!el || !val) return;
+            el.focus();
+            el.value = val;
+            // Angular/Framework specific events
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+            el.dispatchEvent(new Event('blur', { bubbles: true }));
+          };
+
+          setValue(emailField, d.qc_user);
+          setValue(passField, d.qc_pass);
+          
+          setTimeout(() => {
+            const btn = document.querySelector('button[type="submit"]');
+            if (btn && btn.innerText.toLowerCase().includes('sign in')) {
+              btn.click();
+            }
+          }, 800);
+        });
+      }
+    };
+    
+    // Check periodically because Angular pages load components dynamically
+    const loginObserver = new MutationObserver(() => {
+      checkQCLogin();
+    });
+    loginObserver.observe(document.body, { childList: true, subtree: true });
+    checkQCLogin(); // Initial check
   }
 
   function showToast(txt) {

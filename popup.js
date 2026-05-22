@@ -1,11 +1,14 @@
-// ─── IGP Control: Popup ──────────────────────────────────────────────────────
+// ─── IGP Control: Popup Logic ────────────────────────────────────────────────
 
-const status = document.getElementById('status');
+const statusEl = document.getElementById('status');
 
 function setStatus(msg, type) {
-  status.textContent = msg;
-  status.className = 'status ' + (type || '');
-  setTimeout(() => { status.textContent = 'Ready.'; status.className = 'status'; }, 3000);
+  statusEl.textContent = msg;
+  statusEl.className = 'status ' + (type || '');
+  setTimeout(() => { 
+    statusEl.textContent = 'System Ready'; 
+    statusEl.className = 'status'; 
+  }, 3000);
 }
 
 // ─── TABS ────────────────────────────────────────────────────────────────────
@@ -23,46 +26,85 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 
 function setupToggle(id, storageKey) {
   const el = document.getElementById(id);
+  if (!el) return;
+  
   chrome.storage.local.get([storageKey], (data) => {
     el.checked = data[storageKey] !== false;
   });
+  
   el.addEventListener('change', () => {
     chrome.storage.local.set({ [storageKey]: el.checked });
-    setStatus(`${storageKey.replace('_enabled','').toUpperCase()} ${el.checked ? 'ON' : 'OFF'}`, 'success');
+    const name = storageKey.replace('_enabled', '').replace(/_/g, ' ').toUpperCase();
+    setStatus(`${name}: ${el.checked ? 'ON' : 'OFF'}`, 'success');
   });
 }
 
-setupToggle('toggle-qc',        'qc_enabled');
-setupToggle('toggle-qc-rightclick',    'qc_rightclick_enabled');
-setupToggle('toggle-qc-routing',       'qc_routing_enabled');
-setupToggle('toggle-qc-global',        'qc_global_enabled');
-setupToggle('toggle-sqc',       'sqc_enabled');
-setupToggle('toggle-intermesh-global', 'intermesh_global_enabled');
-setupToggle('toggle-tabguard',         'tabguard_enabled');
-setupToggle('toggle-autologin',        'autologin_enabled');
+// Controls Tab Toggles
+setupToggle('toggle-qc',              'qc_enabled');
+setupToggle('toggle-qc-rightclick',   'qc_rightclick_enabled');
+setupToggle('toggle-qc-routing',      'qc_routing_enabled');
+setupToggle('toggle-qc-global',       'qc_global_enabled');
+setupToggle('toggle-qc-autologin',    'qc_autologin_enabled');
+
+setupToggle('toggle-sqc',             'sqc_enabled');
+setupToggle('toggle-sqc-rightclick',  'sqc_rightclick_enabled');
+
+setupToggle('toggle-intermesh',       'intermesh_enabled'); // Added missing toggle setup
+setupToggle('toggle-intermesh-global','intermesh_global_enabled');
+setupToggle('toggle-autologin',       'autologin_enabled');
+
+// TabGuard Tab Toggles
+setupToggle('toggle-tabguard',        'tabguard_enabled');
 
 // ─── CREDENTIALS ─────────────────────────────────────────────────────────────
 
-chrome.storage.local.get(['igp_associate', 'igp_user', 'igp_pass'], (data) => {
-  if (data.igp_associate) document.getElementById('associate').value = data.igp_associate;
-  if (data.igp_user)      document.getElementById('user').value      = data.igp_user;
-  if (data.igp_pass)      document.getElementById('pass').value      = data.igp_pass;
+// Load existing credentials
+chrome.storage.local.get([
+  'igp_associate', 'igp_user', 'igp_pass',
+  'qc_user', 'qc_pass'
+], (data) => {
+  if (data.igp_associate) document.getElementById('im-associate').value = data.igp_associate;
+  if (data.igp_user)      document.getElementById('im-user').value      = data.igp_user;
+  if (data.igp_pass)      document.getElementById('im-pass').value      = data.igp_pass;
+  
+  if (data.qc_user)       document.getElementById('qc-user').value      = data.qc_user;
+  if (data.qc_pass)       document.getElementById('qc-pass').value      = data.qc_pass;
 });
 
-document.getElementById('saveCredBtn').addEventListener('click', () => {
-  chrome.storage.local.set({
-    igp_associate: document.getElementById('associate').value.trim(),
-    igp_user:      document.getElementById('user').value.trim(),
-    igp_pass:      document.getElementById('pass').value.trim()
-  }, () => setStatus('Credentials saved ✅', 'success'));
+// Save Intermesh Credentials
+document.getElementById('saveIMCredBtn').addEventListener('click', () => {
+  const data = {
+    igp_associate: document.getElementById('im-associate').value.trim(),
+    igp_user:      document.getElementById('im-user').value.trim(),
+    igp_pass:      document.getElementById('im-pass').value.trim()
+  };
+  chrome.storage.local.set(data, () => setStatus('Intermesh credentials saved ✅', 'success'));
 });
 
-// Add Enter key support for saving credentials
-['associate', 'user', 'pass'].forEach(id => {
-  document.getElementById(id).addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') document.getElementById('saveCredBtn').click();
+// Save QC Credentials
+document.getElementById('saveQCCredBtn').addEventListener('click', () => {
+  const data = {
+    qc_user:      document.getElementById('qc-user').value.trim(),
+    qc_pass:      document.getElementById('qc-pass').value.trim()
+  };
+  chrome.storage.local.set(data, () => setStatus('QC credentials saved ✅', 'success'));
+});
+
+// Add Enter key support for inputs
+const bindEnter = (ids, btnId) => {
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') document.getElementById(btnId).click();
+      });
+    }
   });
-});
+};
+
+bindEnter(['im-associate', 'im-user', 'im-pass'], 'saveIMCredBtn');
+bindEnter(['qc-user', 'qc-pass'], 'saveQCCredBtn');
+bindEnter(['titleInput'], 'addBtn');
 
 // ─── TABGUARD ────────────────────────────────────────────────────────────────
 
@@ -76,41 +118,58 @@ chrome.storage.local.get(['protectedTitles'], (data) => {
 document.getElementById('addBtn').addEventListener('click', () => {
   const val = document.getElementById('titleInput').value.trim();
   if (!val) return;
-  if (protectedTitles.includes(val)) { setStatus('Already in list.', 'error'); return; }
+  if (protectedTitles.includes(val)) { 
+    setStatus('Already in list.', 'error'); 
+    return; 
+  }
   protectedTitles.push(val);
-  saveTitles(); renderList();
+  saveTitles(); 
+  renderList();
   document.getElementById('titleInput').value = '';
-});
-
-document.getElementById('titleInput').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') document.getElementById('addBtn').click();
+  setStatus('Added to protected list', 'success');
 });
 
 document.getElementById('protectCurrentBtn').addEventListener('click', () => {
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     if (!tabs[0]) return;
     const title = tabs[0].title;
-    if (protectedTitles.includes(title)) { setStatus('Already protected.', 'error'); return; }
+    if (protectedTitles.includes(title)) { 
+      setStatus('Already protected.', 'error'); 
+      return; 
+    }
     protectedTitles.push(title);
-    saveTitles(); renderList();
-    setStatus(`Protected: ${title.slice(0, 25)}...`, 'success');
+    saveTitles(); 
+    renderList();
+    setStatus(`Protected: ${title.slice(0, 20)}...`, 'success');
   });
 });
 
 function renderList() {
   const list = document.getElementById('protectedList');
+  const emptyState = document.getElementById('emptyState');
+  
+  // Clear existing tags
   Array.from(list.querySelectorAll('.tag')).forEach(el => el.remove());
-  document.getElementById('emptyState').style.display = protectedTitles.length === 0 ? 'block' : 'none';
+  
+  emptyState.style.display = protectedTitles.length === 0 ? 'block' : 'none';
+  
   protectedTitles.forEach((title, index) => {
     const tag = document.createElement('div');
     tag.className = 'tag';
-    tag.innerHTML = `<span title="${title}">${title}</span><button class="tag-remove" data-index="${index}">✕</button>`;
+    tag.innerHTML = `
+      <span title="${title}">${title}</span>
+      <button class="tag-remove" data-index="${index}">✕</button>
+    `;
     list.appendChild(tag);
   });
+  
   list.querySelectorAll('.tag-remove').forEach(btn => {
     btn.addEventListener('click', () => {
-      protectedTitles.splice(parseInt(btn.dataset.index), 1);
-      saveTitles(); renderList();
+      const idx = parseInt(btn.dataset.index);
+      protectedTitles.splice(idx, 1);
+      saveTitles(); 
+      renderList();
+      setStatus('Removed from list', 'success');
     });
   });
 }
@@ -118,3 +177,23 @@ function renderList() {
 function saveTitles() {
   chrome.storage.local.set({ protectedTitles });
 }
+
+// ─── ACCORDIONS ──────────────────────────────────────────────────────────────
+
+function setupAccordion(headerId, contentId, iconId) {
+  const header = document.getElementById(headerId);
+  const content = document.getElementById(contentId);
+  const icon = document.getElementById(iconId);
+  
+  if (!header || !content) return;
+  
+  header.addEventListener('click', () => {
+    const isOpen = content.style.display === 'block';
+    content.style.display = isOpen ? 'none' : 'block';
+    icon.textContent = isOpen ? '▼' : '▲';
+    header.style.color = isOpen ? '' : 'var(--primary)';
+  });
+}
+
+setupAccordion('qc-cred-accordion', 'qc-cred-content', 'qc-accordion-icon');
+setupAccordion('im-cred-accordion', 'im-cred-content', 'im-accordion-icon');

@@ -1,4 +1,4 @@
-1)QC PAGE 											[✔✔][❌➖❌➖✔❌][❌❌❌][❌✔✔]
+1)QC PAGE 											[✔✔][➖❌✔➖✔❌][❌❌❌][❌✔✔]
 	▶ Scan/Key Route 							       		
 		1)Global SCAN routes the ip to Tray Field(unique toggle)			 ✔
 		2)Global KEY detection works,ips to tray field(4-digits)(unique toggle)		 ✔
@@ -6,8 +6,8 @@
 	FEATURE(maybe)							       		
 		1)[PKid Route](Added and Removed)					 	 ➖
 			NO need of PKID Route as Qc Panel doesn't gets PKID scans much.
-		2)Detecting print pop up,[Auto print] Complicated Feature					 	 ❌
-		3)[Auto Login] when session expires(with past login creds)		 	 ❌
+		2)Detecting print pop up,[Auto print] Complicated Feature			 ❌		 	 ❌
+		3)[Auto Login] when session expires(with past login creds)		 	 ✔
 		4)[Auto Search] in Assembly(natively impossible for even extension,failed to
 		  implement via debugger access to)						 ➖
 		5)Open Image Easily (right click opens)						 ✔
@@ -76,6 +76,9 @@ HISTORY
 			  of 12 pattern in PKID and TrayNO.
 			2)fixed bug (QC Toggle bugs out sometime) 
 			3)fixed bug (Intermesh auto login bugged out)
+			4)fixed bug(unable to tab space to press button in QC coz of global detection feature)
+			5)Added FEATURE [Auto Login] in QC(dropdown like) change ui of intermesh auto
+			  login to dropdown like
 		BUGS 
 			Intermesh auto login bugged out (fixed)	
 

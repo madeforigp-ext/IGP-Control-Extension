@@ -2,82 +2,368 @@
 <html>
 <head>
   <meta charset="UTF-8">
+  <title>IGP Control</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap');
+
+    :root {
+      --primary: #c0392b;
+      --primary-hover: #a93226;
+      --bg: #f8f9fa;
+      --card-bg: #ffffff;
+      --text-main: #2d3436;
+      --text-muted: #636e72;
+      --border: #edf2f7;
+      --shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+    }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { width: 290px; background: #f5f5f5; color: #1a1a1a; font-family: 'Inter', sans-serif; }
+
+    body {
+      width: 320px;
+      background: var(--bg);
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
 
     /* HEADER */
-    .header { background: #c0392b; padding: 14px 20px 0; }
-    .title { font-family: 'Bebas Neue', cursive; font-size: 24px; letter-spacing: 4px; color: #fff; }
-    .tagline { font-size: 8px; color: #f8b8b0; letter-spacing: 2px; margin-top: 1px; }
+    .header {
+      background: var(--primary);
+      padding: 18px 20px 0;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .title {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 28px;
+      letter-spacing: 3px;
+      color: #fff;
+      line-height: 1;
+    }
+
+    .tagline {
+      font-size: 9px;
+      color: rgba(255,255,255,0.7);
+      letter-spacing: 2px;
+      margin-top: 4px;
+      font-weight: 500;
+    }
 
     /* TABS */
-    .tabs { display: flex; margin-top: 10px; }
-    .tab-btn {
-      flex: 1; padding: 8px 0; font-size: 10px; font-weight: 600; letter-spacing: 1px;
-      text-align: center; cursor: pointer; border: none; background: #a93226; color: #f8b8b0;
-      transition: all 0.15s; text-transform: uppercase;
+    .tabs {
+      display: flex;
+      margin-top: 15px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 8px 8px 0 0;
+      padding: 4px 4px 0;
     }
-    .tab-btn.active { background: #f5f5f5; color: #c0392b; }
+
+    .tab-btn {
+      flex: 1;
+      padding: 10px 0;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-align: center;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: rgba(255,255,255,0.6);
+      transition: all 0.2s;
+      text-transform: uppercase;
+      border-radius: 6px 6px 0 0;
+    }
+
+    .tab-btn.active {
+      background: var(--bg);
+      color: var(--primary);
+    }
 
     /* CONTENT */
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
+    .tab-content { display: none; padding-bottom: 10px; }
+    .tab-content.active { display: block; animation: fadeIn 0.2s ease-out; }
 
-    /* SECTIONS */
-    .section { padding: 12px 20px; border-bottom: 1px solid #eee; background: #fff; }
-    .section-label {
-      font-size: 9px; letter-spacing: 2px; color: #000; text-transform: uppercase;
-      margin-bottom: 10px; font-weight: 600; display: flex; align-items: center; justify-content: space-between;
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* CARDS */
+    .card {
+      background: var(--card-bg);
+      margin: 12px 16px;
+      padding: 16px;
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-main);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
 
     /* TOGGLE */
-    .toggle-row { display: flex; align-items: center;  justify-content: space-between; }
-    .toggle-label { font-size: 11px; color: #666; font-weight: 500; }
-    .toggle { position: relative; width: 36px; height: 20px; }
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 0;
+    }
+
+    .toggle-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .toggle {
+      position: relative;
+      width: 38px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    .toggle.small {
+      width: 30px;
+      height: 16px;
+    }
+
     .toggle input { opacity: 0; width: 0; height: 0; }
-    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #ddd; border-radius: 20px; transition: 0.2s; }
-    .slider:before { position: absolute; content: ''; height: 14px; width: 14px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
-    input:checked + .slider { background: #c0392b; }
-    input:checked + .slider:before { transform: translateX(16px); }
 
-    /* CREDENTIALS */
-    .input { width: 100%; background: #f9f9f9; border: 1px solid #ddd; color: #1a1a1a; font-family: 'Inter', sans-serif; font-size: 10px; padding: 7px 8px; outline: none; transition: border-color 0.2s; border-radius: 3px; margin-bottom: 5px; }
-    .input:focus { border-color: #c0392b; }
-    .input::placeholder { color: #bbb; }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #e2e8f0;
+      border-radius: 20px;
+      transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
 
-    /* TABGUARD */
-    .protected-list { max-height: 110px; overflow-y: auto; margin-bottom: 8px; margin-top: 8px; }
-    .protected-list::-webkit-scrollbar { width: 3px; }
-    .protected-list::-webkit-scrollbar-thumb { background: #c0392b; }
-    .tag { display: flex; align-items: center; justify-content: space-between; background: #f9f9f9; border: 1px solid #eee; padding: 5px 8px; margin-bottom: 3px; font-size: 10px; color: #444; border-radius: 3px; }
-    .tag span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 210px; }
-    .tag-remove { background: none; border: none; color: #c0392b; cursor: pointer; font-size: 12px; flex-shrink: 0; }
-    .empty-state { font-size: 9px; color: #bbb; text-align: center; padding: 8px 0; }
+    .slider:before {
+      position: absolute;
+      content: '';
+      height: 14px;
+      width: 14px;
+      left: 3px;
+      bottom: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
 
-    .input-row { display: flex; gap: 6px; margin-bottom: 6px; }
-    .input-row .input { margin-bottom: 0; }
+    .toggle.small .slider:before {
+      height: 10px;
+      width: 10px;
+      left: 3px;
+      bottom: 3px;
+    }
+
+    input:checked + .slider { background: var(--primary); }
+    input:checked + .slider:before { transform: translateX(18px); }
+    .toggle.small input:checked + .slider:before { transform: translateX(14px); }
+
+    /* CREDENTIALS ACCORDION */
+    .accordion-header {
+      margin-top: 12px;
+      padding: 10px 0 0;
+      border-top: 1px solid var(--border);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      transition: color 0.2s;
+    }
+
+    .accordion-header:hover { color: var(--primary); }
+
+    .accordion-content {
+      display: none;
+      padding-top: 12px;
+    }
+
+    /* INPUTS */
+    .input {
+      width: 100%;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      padding: 10px 12px;
+      outline: none;
+      transition: all 0.2s;
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+
+    .input:focus {
+      border-color: var(--primary);
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.1);
+    }
+
+    .input::placeholder { color: #cbd5e1; }
 
     /* BUTTONS */
-    .btn { cursor: pointer; border: none; font-family: 'Inter', sans-serif; font-weight: 600; transition: all 0.15s; border-radius: 3px; }
-    .btn-sm { background: #c0392b; color: #fff; font-size: 10px; padding: 7px 10px; letter-spacing: 1px; }
-    .btn-sm:hover { background: #a93226; }
-    .btn-full { width: 100%; background: #c0392b ; color: #fff; border: 1px solid #ddd; font-size: 10px; padding: 7px; margin-top: 4px; letter-spacing: 1px; }
-    .btn-full:hover { background: #962d22; }
-    .btn-save { width: 100%; background: #c0392b; color: #fff; font-size: 11px; padding: 9px; margin-top: 4px; letter-spacing: 2px; }
-    .btn-save:hover { background: #962d22; }
-    /*default color #c0392b IGP one ,default hover #a93226*/
-    .status { padding: 8px 20px; font-size: 9px; color: #aaa; min-height: 28px; display: flex; align-items: center; background: #fff; border-top: 1px solid #eee; }
-    .status.success { color: #27ae60; }
-    .status.error { color: #c0392b; }
+    .btn {
+      cursor: pointer;
+      border: none;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      transition: all 0.2s;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      width: 100%;
+      background: var(--primary);
+      color: #fff;
+      font-size: 12px;
+      padding: 10px;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(192, 57, 43, 0.2);
+    }
+
+    .btn-primary:active { transform: translateY(0); }
+
+    .btn-outline {
+      width: 100%;
+      background: transparent;
+      border: 1px solid #e2e8f0;
+      color: var(--text-muted);
+      font-size: 12px;
+      padding: 10px;
+      margin-top: 8px;
+    }
+
+    .btn-outline:hover {
+      background: #f8fafc;
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .btn-small {
+      padding: 8px 16px;
+      font-size: 11px;
+    }
+
+    /* TABGUARD LIST */
+    .protected-list {
+      max-height: 160px;
+      overflow-y: auto;
+      margin: 12px 0;
+      padding-right: 4px;
+    }
+
+    .protected-list::-webkit-scrollbar { width: 4px; }
+    .protected-list::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
+
+    .tag {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f1f5f9;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      font-size: 12px;
+      color: var(--text-main);
+      border-radius: 8px;
+      transition: transform 0.15s;
+    }
+
+    .tag:hover { transform: translateX(2px); }
+
+    .tag span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; font-weight: 500; }
+
+    .tag-remove {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 16px;
+      transition: color 0.2s;
+      line-height: 1;
+    }
+
+    .tag-remove:hover { color: var(--primary); }
+
+    .empty-state {
+      font-size: 11px;
+      color: #94a3b8;
+      text-align: center;
+      padding: 20px 0;
+      font-style: italic;
+    }
+
+    .input-row { display: flex; gap: 8px; margin-bottom: 8px; }
+    .input-row .input { margin-bottom: 0; }
+
+    /* STATUS */
+    .status {
+      padding: 12px 20px;
+      font-size: 11px;
+      color: var(--text-muted);
+      background: #fff;
+      border-top: 1px solid var(--border);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #cbd5e1;
+    }
+
+    .status.success { color: #10b981; }
+    .status.success::before { background: #10b981; }
+    .status.error { color: var(--primary); }
+    .status.error::before { background: var(--primary); }
+
+    .shortcut-hint {
+      font-size: 10px;
+      color: #94a3b8;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
   </style>
 </head>
 <body>
 
 <div class="header">
   <div class="title">IGP CONTROL</div>
-  <div class="tagline">ROUTING · TABGUARD </div>
+  <div class="tagline">ROUTING · TABGUARD · AUTO-LOGIN</div>
   <div class="tabs">
     <button class="tab-btn active" data-tab="controls">Controls</button>
     <button class="tab-btn" data-tab="tabguard">TabGuard</button>
@@ -87,53 +373,79 @@
 <!-- CONTROLS TAB -->
 <div class="tab-content active" id="tab-controls">
 
-  <div class="section">
-    <div class="section-label">
+  <!-- QC Panel Card -->
+  <div class="card">
+    <div class="section-title">
       QC Panel
       <label class="toggle"><input type="checkbox" id="toggle-qc" checked><span class="slider"></span></label>
     </div>
-    <div class="toggle-row" style="margin-bottom: 1px;">
-      <span class="toggle-label" style="font-size: 10px; color: #666;">Image Right-Click</span>
-      <label class="toggle" style="width: 30px; height: 16px;"><input type="checkbox" id="toggle-qc-rightclick" checked><span class="slider"></span></label>
-    </div>
-    <div class="toggle-row" style="margin-bottom: 1px;">
-      <span class="toggle-label" style="font-size: 10px; color: #666;">Scan Routing</span>
-      <label class="toggle" style="width: 30px; height: 16px;"><input type="checkbox" id="toggle-qc-routing" checked><span class="slider"></span></label>
+
+    <div class="toggle-row">
+      <span class="toggle-label">Image Right-Click</span>
+      <label class="toggle small"><input type="checkbox" id="toggle-qc-rightclick" checked><span class="slider"></span></label>
     </div>
     <div class="toggle-row">
-      <span class="toggle-label" style="font-size: 10px; color: #666;">Global Type Detection</span>
-      <label class="toggle" style="width: 30px; height: 16px;"><input type="checkbox" id="toggle-qc-global" checked><span class="slider"></span></label>
+      <span class="toggle-label">Scan Routing</span>
+      <label class="toggle small"><input type="checkbox" id="toggle-qc-routing" checked><span class="slider"></span></label>
+    </div>
+    <div class="toggle-row">
+      <span class="toggle-label">Global Type Detection</span>
+      <label class="toggle small"><input type="checkbox" id="toggle-qc-global" checked><span class="slider"></span></label>
+    </div>
+    <div class="toggle-row">
+      <span class="toggle-label">Auto-Login (JoinVentures)</span>
+      <label class="toggle small"><input type="checkbox" id="toggle-qc-autologin" checked><span class="slider"></span></label>
+    </div>
+
+    <div class="accordion-header" id="qc-cred-accordion">
+      <span>🔑 QC Credentials</span>
+      <span id="qc-accordion-icon">▼</span>
+    </div>
+    <div id="qc-cred-content" class="accordion-content">
+      <input class="input" id="qc-user" type="text" placeholder="Email / Username" />
+      <input class="input" id="qc-pass" type="password" placeholder="Password" />
+      <button class="btn btn-primary" id="saveQCCredBtn">Save QC Credentials</button>
     </div>
   </div>
 
-  <div class="section">
-    <div class="section-label">
+  <!-- Super QC Card -->
+  <div class="card">
+    <div class="section-title">
       Super QC
       <label class="toggle"><input type="checkbox" id="toggle-sqc" checked><span class="slider"></span></label>
     </div>
     <div class="toggle-row">
-      <span class="toggle-label" style="font-size: 10px; color: #666;">Image Right-Click</span>
-      <label class="toggle" style="width: 30px; height: 16px;"><input type="checkbox" id="toggle-sqc-rightclick" checked><span class="slider"></span></label>
+      <span class="toggle-label">Image Right-Click</span>
+      <label class="toggle small"><input type="checkbox" id="toggle-sqc-rightclick" checked><span class="slider"></span></label>
     </div>
   </div>
 
-  <div class="section">
-    <div class="section-label">
+  <!-- Intermesh Card -->
+  <div class="card">
+    <div class="section-title">
       Intermesh
       <label class="toggle"><input type="checkbox" id="toggle-intermesh" checked><span class="slider"></span></label>
     </div>
-    <div class="toggle-row" style="margin-bottom:1px;">
-      <span class="toggle-label" style="font-size: 10px; color: #666;">Global Typing Detection</span>
-      <label class="toggle" style="width: 30px; height: 16px;"><input type="checkbox" id="toggle-intermesh-global" checked><span class="slider" style="before: {height: 10px; width: 10px; left: 3px; bottom: 3px;}"></span></label>
+
+    <div class="toggle-row">
+      <span class="toggle-label">Global Typing Detection</span>
+      <label class="toggle small"><input type="checkbox" id="toggle-intermesh-global" checked><span class="slider"></span></label>
     </div>
-    <div class="toggle-row" style="margin-bottom: 8px;">
-      <span class="toggle-label" style="font-size: 10px; color: #666;">Auto-Login</span>
-      <label class="toggle" style="width: 30px; height: 16px;"><input type="checkbox" id="toggle-autologin" checked><span class="slider"></span></label>
+    <div class="toggle-row">
+      <span class="toggle-label">Auto-Login</span>
+      <label class="toggle small"><input type="checkbox" id="toggle-autologin" checked><span class="slider"></span></label>
     </div>
-    <input class="input" id="associate" type="text" placeholder="Associate Name" />
-    <input class="input" id="user" type="text" placeholder="Username" />
-    <input class="input" id="pass" type="password" placeholder="Password" />
-    <button class="btn btn-save" id="saveCredBtn">SAVE CREDENTIALS</button>
+
+    <div class="accordion-header" id="im-cred-accordion">
+      <span>🔑 Intermesh Credentials</span>
+      <span id="im-accordion-icon">▼</span>
+    </div>
+    <div id="im-cred-content" class="accordion-content">
+      <input class="input" id="im-associate" type="text" placeholder="Associate Name" />
+      <input class="input" id="im-user" type="text" placeholder="Username" />
+      <input class="input" id="im-pass" type="password" placeholder="Password" />
+      <button class="btn btn-primary" id="saveIMCredBtn">Save Intermesh Credentials</button>
+    </div>
   </div>
 
 </div>
@@ -141,26 +453,29 @@
 <!-- TABGUARD TAB -->
 <div class="tab-content" id="tab-tabguard">
 
-  <div class="section">
-    <div class="section-label">
+  <div class="card">
+    <div class="section-title">
       Tab Guard
       <label class="toggle"><input type="checkbox" id="toggle-tabguard" checked><span class="slider"></span></label>
     </div>
-    <div style="font-size: 8px; color: #999; margin-bottom: 8px; margin-top: -8px;">Shortcut: Alt+Shift+G to Protect Tab</div>
-    <div style="font-size: 8px; color: #999; margin-bottom: 8px; margin-top: -8px;">Shortcut: Add shortcut in Extension tab(Ctrl-w) to close</div>
+    
+    <div class="shortcut-hint">⌨️ Alt + Shift + G to Protect Tab</div>
+    <div class="shortcut-hint">⚙️ Configure shortcut in Extensions settings</div>
+
     <div class="protected-list" id="protectedList">
-      <div class="empty-state" id="emptyState">NO TABS PROTECTED</div>
+      <div class="empty-state" id="emptyState">No tabs protected</div>
     </div>
+
     <div class="input-row">
-      <input class="input" id="titleInput" type="text" placeholder="Tab title..." />
-      <button class="btn btn-sm" id="addBtn">ADD</button>
+      <input class="input" id="titleInput" type="text" placeholder="Tab title pattern..." />
+      <button class="btn btn-primary btn-small" id="addBtn">Add</button>
     </div>
-    <button class="btn btn-full" id="protectCurrentBtn">⚡ Protect Current Tab</button>
+    <button class="btn btn-outline" id="protectCurrentBtn">⚡ Protect Current Tab</button>
   </div>
 
 </div>
 
-<div class="status" id="status">Ready.</div>
+<div class="status" id="status">System Ready</div>
 
 <script src="popup.js"></script>
 </body>
