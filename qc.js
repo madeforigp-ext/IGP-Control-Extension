@@ -1,4 +1,4 @@
-// ─── IGP Control: Unified QC & Intermesh Engine ──────────────────────────────
+// ─── IGP Control: QC Engine ──────────────────────────────────────────────────
 // Optimized for performance, framework resilience, and scanner speed.
 
 (function() {
@@ -18,15 +18,7 @@
       qc_rightclick_enabled: true, 
       qc_routing_enabled: true, 
       qc_global_enabled: true,
-      qc_autologin_enabled: true,
-      intermesh_enabled: true, 
-      intermesh_routing_enabled: true,
-      intermesh_global_enabled: true, 
-      autologin_enabled: true,
-      pattern_pkid_prefix: '12,IP',
-      pattern_pkid_len: 14,
-      pattern_oid_prefix: '183',
-      pattern_oid_len: 10
+      qc_autologin_enabled: true
     },
     scanBuffer: '',
     lastKeyTime: Date.now(),
@@ -36,7 +28,6 @@
   };
 
   // High-performance local toggles for instant keydown response
-  let intermeshEnabled = true;
   let qcEnabled = true;
 
   // ─── SETTINGS ──────────────────────────────────────────────────────────────
@@ -50,7 +41,6 @@
       for (let key of keys) {
         if (data[key] !== undefined) state.settings[key] = data[key];
       }
-      intermeshEnabled = state.settings.intermesh_enabled !== false;
       qcEnabled = state.settings.qc_enabled !== false;
     });
 
@@ -60,7 +50,6 @@
       for (let key in changes) {
         if (state.settings.hasOwnProperty(key)) {
           state.settings[key] = changes[key].newValue;
-          if (key === 'intermesh_enabled') intermeshEnabled = changes[key].newValue !== false;
           if (key === 'qc_enabled') qcEnabled = changes[key].newValue !== false;
         }
       }
@@ -73,16 +62,14 @@
   const getContext = () => {
     const url = window.location.href;
     const isQC = url.includes('qc-panel') || url.includes('/qc/') || url.includes('admin.joinventures.com');
-    const isIGP = url.includes('indiangiftsportal.com') && !isQC;
     
     const settings = state.settings;
     return {
       isQC,
-      isIGP,
-      isActive: isQC ? (settings.qc_enabled !== false) : (isIGP ? (settings.intermesh_enabled !== false) : false),
-      routingEnabled: isQC ? (settings.qc_routing_enabled !== false) : (isIGP ? (settings.intermesh_routing_enabled !== false) : false),
-      globalEnabled: isQC ? (settings.qc_global_enabled !== false) : (isIGP ? (settings.intermesh_global_enabled !== false) : false),
-      autoLoginEnabled: isQC ? (settings.qc_autologin_enabled !== false) : (isIGP ? (settings.autologin_enabled !== false) : false)
+      isActive: isQC && (settings.qc_enabled !== false),
+      routingEnabled: isQC && (settings.qc_routing_enabled !== false),
+      globalEnabled: isQC && (settings.qc_global_enabled !== false),
+      autoLoginEnabled: isQC && (settings.qc_autologin_enabled !== false)
     };
   };
 
@@ -133,10 +120,6 @@
     oid = oid || mats[2];
     taskid = taskid || mats[0];
 
-    // Intermesh Specific Fallbacks
-    if (!pkid) pkid = document.querySelector('input[name="packetid"]');
-    if (!oid) oid = document.querySelector('input[name="orderid"], input[name="order_id"], input[name="v_oid"]');
-
     return { pkid, tray, oid, taskid };
   };
 
@@ -164,33 +147,53 @@
         return;
       }
 
-      const container = field?.closest('form, mat-card, .search-container, .mat-form-field, table, td') || document.body;
+      // 1. Find a suitable container to search for buttons
+      // Removed mat-form-field from closest as it's too narrow
+      const container = field?.closest('form, mat-card, .search-container, table, td, .container, .main') || document.body;
       const btns = Array.from(container.querySelectorAll('button, input[type="button"], input[type="submit"], a.button'));
       const blacklist = ['profile', 'account', 'user', 'logout', 'settings', 'export', 'download', 'excel'];
       
       const isValid = (b) => {
         const txt = (b.innerText || b.value || b.name || b.id || "").toLowerCase();
-        return !blacklist.some(k => txt.includes(k)) && !b.disabled && b.offsetWidth > 0;
+        // Allow disabled buttons for discovery (we'll try to enable them)
+        return !blacklist.some(k => txt.includes(k)) && b.offsetWidth > 0;
       };
 
+      // Prioritize enabled buttons first
       let btn = btns.find(b => {
         const txt = (b.innerText || b.value || "").toLowerCase();
-        return (txt === 'go' || txt === 'search' || txt.includes('find') || txt.includes('scan packet')) && isValid(b);
+        return (txt === 'go' || txt === 'search' || txt.includes('find') || txt.includes('scan packet')) && isValid(b) && !b.disabled;
       });
 
       if (!btn) {
         btn = btns.find(b => {
           const txt = (b.innerText || b.value || "").toLowerCase();
-          return (txt.includes('search') || txt.includes('go')) && isValid(b);
+          return (txt.includes('search') || txt.includes('go')) && isValid(b) && !b.disabled;
+        });
+      }
+
+      // Fallback to disabled buttons if no enabled ones found
+      if (!btn) {
+        btn = btns.find(b => {
+          const txt = (b.innerText || b.value || "").toLowerCase();
+          return (txt === 'go' || txt === 'search' || txt.includes('find') || txt.includes('scan packet')) && isValid(b);
         });
       }
 
       if (btn) {
         state.lastAutoSearchTime = Date.now();
+        if (btn.disabled) {
+          btn.disabled = false;
+          btn.removeAttribute('disabled');
+        }
         btn.click();
-      } else if (field?.form) {
+      } else {
+        // Framework-safe fallback: Trigger Enter key instead of form.submit() to avoid page reloads
         state.lastAutoSearchTime = Date.now();
-        field.form.submit();
+        const enterEvt = { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true };
+        field.dispatchEvent(new KeyboardEvent('keydown', enterEvt));
+        field.dispatchEvent(new KeyboardEvent('keypress', enterEvt));
+        field.dispatchEvent(new KeyboardEvent('keyup', enterEvt));
       }
       state.isProcessing = false;
     }, CONFIG.SEARCH_DELAY);
@@ -199,24 +202,13 @@
   // ─── DYNAMIC LOGIC ─────────────────────────────────────────────────────────
 
   const identify = (val) => {
-    // Strictly clean: only alphanumeric characters are allowed as per patterns
     val = val.replace(/[^A-Z0-9]/gi, "").toUpperCase();
     if (!val) return null;
     
     // Tray is usually 4 digits
     if (/^\d{4}$/.test(val)) return 'tray';
 
-    // OID Patterns (Priority over generic digits)
-    const oidPrefixes = state.settings.pattern_oid_prefix.split(',').map(p => p.trim().toUpperCase());
-    const oidMax = state.settings.pattern_oid_len;
-    if (oidPrefixes.some(p => val.startsWith(p)) && val.length <= oidMax) return 'oid';
-
-    // PKID Patterns
-    const pkPrefixes = state.settings.pattern_pkid_prefix.split(',').map(p => p.trim().toUpperCase());
-    const pkMax = state.settings.pattern_pkid_len;
-    if (pkPrefixes.some(p => val.startsWith(p)) && val.length <= pkMax) return 'pkid';
-    
-    // Generic PKID fallback
+    // Generic PKID fallback for QC
     if (/^\d{7,14}$/.test(val)) return 'pkid';
 
     return null;
@@ -234,8 +226,11 @@
   // ─── IMAGE ENHANCEMENT ─────────────────────────────────────────────────────
 
   document.addEventListener('contextmenu', (e) => {
+    // Strict Toggle Check
+    if (!qcEnabled) return;
+    
     const ctx = getContext();
-    if (!ctx.isQC || !ctx.isActive || state.settings.qc_rightclick_enabled === false) return;
+    if (!ctx.isActive || state.settings.qc_rightclick_enabled === false) return;
 
     const img = e.target.closest('img');
     if (img && img.src && !img.src.startsWith('data:')) {
@@ -247,17 +242,11 @@
   // ─── EVENT LISTENERS ───────────────────────────────────────────────────────
 
   window.addEventListener('keydown', (e) => {
-    // Master Toggle Check (Instant response)
-    const url = window.location.href;
-    if (url.includes('indiangiftsportal.com')) {
-       if (url.includes('admin.joinventures.com') || url.includes('qc-panel') || url.includes('/qc/')) {
-          if (!qcEnabled) return;
-       } else if (!intermeshEnabled) {
-          return;
-       }
-    }
+    // Master Toggle Check
+    if (!qcEnabled) return;
 
     const ctx = getContext();
+    // Entire feature set depends on isActive (which checks qc_enabled)
     if (!ctx.isActive) return;
 
     if (e.ctrlKey || e.altKey || e.metaKey) return;
@@ -277,13 +266,17 @@
         return;
       }
 
-      if (!ctx.routingEnabled || ctx.isIGP) return; // Skip routing for IGP
+      // Strict Routing Toggle Check
+      if (!ctx.routingEnabled) {
+        state.scanBuffer = '';
+        state.isRedirected = false;
+        return;
+      }
 
       const val = state.scanBuffer.replace(/[^A-Z0-9]/gi, "").toUpperCase();
       let type = identify(val);
       
-      if (ctx.isQC && (type === 'pkid' || type === 'oid')) type = null;
-      
+      // In QC, we only route Enter if it's a identified type (like tray or generic pkid)
       if (type) {
         e.preventDefault(); e.stopImmediatePropagation();
         handleAction(val, type);
@@ -301,9 +294,7 @@
       const activeTag = document.activeElement.tagName;
       const isFocused = activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT';
       
-      // If focused, only allow jump if it's a fast scanner or a deliberate prefix
       if (isFocused && gap > 150) {
-         // Reset buffer if focused and typing slowly (manual entry in field)
          state.scanBuffer = '';
          state.isRedirected = false;
       }
@@ -312,32 +303,15 @@
 
       state.scanBuffer += e.key;
 
+      // Global Type Detection (Global Jump) - Strict Toggle Check
       if (ctx.globalEnabled && !state.isRedirected) {
         const prefix = state.scanBuffer.toUpperCase().trim();
         if (prefix.length === 0) return;
         
-        let jumpType = null;
-        if (ctx.isQC) {
-          jumpType = 'tray';
-        } else {
-          const pkPrefixes = state.settings.pattern_pkid_prefix.split(',').map(p => p.trim().toUpperCase());
-          const oidPrefixes = state.settings.pattern_oid_prefix.split(',').map(p => p.trim().toUpperCase());
-          
-          // Check for exact prefix match
-          if (pkPrefixes.includes(prefix)) jumpType = 'pkid';
-          else if (oidPrefixes.includes(prefix)) jumpType = 'oid';
-          
-          // Check for partial prefix match (ambiguity handling)
-          if (!jumpType) {
-            const pkMatch = pkPrefixes.some(p => p.startsWith(prefix) && p !== prefix);
-            const oidMatch = oidPrefixes.some(p => p.startsWith(prefix) && p !== prefix);
-            if (pkMatch || oidMatch) return; // Wait for more characters
-          }
-        }
-
-        if (jumpType) {
+        // QC Global jump is usually for Tray (start typing 4 digits)
+        if (prefix.length === 4 && /^\d{4}$/.test(prefix)) {
           const fields = findFields();
-          const target = fields[jumpType];
+          const target = fields['tray'];
           if (target && document.activeElement !== target) {
             target.focus();
             target.value = prefix;
@@ -348,11 +322,6 @@
           }
         }
       }
-
-      if (ctx.isIGP && ctx.routingEnabled && !state.isRedirected) {
-        // Scan Routing scrapped for Intermesh
-        return;
-      }
     }
   }, true);
 
@@ -361,43 +330,6 @@
   const checkAutoLogin = () => {
     const ctx = getContext();
     if (!ctx.isActive || !ctx.autoLoginEnabled) return;
-
-    if (ctx.isIGP) {
-      const body = document.body.innerText;
-      if (!body.includes('Please enter your User Name')) return;
-
-      if (body.toLowerCase().match(/invalid|incorrect|failed/)) {
-        chrome.storage.local.set({ autologin_enabled: false });
-        showToast('⛔ Auto-Login Failed. Disabled.');
-        return;
-      }
-
-      chrome.storage.local.get(['igp_associate', 'igp_user', 'igp_pass'], (d) => {
-        if (!d.igp_user || !d.igp_pass) return;
-        
-        const assoc = document.querySelector('input[name="v_name"]');
-        const user  = document.querySelector('input[name="usr_name"]');
-        const pass  = document.querySelector('input[name="usr_pass"]');
-        
-        const setValue = (el, val) => {
-          if (!el || !val) return;
-          el.value = val;
-          el.dispatchEvent(new Event('input', { bubbles: true }));
-          el.dispatchEvent(new Event('change', { bubbles: true }));
-        };
-
-        if (assoc) setValue(assoc, d.igp_associate);
-        if (user) setValue(user, d.igp_user);
-        if (pass) setValue(pass, d.igp_pass);
-        
-        setTimeout(() => {
-          const currentCtx = getContext();
-          if (!currentCtx.isActive || !currentCtx.autoLoginEnabled) return;
-          const btn = document.querySelector('input[name="Submit1"]');
-          if (btn) btn.click();
-        }, 800);
-      });
-    }
 
     if (ctx.isQC) {
       const emailField = document.querySelector('input[formcontrolname="email"]');
@@ -432,23 +364,10 @@
     }
   };
 
-  // Run auto-login
   if (window.location.href.includes('admin.joinventures.com')) {
     const loginObserver = new MutationObserver(() => checkAutoLogin());
     loginObserver.observe(document.body, { childList: true, subtree: true });
   }
   checkAutoLogin();
-
-  function showToast(txt) {
-    const div = document.createElement('div');
-    div.textContent = txt;
-    Object.assign(div.style, {
-      position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)',
-      backgroundColor: '#c0392b', color: '#fff', padding: '15px 30px', borderRadius: '5px',
-      zIndex: '2147483647', fontWeight: 'bold', fontSize: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.5)'
-    });
-    document.body.appendChild(div);
-    setTimeout(() => div.remove(), CONFIG.TOAST_DURATION);
-  }
 
 })();

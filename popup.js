@@ -46,55 +46,15 @@ setupToggle('toggle-qc-routing',      'qc_routing_enabled');
 setupToggle('toggle-qc-global',       'qc_global_enabled');
 setupToggle('toggle-qc-autologin',    'qc_autologin_enabled');
 
-setupToggle('toggle-intermesh',         'intermesh_enabled');
-setupToggle('toggle-intermesh-global',  'intermesh_global_enabled');
-setupToggle('toggle-autologin',         'autologin_enabled');
-
 // TabGuard Tab Toggles
 setupToggle('toggle-tabguard',        'tabguard_enabled');
 
-// ─── CREDENTIALS & PATTERNS ──────────────────────────────────────────────────
+// ─── CREDENTIALS ─────────────────────────────────────────────────────────────
 
-// Load existing credentials and patterns
-chrome.storage.local.get([
-  'igp_associate', 'igp_user', 'igp_pass',
-  'qc_user', 'qc_pass',
-  'pattern_pkid_prefix', 'pattern_pkid_len',
-  'pattern_oid_prefix', 'pattern_oid_len'
-], (data) => {
-  if (data.igp_associate) document.getElementById('im-associate').value = data.igp_associate;
-  if (data.igp_user)      document.getElementById('im-user').value      = data.igp_user;
-  if (data.igp_pass)      document.getElementById('im-pass').value      = data.igp_pass;
-  
-  if (data.qc_user)       document.getElementById('qc-user').value      = data.qc_user;
-  if (data.qc_pass)       document.getElementById('qc-pass').value      = data.qc_pass;
-
-  // Patterns
-  document.getElementById('pattern-pkid-prefix').value = data.pattern_pkid_prefix || '12,IP';
-  document.getElementById('pattern-pkid-len').value    = data.pattern_pkid_len || 14;
-  document.getElementById('pattern-oid-prefix').value  = data.pattern_oid_prefix || '183';
-  document.getElementById('pattern-oid-len').value     = data.pattern_oid_len || 10;
-});
-
-// Save Intermesh Credentials
-document.getElementById('saveIMCredBtn').addEventListener('click', () => {
-  const data = {
-    igp_associate: document.getElementById('im-associate').value.trim(),
-    igp_user:      document.getElementById('im-user').value.trim(),
-    igp_pass:      document.getElementById('im-pass').value.trim()
-  };
-  chrome.storage.local.set(data, () => setStatus('Intermesh credentials saved ✅', 'success'));
-});
-
-// Save Advanced Patterns
-document.getElementById('savePatternsBtn').addEventListener('click', () => {
-  const data = {
-    pattern_pkid_prefix: document.getElementById('pattern-pkid-prefix').value.trim(),
-    pattern_pkid_len:    parseInt(document.getElementById('pattern-pkid-len').value) || 14,
-    pattern_oid_prefix:  document.getElementById('pattern-oid-prefix').value.trim(),
-    pattern_oid_len:     parseInt(document.getElementById('pattern-oid-len').value) || 10
-  };
-  chrome.storage.local.set(data, () => setStatus('Advanced patterns saved ✅', 'success'));
+// Load existing credentials
+chrome.storage.local.get(['qc_user', 'qc_pass'], (data) => {
+  if (data.qc_user) document.getElementById('qc-user').value = data.qc_user;
+  if (data.qc_pass) document.getElementById('qc-pass').value = data.qc_pass;
 });
 
 // Save QC Credentials
@@ -118,7 +78,6 @@ const bindEnter = (ids, btnId) => {
   });
 };
 
-bindEnter(['im-associate', 'im-user', 'im-pass'], 'saveIMCredBtn');
 bindEnter(['qc-user', 'qc-pass'], 'saveQCCredBtn');
 bindEnter(['titleInput'], 'addBtn');
 
@@ -212,5 +171,3 @@ function setupAccordion(headerId, contentId, iconId) {
 }
 
 setupAccordion('qc-cred-accordion', 'qc-cred-content', 'qc-accordion-icon');
-setupAccordion('im-pattern-accordion', 'im-pattern-content', 'im-pattern-icon');
-setupAccordion('im-cred-accordion', 'im-cred-content', 'im-accordion-icon');

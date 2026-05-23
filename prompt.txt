@@ -1,5 +1,7 @@
-debug and refactor the logic in [] to ensure that all toggles synchronize correctly and that features
+debug and refactor the "logic in [Image Right-Click,Global Type Detection] only no other togggles",to ensure that all toggles synchronize correctly and that features
 strictly respect their "OFF" states in real-time.
+DO NOT TOUCH: other unrelated files and logics
+EXPECTED BEHAVIOR: Toggle OFF in popup → keydown listener logs false → no Feature should work
 
 TASK: Fix toggle not working in intermesh.js — feature runs even when toggle is OFF
 FILE: intermesh.js
@@ -15,3 +17,13 @@ FIX:
 
 EXPECTED BEHAVIOR: Toggle OFF in popup → keydown listener logs false → no routing happens
 TEST: Open console, toggle OFF, scan barcode — log should show false and nothing should route
+
+scrape intermesh totally, no toggels , no logic ,no fetaure of intermesh should remain,delete files related to intermesh,and before delteing explain the method ,logic used in inermesh pattern matching how it is coded
+
+
+Qc scan routing is bugged out,  scan inputs the data to tray feild but it seems like it isnt seraching ,it clearing out(not sure) but after ip ,the page reloads,but no tray number in tray feild <button _ngcontent-ejs-c263="" mat-flat-button="" type="submit" class="mat-focus-indicator btn ng-tns-c263-3 mat-flat-button mat-button-base mat-button-disabled" disabled="true"><span class="mat-button-wrapper">Search</span><span matripple="" class="mat-ripple mat-button-ripple"></span><span class="mat-button-focus-overlay"></span></button>
+
+
+Image Right-Click
+
+Global Type Detection
