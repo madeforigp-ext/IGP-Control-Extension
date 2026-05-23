@@ -1,4 +1,4 @@
-1)QC PAGE 											[✔✔][➖❌✔➖✔❌][❌❌❌][❌✔✔❌]
+1)QC PAGE 											[✔✔][➖❌✔➖✔❌][❌❌❌][✔✔✔✔][✔]
 	▶ Scan/Key Route 							       		
 		1)Global SCAN routes the ip to Tray Field(unique toggle)			 ✔
 		2)Global KEY detection works,ips to tray field(4-digits)(unique toggle)		 ✔
@@ -21,13 +21,14 @@
 	                                             	         
 
 	BUGS								        	
-		1)[SCAN BUG]Two refresh happens(Scan trigger and extension code	               	 ❌
-		  	  trigger both gets added ig)
+		1)[SCAN BUG]Two refresh happens(Scan trigger and extension code	               	 ✔
+		  	  trigger both gets added ig)(GOT fixed in debugging other toggles)
 		2)[PKID BUG]Tray starting with 12 Gets into PKID field in PKID feature   	 ✔
 			 (this feature got removed,coz of bug,but bug remains)(fixed)
 		3)[PKID BUG]Starting trolley with 12 Gets into PKID field in PKID       	 ✔
 			 feature(this feature got removed,coz of bug)(fixed)
-		4)GLobally all inputs routes to tray(even letters)				 ❌			
+		4)GLobally all inputs routes to tray(even letters)				 ✔
+		  (FIX:Now Globally only 4 digits get routed into tray)			
 
 
 2)Extension Feature										[✔]
@@ -64,6 +65,7 @@ HISTORY
 	04 19 pm 23/5/26
 			1)removed intermesh (COMPLETELY SCRAPED - ALL FILES AND LOGIC DELETED)
 			2)debugged all bugs in qc ,all featue working(Scan Routing,Image Right-Click,Global Type Detection,Auto-Login (JoinVentures))
+			3)added a main branch(as a backup)master branch has old Extension code.
 
 	
 
