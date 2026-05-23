@@ -408,18 +408,6 @@
     </div>
   </div>
 
-  <!-- Super QC Card -->
-  <div class="card">
-    <div class="section-title">
-      Super QC
-      <label class="toggle"><input type="checkbox" id="toggle-sqc" checked><span class="slider"></span></label>
-    </div>
-    <div class="toggle-row">
-      <span class="toggle-label">Image Right-Click</span>
-      <label class="toggle small"><input type="checkbox" id="toggle-sqc-rightclick" checked><span class="slider"></span></label>
-    </div>
-  </div>
-
   <!-- Intermesh Card -->
   <div class="card">
     <div class="section-title">
@@ -428,12 +416,30 @@
     </div>
 
     <div class="toggle-row">
-      <span class="toggle-label">Global Typing Detection</span>
+      <span class="toggle-label">Global Key Detection</span>
       <label class="toggle small"><input type="checkbox" id="toggle-intermesh-global" checked><span class="slider"></span></label>
     </div>
     <div class="toggle-row">
       <span class="toggle-label">Auto-Login</span>
       <label class="toggle small"><input type="checkbox" id="toggle-autologin" checked><span class="slider"></span></label>
+    </div>
+
+    <div class="accordion-header" id="im-pattern-accordion">
+      <span>⚙️ Advanced Patterns</span>
+      <span id="im-pattern-icon">▼</span>
+    </div>
+    <div id="im-pattern-content" class="accordion-content">
+      <div class="shortcut-hint">PKID Pattern</div>
+      <div class="input-row">
+        <input class="input" id="pattern-pkid-prefix" type="text" placeholder="Prefix (e.g. 12,IP)" />
+        <input class="input" id="pattern-pkid-len" type="number" placeholder="Max Len" style="width: 80px;" />
+      </div>
+      <div class="shortcut-hint">OID Pattern</div>
+      <div class="input-row">
+        <input class="input" id="pattern-oid-prefix" type="text" placeholder="Prefix (e.g. 183)" />
+        <input class="input" id="pattern-oid-len" type="number" placeholder="Max Len" style="width: 80px;" />
+      </div>
+      <button class="btn btn-primary" id="savePatternsBtn">Save Patterns</button>
     </div>
 
     <div class="accordion-header" id="im-cred-accordion">

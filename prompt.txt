@@ -1,0 +1,17 @@
+debug and refactor the logic in [] to ensure that all toggles synchronize correctly and that features
+strictly respect their "OFF" states in real-time.
+
+TASK: Fix toggle not working in intermesh.js — feature runs even when toggle is OFF
+FILE: intermesh.js
+DO NOT TOUCH: other unrelated files and logics
+PROBLEM: settings object is updated via chrome.storage.onChanged but the keydown 
+listener check `if (settings.intermesh_enabled === false)` is not stopping execution.
+
+FIX: 
+1. Change settings default to match storage keys exactly used in popup.js
+2. Add console.log('[IGP] Toggle state:', settings.intermesh_enabled) as first line 
+   inside keydown listener so we can verify the value
+3. Ensure chrome.storage.onChanged is updating the correct key name that popup saves to
+
+EXPECTED BEHAVIOR: Toggle OFF in popup → keydown listener logs false → no routing happens
+TEST: Open console, toggle OFF, scan barcode — log should show false and nothing should route

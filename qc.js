@@ -18,11 +18,15 @@
       qc_rightclick_enabled: true, 
       qc_routing_enabled: true, 
       qc_global_enabled: true,
-      sqc_enabled: true, 
-      sqc_rightclick_enabled: true, 
+      qc_autologin_enabled: true,
       intermesh_enabled: true, 
+      intermesh_routing_enabled: true,
       intermesh_global_enabled: true, 
-      autologin_enabled: true 
+      autologin_enabled: true,
+      pattern_pkid_prefix: '12,IP',
+      pattern_pkid_len: 14,
+      pattern_oid_prefix: '183',
+      pattern_oid_len: 10
     },
     scanBuffer: '',
     lastKeyTime: Date.now(),
@@ -31,32 +35,58 @@
     isRedirected: false
   };
 
+  // High-performance local toggles for instant keydown response
+  let intermeshEnabled = true;
+  let qcEnabled = true;
+
   // ─── SETTINGS ──────────────────────────────────────────────────────────────
 
   const initSettings = () => {
     if (typeof chrome === 'undefined' || !chrome.storage) return;
     const keys = Object.keys(state.settings);
-    // Add new QC autologin key
-    if (!keys.includes('qc_autologin_enabled')) {
-      state.settings.qc_autologin_enabled = true;
-      keys.push('qc_autologin_enabled');
-    }
+    
+    // Initial Load
     chrome.storage.local.get(keys, (data) => {
-      Object.assign(state.settings, data);
+      for (let key of keys) {
+        if (data[key] !== undefined) state.settings[key] = data[key];
+      }
+      intermeshEnabled = state.settings.intermesh_enabled !== false;
+      qcEnabled = state.settings.qc_enabled !== false;
     });
+
+    // Lively Sync
     chrome.storage.onChanged.addListener((changes, area) => {
       if (area !== 'local') return;
       for (let key in changes) {
-        if (state.settings[key] !== undefined) state.settings[key] = changes[key].newValue;
+        if (state.settings.hasOwnProperty(key)) {
+          state.settings[key] = changes[key].newValue;
+          if (key === 'intermesh_enabled') intermeshEnabled = changes[key].newValue !== false;
+          if (key === 'qc_enabled') qcEnabled = changes[key].newValue !== false;
+        }
       }
     });
   };
   initSettings();
 
-  // ─── DOM UTILS ─────────────────────────────────────────────────────────────
+  // ─── UTILS ─────────────────────────────────────────────────────────────────
+
+  const getContext = () => {
+    const url = window.location.href;
+    const isQC = url.includes('qc-panel') || url.includes('/qc/') || url.includes('admin.joinventures.com');
+    const isIGP = url.includes('indiangiftsportal.com') && !isQC;
+    
+    const settings = state.settings;
+    return {
+      isQC,
+      isIGP,
+      isActive: isQC ? (settings.qc_enabled !== false) : (isIGP ? (settings.intermesh_enabled !== false) : false),
+      routingEnabled: isQC ? (settings.qc_routing_enabled !== false) : (isIGP ? (settings.intermesh_routing_enabled !== false) : false),
+      globalEnabled: isQC ? (settings.qc_global_enabled !== false) : (isIGP ? (settings.intermesh_global_enabled !== false) : false),
+      autoLoginEnabled: isQC ? (settings.qc_autologin_enabled !== false) : (isIGP ? (settings.autologin_enabled !== false) : false)
+    };
+  };
 
   const findFields = () => {
-    const isSQC = window.location.href.includes('super-qc');
     const allInputs = Array.from(document.querySelectorAll('input:not([type="hidden"])')).filter(i => i.offsetWidth > 0);
     
     const patterns = {
@@ -68,10 +98,27 @@
 
     const findByPattern = (type) => {
       const { pos, neg } = patterns[type];
-      return allInputs.find(i => {
+      // 1. Search attributes
+      let field = allInputs.find(i => {
         const text = `${i.id} ${i.name} ${i.placeholder} ${i.getAttribute('aria-label') || ''} ${i.getAttribute('formcontrolname') || ''}`.toLowerCase();
         return pos.some(p => text.includes(p)) && !neg.some(n => text.includes(n));
       });
+
+      // 2. Search labels/nearby text
+      if (!field) {
+        const labels = Array.from(document.querySelectorAll('label, mat-label, .mat-form-field-label, span, p'));
+        for (let l of labels) {
+          const txt = (l.innerText || l.textContent || "").toLowerCase();
+          if (pos.some(p => txt.includes(p)) && !neg.some(n => txt.includes(n))) {
+            const container = l.closest('mat-form-field, .form-group, .mat-form-field-wrapper, .mat-form-field-flex, td') || l.parentElement;
+            if (container) {
+              field = container.querySelector('input:not([type="hidden"])');
+              if (field && field.offsetWidth > 0) break;
+            }
+          }
+        }
+      }
+      return field;
     };
 
     let pkid = findByPattern('pkid');
@@ -79,36 +126,16 @@
     let oid  = findByPattern('oid');
     let taskid = findByPattern('taskid');
 
-    // Robust label-based search for Super QC (Angular Material)
-    if (isSQC) {
-      const labels = Array.from(document.querySelectorAll('label, mat-label, .mat-form-field-label, span, p, mat-placeholder'));
-      const findByLabel = (type) => {
-        const { pos, neg } = patterns[type];
-        for (let l of labels) {
-          const txt = (l.innerText || l.textContent || "").toLowerCase();
-          if (pos.some(p => txt.includes(p)) && !neg.some(n => txt.includes(n))) {
-            const container = l.closest('mat-form-field, .form-group, .mat-form-field-wrapper, .mat-form-field-flex') || l.parentElement;
-            const input = container.querySelector('input');
-            if (input) return input;
-          }
-        }
-        return null;
-      };
-
-      if (!pkid) pkid = findByLabel('pkid');
-      if (!tray) tray = findByLabel('tray');
-      if (!oid)  oid  = findByLabel('oid');
-      if (!taskid) taskid = findByLabel('taskid');
-    }
-
     // Fallback for standard QC Panel
-    if (!isSQC && !pkid) {
-      const mats = allInputs.filter(i => i.classList.contains('mat-input-element'));
-      pkid = pkid || mats[3] || mats[0];
-      tray = tray || mats[1];
-      oid = oid || mats[2];
-      taskid = taskid || mats[0]; // Default taskid to first input if not found?
-    }
+    const mats = allInputs.filter(i => i.classList.contains('mat-input-element'));
+    pkid = pkid || mats[3] || mats[0];
+    tray = tray || mats[1];
+    oid = oid || mats[2];
+    taskid = taskid || mats[0];
+
+    // Intermesh Specific Fallbacks
+    if (!pkid) pkid = document.querySelector('input[name="packetid"]');
+    if (!oid) oid = document.querySelector('input[name="orderid"], input[name="order_id"], input[name="v_oid"]');
 
     return { pkid, tray, oid, taskid };
   };
@@ -117,17 +144,28 @@
     if (!el) return;
     el.focus();
     el.value = '';
-    ['input', 'change', 'blur', 'keyup', 'keydown'].forEach(evt => el.dispatchEvent(new Event(evt, { bubbles: true })));
     el.select();
     document.execCommand('insertText', false, val);
+    ['input', 'change', 'blur', 'keyup', 'keydown'].forEach(evt => el.dispatchEvent(new Event(evt, { bubbles: true })));
   };
 
   const triggerSearch = (field) => {
     if (state.isProcessing) return;
+    
+    const ctx = getContext();
+    if (!ctx.isActive || !ctx.routingEnabled) return;
+
     state.isProcessing = true;
     
     setTimeout(() => {
-      const btns = Array.from(document.querySelectorAll('button, input[type="button"], input[type="submit"], a.button'));
+      const currentCtx = getContext();
+      if (!currentCtx.isActive || !currentCtx.routingEnabled) {
+        state.isProcessing = false;
+        return;
+      }
+
+      const container = field?.closest('form, mat-card, .search-container, .mat-form-field, table, td') || document.body;
+      const btns = Array.from(container.querySelectorAll('button, input[type="button"], input[type="submit"], a.button'));
       const blacklist = ['profile', 'account', 'user', 'logout', 'settings', 'export', 'download', 'excel'];
       
       const isValid = (b) => {
@@ -137,12 +175,14 @@
 
       let btn = btns.find(b => {
         const txt = (b.innerText || b.value || "").toLowerCase();
-        return (txt.includes('search') || txt.includes('scan packet id') || txt.includes('find') || txt.includes('go')) && isValid(b);
+        return (txt === 'go' || txt === 'search' || txt.includes('find') || txt.includes('scan packet')) && isValid(b);
       });
 
-      if (!btn && field) {
-        const container = field.closest('form, mat-card, .search-container, .mat-form-field') || document.body;
-        btn = Array.from(container.querySelectorAll('button')).find(isValid);
+      if (!btn) {
+        btn = btns.find(b => {
+          const txt = (b.innerText || b.value || "").toLowerCase();
+          return (txt.includes('search') || txt.includes('go')) && isValid(b);
+        });
       }
 
       if (btn) {
@@ -156,20 +196,33 @@
     }, CONFIG.SEARCH_DELAY);
   };
 
-  // ─── LOGIC ─────────────────────────────────────────────────────────────────
+  // ─── DYNAMIC LOGIC ─────────────────────────────────────────────────────────
 
   const identify = (val) => {
-    val = val.trim().toUpperCase();
+    // Strictly clean: only alphanumeric characters are allowed as per patterns
+    val = val.replace(/[^A-Z0-9]/gi, "").toUpperCase();
+    if (!val) return null;
+    
+    // Tray is usually 4 digits
     if (/^\d{4}$/.test(val)) return 'tray';
-    if (/^183\d+$/.test(val)) return 'oid';
-    if (/^(12|IP)?\d{7,14}$/.test(val)) return 'pkid';
+
+    // OID Patterns (Priority over generic digits)
+    const oidPrefixes = state.settings.pattern_oid_prefix.split(',').map(p => p.trim().toUpperCase());
+    const oidMax = state.settings.pattern_oid_len;
+    if (oidPrefixes.some(p => val.startsWith(p)) && val.length <= oidMax) return 'oid';
+
+    // PKID Patterns
+    const pkPrefixes = state.settings.pattern_pkid_prefix.split(',').map(p => p.trim().toUpperCase());
+    const pkMax = state.settings.pattern_pkid_len;
+    if (pkPrefixes.some(p => val.startsWith(p)) && val.length <= pkMax) return 'pkid';
+    
+    // Generic PKID fallback
+    if (/^\d{7,14}$/.test(val)) return 'pkid';
+
     return null;
   };
 
-  const handleAction = (val, type, isQCAction = false) => {
-    // If routing is disabled for standard QC, block everything (fill & search)
-    if (isQCAction && !state.settings.qc_routing_enabled) return;
-    
+  const handleAction = (val, type) => {
     const fields = findFields();
     const target = fields[type];
     if (target) {
@@ -181,17 +234,8 @@
   // ─── IMAGE ENHANCEMENT ─────────────────────────────────────────────────────
 
   document.addEventListener('contextmenu', (e) => {
-    const url = window.location.href;
-    const isSQC = url.includes('super-qc');
-    const isQC = url.includes('qc-panel') && !isSQC;
-    
-    if (isSQC) {
-      if (!state.settings.sqc_enabled || !state.settings.sqc_rightclick_enabled) return;
-    } else if (isQC) {
-      if (!state.settings.qc_enabled || !state.settings.qc_rightclick_enabled) return;
-    } else {
-      return;
-    }
+    const ctx = getContext();
+    if (!ctx.isQC || !ctx.isActive || state.settings.qc_rightclick_enabled === false) return;
 
     const img = e.target.closest('img');
     if (img && img.src && !img.src.startsWith('data:')) {
@@ -202,107 +246,92 @@
 
   // ─── EVENT LISTENERS ───────────────────────────────────────────────────────
 
-  document.addEventListener('keydown', (e) => {
+  window.addEventListener('keydown', (e) => {
+    // Master Toggle Check (Instant response)
     const url = window.location.href;
-    const isSQC = url.includes('super-qc');
-    const isQC = (url.includes('qc-panel') || url.includes('/qc/')) && !isSQC;
-    const isIntermesh = url.includes('indiangiftsportal.com') && !isQC && !isSQC;
-    
-    // Strict site-specific toggle enforcement
-    if (isSQC && !state.settings.sqc_enabled) return;
-    if (isQC && !state.settings.qc_enabled) return;
-    if (isIntermesh && !state.settings.intermesh_enabled) return;
+    if (url.includes('indiangiftsportal.com')) {
+       if (url.includes('admin.joinventures.com') || url.includes('qc-panel') || url.includes('/qc/')) {
+          if (!qcEnabled) return;
+       } else if (!intermeshEnabled) {
+          return;
+       }
+    }
 
-    // Ignore shortcuts (Ctrl, Alt, Meta) to prevent breaking browser/app functionality
+    const ctx = getContext();
+    if (!ctx.isActive) return;
+
     if (e.ctrlKey || e.altKey || e.metaKey) return;
 
     const now = Date.now();
     const gap = now - state.lastKeyTime;
     state.lastKeyTime = now;
 
-    // Reset buffer if user paused
     if (gap > CONFIG.TYPING_GAP_THRESHOLD) {
       state.scanBuffer = '';
       state.isRedirected = false;
     }
 
     if (e.key === 'Enter') {
-      // ... shield logic ...
       if (now - state.lastAutoSearchTime < CONFIG.SHIELD_TIME) {
         e.preventDefault(); e.stopImmediatePropagation();
         return;
       }
 
-      const val = state.scanBuffer.trim();
+      if (!ctx.routingEnabled || ctx.isIGP) return; // Skip routing for IGP
+
+      const val = state.scanBuffer.replace(/[^A-Z0-9]/gi, "").toUpperCase();
+      let type = identify(val);
       
-      // Detection Logic: Identification on Enter is independent of the Global toggle for QC
-      let type = null;
-      if (isIntermesh || isSQC || isQC) {
-        // If routing is disabled for standard QC, skip identification
-        if (isQC && !state.settings.qc_routing_enabled) {
-          type = null;
-        } else {
-          type = identify(val);
-          // OID and PKId detection disabled for standard QC
-          if (isQC && (type === 'pkid' || type === 'oid')) type = null;
-        }
-      }
+      if (ctx.isQC && (type === 'pkid' || type === 'oid')) type = null;
       
       if (type) {
         e.preventDefault(); e.stopImmediatePropagation();
-        handleAction(val, type, isQC);
+        handleAction(val, type);
         state.scanBuffer = '';
         state.isRedirected = false;
         return;
       }
       
-      // Clear buffer on Enter even if not identified
       state.scanBuffer = '';
       state.isRedirected = false;
       return;
     }
 
     if (e.key.length === 1) {
-      // If we already redirected this burst, let characters fall through naturally to focused field
-      if (state.isRedirected) return;
-
       const activeTag = document.activeElement.tagName;
       const isFocused = activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT';
       
-      // If focused and typing slow (> 100ms gap), it's a human. Let them type.
-      if (isFocused && gap > 100) {
-        state.scanBuffer = '';
-        return;
+      // If focused, only allow jump if it's a fast scanner or a deliberate prefix
+      if (isFocused && gap > 150) {
+         // Reset buffer if focused and typing slowly (manual entry in field)
+         state.scanBuffer = '';
+         state.isRedirected = false;
       }
 
-      // Allow standard keyboard navigation: don't intercept 'Space' to jump focus 
-      // if it's the first key pressed (lets you click buttons/checkboxes via spacebar)
-      if (e.key === ' ') {
-        if (state.scanBuffer.length === 0) return;
-        // If buffer isn't empty, space is part of a string, but we still shouldn't JUMP because of a space.
-      }
+      if (e.key === ' ' && state.scanBuffer.length === 0) return;
 
       state.scanBuffer += e.key;
 
-      // Prefix-based Jump/Focus
-      // Global Typing Detection logic
-      let canJump = false;
-      if (isIntermesh && state.settings.intermesh_global_enabled !== false) canJump = true;
-      if (isSQC && state.settings.intermesh_global_enabled !== false) canJump = true; 
-      if (isQC && state.settings.qc_global_enabled !== false) canJump = true;
-
-      if (canJump) {
+      if (ctx.globalEnabled && !state.isRedirected) {
         const prefix = state.scanBuffer.toUpperCase().trim();
-        if (prefix.length === 0) return; // Don't jump on pure whitespace
+        if (prefix.length === 0) return;
         
         let jumpType = null;
-
-        if (isQC) {
-          // QC: All global keystrokes pass to tray
+        if (ctx.isQC) {
           jumpType = 'tray';
         } else {
-          if (prefix === '12' || prefix === '183' || prefix === '120' || prefix === '121' || prefix === 'IP') {
-            jumpType = (prefix === '183') ? 'oid' : 'pkid';
+          const pkPrefixes = state.settings.pattern_pkid_prefix.split(',').map(p => p.trim().toUpperCase());
+          const oidPrefixes = state.settings.pattern_oid_prefix.split(',').map(p => p.trim().toUpperCase());
+          
+          // Check for exact prefix match
+          if (pkPrefixes.includes(prefix)) jumpType = 'pkid';
+          else if (oidPrefixes.includes(prefix)) jumpType = 'oid';
+          
+          // Check for partial prefix match (ambiguity handling)
+          if (!jumpType) {
+            const pkMatch = pkPrefixes.some(p => p.startsWith(prefix) && p !== prefix);
+            const oidMatch = oidPrefixes.some(p => p.startsWith(prefix) && p !== prefix);
+            if (pkMatch || oidMatch) return; // Wait for more characters
           }
         }
 
@@ -312,8 +341,7 @@
           if (target && document.activeElement !== target) {
             target.focus();
             target.value = prefix;
-            // Set cursor to end
-            if (target.setSelectionRange) target.setSelectionRange((prefix || '').length, (prefix || '').length);
+            if (target.setSelectionRange) target.setSelectionRange(prefix.length, prefix.length);
             state.isRedirected = true;
             e.preventDefault();
             return;
@@ -321,31 +349,20 @@
         }
       }
 
-      // Fast auto-submit ONLY for Tray (4 digits)
-      let trayType = null;
-      if (isIntermesh || isSQC) {
-        trayType = identify(state.scanBuffer);
-      } else if (isQC) {
-        // QC: Fast auto-submit is removed to eliminate all global typing detection.
-        // Trays will only route on Enter (scanners) or via the Global toggle jump above.
-        trayType = null;
-      }
-
-      if (trayType === 'tray' && state.scanBuffer && state.scanBuffer.length === 4) {
-        e.preventDefault(); e.stopImmediatePropagation();
-        handleAction(state.scanBuffer, 'tray', isQC);
-        state.scanBuffer = '';
-        state.isRedirected = false;
+      if (ctx.isIGP && ctx.routingEnabled && !state.isRedirected) {
+        // Scan Routing scrapped for Intermesh
+        return;
       }
     }
   }, true);
 
-  // ─── AUTO LOGIN (Intermesh) ────────────────────────────────────────────────
+  // ─── AUTO LOGIN ────────────────────────────────────────────────────────────
 
-  if (window.location.href.includes('indiangiftsportal.com')) {
-    const checkLogin = () => {
-      if (!state.settings.intermesh_enabled || !state.settings.autologin_enabled) return;
-      
+  const checkAutoLogin = () => {
+    const ctx = getContext();
+    if (!ctx.isActive || !ctx.autoLoginEnabled) return;
+
+    if (ctx.isIGP) {
       const body = document.body.innerText;
       if (!body.includes('Please enter your User Name')) return;
 
@@ -374,21 +391,15 @@
         if (pass) setValue(pass, d.igp_pass);
         
         setTimeout(() => {
+          const currentCtx = getContext();
+          if (!currentCtx.isActive || !currentCtx.autoLoginEnabled) return;
           const btn = document.querySelector('input[name="Submit1"]');
           if (btn) btn.click();
         }, 800);
       });
-    };
-    checkLogin();
-  }
+    }
 
-  // ─── AUTO LOGIN (JoinVentures) ──────────────────────────────────────────
-
-  if (window.location.href.includes('admin.joinventures.com')) {
-    const checkQCLogin = () => {
-      if (!state.settings.qc_enabled || !state.settings.qc_autologin_enabled) return;
-      
-      // Look for the specific login button or email field to confirm we are on login page
+    if (ctx.isQC) {
       const emailField = document.querySelector('input[formcontrolname="email"]');
       const passField = document.querySelector('input[formcontrolname="password"]');
       
@@ -400,7 +411,6 @@
             if (!el || !val) return;
             el.focus();
             el.value = val;
-            // Angular/Framework specific events
             el.dispatchEvent(new Event('input', { bubbles: true }));
             el.dispatchEvent(new Event('change', { bubbles: true }));
             el.dispatchEvent(new Event('blur', { bubbles: true }));
@@ -410,6 +420,8 @@
           setValue(passField, d.qc_pass);
           
           setTimeout(() => {
+            const currentCtx = getContext();
+            if (!currentCtx.isActive || !currentCtx.autoLoginEnabled) return;
             const btn = document.querySelector('button[type="submit"]');
             if (btn && btn.innerText.toLowerCase().includes('sign in')) {
               btn.click();
@@ -417,15 +429,15 @@
           }, 800);
         });
       }
-    };
-    
-    // Check periodically because Angular pages load components dynamically
-    const loginObserver = new MutationObserver(() => {
-      checkQCLogin();
-    });
+    }
+  };
+
+  // Run auto-login
+  if (window.location.href.includes('admin.joinventures.com')) {
+    const loginObserver = new MutationObserver(() => checkAutoLogin());
     loginObserver.observe(document.body, { childList: true, subtree: true });
-    checkQCLogin(); // Initial check
   }
+  checkAutoLogin();
 
   function showToast(txt) {
     const div = document.createElement('div');

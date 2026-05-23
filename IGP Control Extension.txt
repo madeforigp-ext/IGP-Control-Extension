@@ -1,4 +1,4 @@
-1)QC PAGE 											[✔✔][➖❌✔➖✔❌][❌❌❌][❌✔✔]
+1)QC PAGE 											[✔✔][➖❌✔➖✔❌][❌❌❌][❌✔✔❌]
 	▶ Scan/Key Route 							       		
 		1)Global SCAN routes the ip to Tray Field(unique toggle)			 ✔
 		2)Global KEY detection works,ips to tray field(4-digits)(unique toggle)		 ✔
@@ -6,7 +6,7 @@
 	FEATURE(maybe)							       		
 		1)[PKid Route](Added and Removed)					 	 ➖
 			NO need of PKID Route as Qc Panel doesn't gets PKID scans much.
-		2)Detecting print pop up,[Auto print] Complicated Feature			 ❌		 	 ❌
+		2)Detecting print pop up,[Auto print] Complicated Feature			 ❌		 	 
 		3)[Auto Login] when session expires(with past login creds)		 	 ✔
 		4)[Auto Search] in Assembly(natively impossible for even extension,failed to
 		  implement via debugger access to)						 ➖
@@ -27,6 +27,7 @@
 			 (this feature got removed,coz of bug,but bug remains)(fixed)
 		3)[PKID BUG]Starting trolley with 12 Gets into PKID field in PKID       	 ✔
 			 feature(this feature got removed,coz of bug)(fixed)
+		4)GLobally all inputs routes to tray(even letters)				 ❌			
 
 
 2)INTERMESH PAGE										[✔✔✔❌❌❌❌]
@@ -80,7 +81,17 @@ HISTORY
 			5)Added FEATURE [Auto Login] in QC(dropdown like) change ui of intermesh auto
 			  login to dropdown like
 		BUGS 
-			Intermesh auto login bugged out (fixed)	
+			Intermesh auto login bugged out (fixed)
+
+	11 50 am 22/5/26
+			1)removed whole SQC logic (bugging out too much	)
+			2)removed intermesh
+			3)debugged all toggles in qc to work in realtime.
+			4)Added advance setting for pattern matching of PKID,OID in intermesh.(buugy?)
+
+
+	04 19 pm 23/5/26
+			1)removed intermesh
 
 	
 
