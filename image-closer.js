@@ -15,6 +15,17 @@
                          (document.body.children[0].tagName === 'IMG' || document.body.children[0].tagName === 'VIDEO');
 
     if (isImage || hasOnlyImage) {
+      // Check if it's from our authorized panels
+      const isFromQC = window.location.hash === '#igp-qc' || 
+                       (document.referrer && (
+                         document.referrer.includes('/personalization/qc-panel') ||
+                         document.referrer.includes('/order-mgmt-panel/super-qc') ||
+                         document.referrer.includes('orders_vendor.php') ||
+                         document.referrer.includes('persInfo.php')
+                       ));
+      
+      if (!isFromQC) return;
+
       // Check feature toggle
       chrome.storage.local.get(['qc_rightclick_enabled'], (data) => {
         if (data.qc_rightclick_enabled !== false) {

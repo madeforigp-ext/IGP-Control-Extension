@@ -71,6 +71,14 @@ HISTORY
 		TODO 
 			1)Add intermesh again ,all logics.
 
+
+	04 19 pm 25/5/26
+			1)making image feature only work in Qc panel(but why, idk too)
+			2)image features work for all (intermesh,Qc,Sqc)
+
+		TODO
+			1)Add intermesh
+			2)Add SQC
 	
 
 

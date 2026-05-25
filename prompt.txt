@@ -26,3 +26,10 @@ Qc scan routing is bugged out,  scan inputs the data to tray feild but it seems 
 
 Image right-click feature open any image in qc in a new tab perfectly,can we make it gets closed when i right click again in the image tab
   EXPECTED BEHAVIOR: rightclick, the feature open it in  a new tab (default feature rightnow), right clicking again in that new opened image tab , the image should close
+
+https://admin.joinventures.com/#/order-mgmt-panel/super-qc ,http://admin.indiangiftsportal.com/orders_vendor.php?packetid=12244850&x=13&y=10 andhttps://admin.joinventures.com/#/personalization/qc-panel all image features
+
+the image having subdoaminds open like this http://admin.indiangiftsportal.com/persInfo.php?pid=718405&oid=18409555 some part in the link is dynamic.. and sqc right click image is bugging out it is removing more then this part "f_auto,q_auto,t_pnopt3prodlp/" ,i guess thats y, and remove this art in link too "f_auto,q_auto,t_pnopt4prodlp/ "
+
+
+

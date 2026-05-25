@@ -8,8 +8,8 @@
   "content_scripts": [
     {
       "matches": [
-        "*://admin.joinventures.com/*",
-        "*://admin.indiangiftsportal.com/*"
+        "*://*.joinventures.com/*",
+        "*://*.indiangiftsportal.com/*"
       ],
       "js": ["qc.js"],
       "run_at": "document_idle"

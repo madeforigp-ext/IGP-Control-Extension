@@ -61,15 +61,31 @@
 
   const getContext = () => {
     const url = window.location.href;
-    const isQC = url.includes('qc-panel') || url.includes('/qc/') || url.includes('admin.joinventures.com');
     
+    // 1. Scanner & Routing (Strictly restricted to prevent "bugging out" other panels)
+    const isQCScannerPath = url.includes('qc-panel') || url.includes('/qc/');
+    
+    // 2. Image Feature (Designated Global Panels)
+    const isQCPanel = url.includes('/personalization/qc-panel');
+    const isSQCPanel = url.includes('/order-mgmt-panel/super-qc');
+    const isIntermesh = url.includes('orders_vendor.php') || url.includes('persInfo.php');
+    const isImageFeatureActive = isQCPanel || isSQCPanel || isIntermesh;
+    
+    // 3. Domain Check for Auto-Login
+    const isJV = url.includes('joinventures.com');
+    const isIGP = url.includes('indiangiftsportal.com');
+    const isSupportedDomain = isJV || isIGP;
+
     const settings = state.settings;
     return {
-      isQC,
-      isActive: isQC && (settings.qc_enabled !== false),
-      routingEnabled: isQC && (settings.qc_routing_enabled !== false),
-      globalEnabled: isQC && (settings.qc_global_enabled !== false),
-      autoLoginEnabled: isQC && (settings.qc_autologin_enabled !== false)
+      isScannerPath: isQCScannerPath,
+      isImageFeatureActive,
+      isJV,
+      isSupportedDomain,
+      isActive: isSupportedDomain && (settings.qc_enabled !== false),
+      routingEnabled: isQCScannerPath && (settings.qc_routing_enabled !== false),
+      globalEnabled: isQCScannerPath && (settings.qc_global_enabled !== false),
+      autoLoginEnabled: isJV && (settings.qc_autologin_enabled !== false)
     };
   };
 
@@ -147,19 +163,15 @@
         return;
       }
 
-      // 1. Find a suitable container to search for buttons
-      // Removed mat-form-field from closest as it's too narrow
       const container = field?.closest('form, mat-card, .search-container, table, td, .container, .main') || document.body;
       const btns = Array.from(container.querySelectorAll('button, input[type="button"], input[type="submit"], a.button'));
       const blacklist = ['profile', 'account', 'user', 'logout', 'settings', 'export', 'download', 'excel'];
       
       const isValid = (b) => {
         const txt = (b.innerText || b.value || b.name || b.id || "").toLowerCase();
-        // Allow disabled buttons for discovery (we'll try to enable them)
         return !blacklist.some(k => txt.includes(k)) && b.offsetWidth > 0;
       };
 
-      // Prioritize enabled buttons first
       let btn = btns.find(b => {
         const txt = (b.innerText || b.value || "").toLowerCase();
         return (txt === 'go' || txt === 'search' || txt.includes('find') || txt.includes('scan packet')) && isValid(b) && !b.disabled;
@@ -172,7 +184,6 @@
         });
       }
 
-      // Fallback to disabled buttons if no enabled ones found
       if (!btn) {
         btn = btns.find(b => {
           const txt = (b.innerText || b.value || "").toLowerCase();
@@ -188,7 +199,6 @@
         }
         btn.click();
       } else {
-        // Framework-safe fallback: Trigger Enter key instead of form.submit() to avoid page reloads
         state.lastAutoSearchTime = Date.now();
         const enterEvt = { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true };
         field.dispatchEvent(new KeyboardEvent('keydown', enterEvt));
@@ -204,13 +214,8 @@
   const identify = (val) => {
     val = val.replace(/[^A-Z0-9]/gi, "").toUpperCase();
     if (!val) return null;
-    
-    // Tray is usually 4 digits
     if (/^\d{4}$/.test(val)) return 'tray';
-
-    // Generic PKID fallback for QC
     if (/^\d{7,14}$/.test(val)) return 'pkid';
-
     return null;
   };
 
@@ -226,28 +231,42 @@
   // ─── IMAGE ENHANCEMENT ─────────────────────────────────────────────────────
 
   document.addEventListener('contextmenu', (e) => {
-    // Strict Toggle Check
+    // Master Toggle
     if (!qcEnabled) return;
     
     const ctx = getContext();
-    if (!ctx.isActive || state.settings.qc_rightclick_enabled === false) return;
+    if (!ctx.isActive || !ctx.isImageFeatureActive || state.settings.qc_rightclick_enabled === false) return;
 
     const img = e.target.closest('img');
     if (img && img.src && !img.src.startsWith('data:')) {
       e.preventDefault();
-      window.open(img.src, '_blank');
+      let targetUrl = img.src;
+      
+      // Optimization strings to remove
+      const optStrings = ['f_auto,q_auto,t_pnopt3prodlp', 'f_auto,q_auto,t_pnopt4prodlp'];
+      
+      optStrings.forEach(s => {
+        if (targetUrl.includes(s)) {
+          // Remove string and trailing slash if present
+          targetUrl = targetUrl.split(s + '/').join('').split(s).join('');
+        }
+      });
+      
+      // Safe double slash cleanup (preserves http:// or https://)
+      targetUrl = targetUrl.replace(/([^:])\/\//g, '$1/');
+      
+      window.open(targetUrl + '#igp-qc', '_blank');
     }
   }, true);
 
   // ─── EVENT LISTENERS ───────────────────────────────────────────────────────
 
   window.addEventListener('keydown', (e) => {
-    // Master Toggle Check
     if (!qcEnabled) return;
 
     const ctx = getContext();
-    // Entire feature set depends on isActive (which checks qc_enabled)
-    if (!ctx.isActive) return;
+    // Scanner only works on designated scanner paths
+    if (!ctx.isActive || !ctx.isScannerPath) return;
 
     if (e.ctrlKey || e.altKey || e.metaKey) return;
 
@@ -266,7 +285,6 @@
         return;
       }
 
-      // Strict Routing Toggle Check
       if (!ctx.routingEnabled) {
         state.scanBuffer = '';
         state.isRedirected = false;
@@ -276,7 +294,6 @@
       const val = state.scanBuffer.replace(/[^A-Z0-9]/gi, "").toUpperCase();
       let type = identify(val);
       
-      // In QC, we only route Enter if it's a identified type (like tray or generic pkid)
       if (type) {
         e.preventDefault(); e.stopImmediatePropagation();
         handleAction(val, type);
@@ -303,12 +320,10 @@
 
       state.scanBuffer += e.key;
 
-      // Global Type Detection (Global Jump) - Strict Toggle Check
       if (ctx.globalEnabled && !state.isRedirected) {
         const prefix = state.scanBuffer.toUpperCase().trim();
         if (prefix.length === 0) return;
         
-        // QC Global jump is usually for Tray (start typing 4 digits)
         if (prefix.length === 4 && /^\d{4}$/.test(prefix)) {
           const fields = findFields();
           const target = fields['tray'];
@@ -331,40 +346,39 @@
     const ctx = getContext();
     if (!ctx.isActive || !ctx.autoLoginEnabled) return;
 
-    if (ctx.isQC) {
-      const emailField = document.querySelector('input[formcontrolname="email"]');
-      const passField = document.querySelector('input[formcontrolname="password"]');
-      
-      if (emailField && passField) {
-        chrome.storage.local.get(['qc_user', 'qc_pass'], (d) => {
-          if (!d.qc_user || !d.qc_pass) return;
+    const emailField = document.querySelector('input[formcontrolname="email"]');
+    const passField = document.querySelector('input[formcontrolname="password"]');
+    
+    if (emailField && passField) {
+      chrome.storage.local.get(['qc_user', 'qc_pass'], (d) => {
+        if (!d.qc_user || !d.qc_pass) return;
 
-          const setValue = (el, val) => {
-            if (!el || !val) return;
-            el.focus();
-            el.value = val;
-            el.dispatchEvent(new Event('input', { bubbles: true }));
-            el.dispatchEvent(new Event('change', { bubbles: true }));
-            el.dispatchEvent(new Event('blur', { bubbles: true }));
-          };
+        const setValue = (el, val) => {
+          if (!el || !val) return;
+          el.focus();
+          el.value = val;
+          el.dispatchEvent(new Event('input', { bubbles: true }));
+          el.dispatchEvent(new Event('change', { bubbles: true }));
+          el.dispatchEvent(new Event('blur', { bubbles: true }));
+        };
 
-          setValue(emailField, d.qc_user);
-          setValue(passField, d.qc_pass);
-          
-          setTimeout(() => {
-            const currentCtx = getContext();
-            if (!currentCtx.isActive || !currentCtx.autoLoginEnabled) return;
-            const btn = document.querySelector('button[type="submit"]');
-            if (btn && btn.innerText.toLowerCase().includes('sign in')) {
-              btn.click();
-            }
-          }, 800);
-        });
-      }
+        setValue(emailField, d.qc_user);
+        setValue(passField, d.qc_pass);
+        
+        setTimeout(() => {
+          const currentCtx = getContext();
+          if (!currentCtx.isActive || !currentCtx.autoLoginEnabled) return;
+          const btn = document.querySelector('button[type="submit"]');
+          if (btn && btn.innerText.toLowerCase().includes('sign in')) {
+            btn.click();
+          }
+        }, 800);
+      });
     }
   };
 
-  if (window.location.href.includes('admin.joinventures.com')) {
+  const currentHost = window.location.hostname;
+  if (currentHost.includes('joinventures.com') || currentHost.includes('indiangiftsportal.com')) {
     const loginObserver = new MutationObserver(() => checkAutoLogin());
     loginObserver.observe(document.body, { childList: true, subtree: true });
   }
