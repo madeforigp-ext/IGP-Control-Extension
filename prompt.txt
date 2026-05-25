@@ -24,6 +24,5 @@ scrape intermesh totally, no toggels , no logic ,no fetaure of intermesh should 
 Qc scan routing is bugged out,  scan inputs the data to tray feild but it seems like it isnt seraching ,it clearing out(not sure) but after ip ,the page reloads,but no tray number in tray feild <button _ngcontent-ejs-c263="" mat-flat-button="" type="submit" class="mat-focus-indicator btn ng-tns-c263-3 mat-flat-button mat-button-base mat-button-disabled" disabled="true"><span class="mat-button-wrapper">Search</span><span matripple="" class="mat-ripple mat-button-ripple"></span><span class="mat-button-focus-overlay"></span></button>
 
 
-Image Right-Click
-
-Global Type Detection
+Image right-click feature open any image in qc in a new tab perfectly,can we make it gets closed when i right click again in the image tab
+  EXPECTED BEHAVIOR: rightclick, the feature open it in  a new tab (default feature rightnow), right clicking again in that new opened image tab , the image should close

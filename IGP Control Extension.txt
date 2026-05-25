@@ -66,6 +66,10 @@ HISTORY
 			1)removed intermesh (COMPLETELY SCRAPED - ALL FILES AND LOGIC DELETED)
 			2)debugged all bugs in qc ,all featue working(Scan Routing,Image Right-Click,Global Type Detection,Auto-Login (JoinVentures))
 			3)added a main branch(as a backup)master branch has old Extension code.
+			4)right click opens a image, now rightclicking again the closes it.
+			5)info icon for all toggle explaining about the toggles.
+		TODO 
+			1)Add intermesh again ,all logics.
 
 	
 

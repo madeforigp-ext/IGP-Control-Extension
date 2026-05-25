@@ -357,6 +357,58 @@
       align-items: center;
       gap: 4px;
     }
+
+    /* TOOLTIP */
+    .info-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #e2e8f0;
+      color: #64748b;
+      font-size: 9px;
+      font-weight: 700;
+      font-style: italic;
+      margin-left: 6px;
+      cursor: help;
+      position: relative;
+    }
+
+    .info-icon:hover {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .info-icon::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 125%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #334155;
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 10px;
+      white-space: normal;
+      width: 180px;
+      line-height: 1.4;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s;
+      z-index: 1000;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+      font-weight: 400;
+      font-style: normal;
+    }
+
+    .info-icon:hover::after {
+      opacity: 1;
+      visibility: visible;
+      bottom: 150%;
+    }
   </style>
 </head>
 <body>
@@ -376,24 +428,24 @@
   <!-- QC Panel Card -->
   <div class="card">
     <div class="section-title">
-      QC Panel
+      <span>QC Panel <i class="info-icon" data-tooltip="Master toggle for all QC-related automation features.">i</i></span>
       <label class="toggle"><input type="checkbox" id="toggle-qc" checked><span class="slider"></span></label>
     </div>
 
     <div class="toggle-row">
-      <span class="toggle-label">Scan Routing</span>
+      <span class="toggle-label">Scan Routing <i class="info-icon" data-tooltip="Automatically focuses search fields and triggers searches when a tray or packet ID is scanned.">i</i></span>
       <label class="toggle small"><input type="checkbox" id="toggle-qc-routing" checked><span class="slider"></span></label>
     </div>
     <div class="toggle-row">
-      <span class="toggle-label">Image Right-Click</span>
+      <span class="toggle-label">Image Right-Click <i class="info-icon" data-tooltip="Right-click any product image to open it in a new tab. Right-click again in the new tab to close it.">i</i></span>
       <label class="toggle small"><input type="checkbox" id="toggle-qc-rightclick" checked><span class="slider"></span></label>
     </div>
     <div class="toggle-row">
-      <span class="toggle-label">Global Type Detection</span>
+      <span class="toggle-label">Global Type Detection <i class="info-icon" data-tooltip="Allows you to start typing a tray number from anywhere on the page to jump directly to the tray field.">i</i></span>
       <label class="toggle small"><input type="checkbox" id="toggle-qc-global" checked><span class="slider"></span></label>
     </div>
     <div class="toggle-row">
-      <span class="toggle-label">Auto-Login (JoinVentures)</span>
+      <span class="toggle-label">Auto-Login (JoinVentures) <i class="info-icon" data-tooltip="Automatically fills credentials and clicks sign-in on the JoinVentures login page.">i</i></span>
       <label class="toggle small"><input type="checkbox" id="toggle-qc-autologin" checked><span class="slider"></span></label>
     </div>
 
@@ -415,7 +467,7 @@
 
   <div class="card">
     <div class="section-title">
-      Tab Guard
+      <span>Tab Guard <i class="info-icon" data-tooltip="Protects specific tabs from accidental closure. Use the shortcut Alt+Shift+X to close all unprotected tabs.">i</i></span>
       <label class="toggle"><input type="checkbox" id="toggle-tabguard" checked><span class="slider"></span></label>
     </div>
     
