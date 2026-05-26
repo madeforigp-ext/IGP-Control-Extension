@@ -458,25 +458,32 @@
       
       <!-- Create Group -->
       <div style="background: #f8fafc; padding: 10px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #e2e8f0;">
-        <div style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 6px;">New Group</div>
+        <div style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 6px;"><span id="groupSectionTitle">New Group</span></div>
         <div class="input-row">
           <input class="input" id="group-name" type="text" placeholder="Group Name (e.g. LED Lamps)" style="flex: 1;" />
           <input type="color" id="group-color" value="#c0392b" style="width: 38px; height: 38px; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; background: #fff; padding: 2px;" />
         </div>
-        <button class="btn btn-primary btn-small" id="addGroupBtn" style="width: 100%; margin-top: 4px;">Create Group</button>
+        <div class="input-row" id="groupEditActions" style="display:none; gap:8px;">
+          <button class="btn btn-outline btn-small" id="cancelGroupEditBtn" style="flex: 1;">Cancel</button>
+          <button class="btn btn-primary btn-small" id="addGroupBtn" style="flex: 2;">Update Group</button>
+        </div>
+        <button class="btn btn-primary btn-small" id="addGroupBtnSimple" style="width: 100%; margin-top: 4px;">Create Group</button>
       </div>
 
       <!-- Add SKU to Group -->
       <div id="addSkuSection" style="display: none; background: #fff; padding: 10px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #c0392b;">
-        <div style="font-size: 10px; font-weight: 700; color: var(--primary); text-transform: uppercase; margin-bottom: 6px;">Add to: <span id="targetGroupName"></span></div>
+        <div style="font-size: 10px; font-weight: 700; color: var(--primary); text-transform: uppercase; margin-bottom: 6px;"><span id="skuSectionAction">Add to</span>: <span id="targetGroupName"></span></div>
         <div class="input-row">
           <input class="input" id="sku-input" type="text" placeholder="SKU Value" style="flex: 2;" />
           <input class="input" id="sku-display-name" type="text" placeholder="Name" style="flex: 1;" />
         </div>
         <div class="input-row">
+          <input class="input" id="sku-custom-note" type="text" placeholder="Custom Note (replaces '-')" style="flex: 1;" />
+        </div>
+        <div class="input-row">
           <input type="color" id="sku-color" value="#3498db" style="width: 38px; height: 38px; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; background: #fff; padding: 2px;" />
           <button class="btn btn-outline btn-small" id="cancelSkuBtn" style="flex: 1;">Cancel</button>
-          <button class="btn btn-primary btn-small" id="saveSkuBtn" style="flex: 2;">Add SKU</button>
+          <button class="btn btn-primary btn-small" id="saveSkuBtn" style="flex: 2;">Save SKU</button>
         </div>
       </div>
 

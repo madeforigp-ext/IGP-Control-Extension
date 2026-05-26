@@ -245,6 +245,14 @@
           taskIdEl.style.borderRadius = '4px';
           taskIdEl.style.fontWeight = 'bold';
           taskIdEl.style.border = '1px solid rgba(255,255,255,0.2)';
+
+          // Custom Note Replacement (New Feature)
+          if (match.sku.note) {
+            const textCell = row.querySelector('.mat-column-text');
+            if (textCell && textCell.textContent.trim() === '-') {
+              textCell.textContent = match.sku.note;
+            }
+          }
         } else {
           taskIdEl.style.background = ''; taskIdEl.style.color = ''; taskIdEl.style.textShadow = '';
           taskIdEl.style.padding = ''; taskIdEl.style.borderRadius = ''; taskIdEl.style.fontWeight = ''; taskIdEl.style.border = '';
