@@ -1,4 +1,4 @@
-1)QC PAGE 											[✔✔✔✔✔✔][➖❌➖➖❌][❌❌][✔✔✔✔✔]
+1)QC PAGE 											[✔✔✔✔✔✔][➖❌➖➖❌❌][❌❌][✔✔✔✔✔]
 	▶ Scan/Key Route 							       		
 		1)Global SCAN routes the ip to Tray Field(unique toggle)			 ✔
 		2)Global KEY detection works,ips to tray field(4-digits)(unique toggle)		 ✔
@@ -15,7 +15,9 @@
 		3)[Auto Search] in Assembly(natively impossible for even extension,failed to
 		  implement via debugger access to)						 ➖
 		4)Import Export settings (no use ,coz extenison can only be shared via files)    ➖
-		5)Paste Feature									 ❌
+		5)Paste Feature	(pasting OID/Pkid/Sku/Barcode should route to thier 
+		  respected field								 ❌
+		6)Clicking the products in Icon will route the product sku to Sku field 	 ❌
 
 	ADVANCE FEATURE(damn sure noo!)
 		1)Making [panel view more] thorough (giving color grades to same OID/PKID?)	 ❌
