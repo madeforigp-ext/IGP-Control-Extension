@@ -449,6 +449,25 @@
       <label class="toggle small"><input type="checkbox" id="toggle-qc-autologin" checked><span class="slider"></span></label>
     </div>
 
+    <div class="accordion-header" id="sku-tracking-accordion">
+      <span>🎯 SKU Tracking</span>
+      <span id="sku-accordion-icon">▼</span>
+    </div>
+    <div id="sku-tracking-content" class="accordion-content">
+      <div class="shortcut-hint">Track and highlight specific SKUs in QC list</div>
+      <div class="input-row">
+        <input class="input" id="sku-input" type="text" placeholder="SKU (e.g. JVS1406402)" style="flex: 2;" />
+        <input class="input" id="sku-name" type="text" placeholder="Name" style="flex: 1;" />
+      </div>
+      <div class="input-row">
+        <input type="color" id="sku-color" value="#c0392b" style="width: 40px; height: 38px; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; background: #fff; padding: 2px;" />
+        <button class="btn btn-primary" id="addSkuBtn" style="flex: 1;">Track SKU</button>
+      </div>
+      <div class="protected-list" id="skuList" style="margin-top: 10px; max-height: 120px;">
+        <div class="empty-state" id="skuEmptyState">No SKUs tracked</div>
+      </div>
+    </div>
+
     <div class="accordion-header" id="qc-cred-accordion">
       <span>🔑 QC Credentials</span>
       <span id="qc-accordion-icon">▼</span>

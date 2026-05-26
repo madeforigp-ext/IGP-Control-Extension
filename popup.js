@@ -171,3 +171,69 @@ function setupAccordion(headerId, contentId, iconId) {
 }
 
 setupAccordion('qc-cred-accordion', 'qc-cred-content', 'qc-accordion-icon');
+setupAccordion('sku-tracking-accordion', 'sku-tracking-content', 'sku-accordion-icon');
+
+// ─── SKU TRACKING ────────────────────────────────────────────────────────────
+
+let trackedSKUs = [];
+
+chrome.storage.local.get(['trackedSKUs'], (data) => {
+  trackedSKUs = data.trackedSKUs || [];
+  renderSkuList();
+});
+
+document.getElementById('addSkuBtn').addEventListener('click', () => {
+  const sku = document.getElementById('sku-input').value.trim().toUpperCase();
+  const name = document.getElementById('sku-name').value.trim();
+  const color = document.getElementById('sku-color').value;
+  
+  if (!sku || !name) {
+    setStatus('SKU and Name are required.', 'error');
+    return;
+  }
+  
+  if (trackedSKUs.some(item => item.sku === sku)) {
+    setStatus('SKU already tracked.', 'error');
+    return;
+  }
+  
+  trackedSKUs.push({ sku, name, color });
+  chrome.storage.local.set({ trackedSKUs }, () => {
+    renderSkuList();
+    document.getElementById('sku-input').value = '';
+    document.getElementById('sku-name').value = '';
+    setStatus('SKU added to tracking', 'success');
+  });
+});
+
+function renderSkuList() {
+  const list = document.getElementById('skuList');
+  const emptyState = document.getElementById('skuEmptyState');
+  
+  Array.from(list.querySelectorAll('.tag')).forEach(el => el.remove());
+  emptyState.style.display = trackedSKUs.length === 0 ? 'block' : 'none';
+  
+  trackedSKUs.forEach((item, index) => {
+    const tag = document.createElement('div');
+    tag.className = 'tag';
+    tag.style.borderLeft = `4px solid ${item.color}`;
+    tag.innerHTML = `
+      <span title="${item.sku}: ${item.name}"><strong>${item.name}</strong> (${item.sku})</span>
+      <button class="tag-remove" data-index="${index}">✕</button>
+    `;
+    list.appendChild(tag);
+  });
+  
+  list.querySelectorAll('.tag-remove').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.index);
+      trackedSKUs.splice(idx, 1);
+      chrome.storage.local.set({ trackedSKUs }, () => {
+        renderSkuList();
+        setStatus('SKU removed', 'success');
+      });
+    });
+  });
+}
+
+bindEnter(['sku-input', 'sku-name'], 'addSkuBtn');

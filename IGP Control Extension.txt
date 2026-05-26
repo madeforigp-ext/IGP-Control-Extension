@@ -1,4 +1,4 @@
-1)QC PAGE 											[✔✔][➖❌✔➖✔❌][❌❌❌][✔✔✔✔][✔]
+1)QC PAGE 											[✔✔][➖❌✔➖✔❌][❌❌❌][✔✔✔✔✔]
 	▶ Scan/Key Route 							       		
 		1)Global SCAN routes the ip to Tray Field(unique toggle)			 ✔
 		2)Global KEY detection works,ips to tray field(4-digits)(unique toggle)		 ✔
@@ -28,7 +28,8 @@
 		3)[PKID BUG]Starting trolley with 12 Gets into PKID field in PKID       	 ✔
 			 feature(this feature got removed,coz of bug)(fixed)
 		4)GLobally all inputs routes to tray(even letters)				 ✔
-		  (FIX:Now Globally only 4 digits get routed into tray)			
+		  (FIX:Now Globally only 4 digits get routed into tray)
+		5)QC Toggle bugs out sometime (fixed)						 ✔	
 
 
 2)Extension Feature										[✔]
@@ -75,6 +76,9 @@ HISTORY
 	04 19 pm 25/5/26
 			1)making image feature only work in Qc panel(but why, idk too)
 			2)image features work for all (intermesh,Qc,Sqc)
+			3)Making [panel view more] thorough (giving color grades to same OID/PKID?)	 
+		          [Both feature can't be activated at same time,coz it adds complexity] ,
+			  Count Things Adding this features (testing remains)
 
 		TODO
 			1)Add intermesh

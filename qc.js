@@ -9,7 +9,8 @@
     TYPING_GAP_THRESHOLD: 400,  // ms to reset buffer
     SEARCH_DELAY: 400,          // ms to allow framework state to settle
     SHIELD_TIME: 800,           // ms to block duplicate Enters
-    TOAST_DURATION: 2500
+    TOAST_DURATION: 2500,
+    SKU_REFRESH_INTERVAL: 2000
   };
 
   let state = {
@@ -20,6 +21,7 @@
       qc_global_enabled: true,
       qc_autologin_enabled: true
     },
+    trackedSKUs: [],
     scanBuffer: '',
     lastKeyTime: Date.now(),
     lastAutoSearchTime: 0,
@@ -37,11 +39,13 @@
     const keys = Object.keys(state.settings);
     
     // Initial Load
-    chrome.storage.local.get(keys, (data) => {
+    chrome.storage.local.get([...keys, 'trackedSKUs'], (data) => {
       for (let key of keys) {
         if (data[key] !== undefined) state.settings[key] = data[key];
       }
+      state.trackedSKUs = data.trackedSKUs || [];
       qcEnabled = state.settings.qc_enabled !== false;
+      processSKUs();
     });
 
     // Lively Sync
@@ -51,6 +55,10 @@
         if (state.settings.hasOwnProperty(key)) {
           state.settings[key] = changes[key].newValue;
           if (key === 'qc_enabled') qcEnabled = changes[key].newValue !== false;
+        }
+        if (key === 'trackedSKUs') {
+          state.trackedSKUs = changes[key].newValue || [];
+          processSKUs();
         }
       }
     });
@@ -129,7 +137,6 @@
     let oid  = findByPattern('oid');
     let taskid = findByPattern('taskid');
 
-    // Fallback for standard QC Panel
     const mats = allInputs.filter(i => i.classList.contains('mat-input-element'));
     pkid = pkid || mats[3] || mats[0];
     tray = tray || mats[1];
@@ -209,6 +216,96 @@
     }, CONFIG.SEARCH_DELAY);
   };
 
+  // ─── SKU TRACKING & HIGHLIGHTING ───────────────────────────────────────────
+
+  const getSummaryWidget = () => {
+    let widget = document.getElementById('igp-sku-summary');
+    if (!widget) {
+      widget = document.createElement('div');
+      widget.id = 'igp-sku-summary';
+      Object.assign(widget.style, {
+        position: 'fixed',
+        bottom: '20px',
+        right: '20px',
+        zIndex: '2147483647',
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        border: '1px solid #e2e8f0',
+        borderRadius: '12px',
+        padding: '10px 16px',
+        boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)',
+        fontFamily: 'Inter, system-ui, sans-serif',
+        fontSize: '13px',
+        color: '#1e293b',
+        display: 'none',
+        flexDirection: 'column',
+        gap: '6px',
+        backdropFilter: 'blur(8px)',
+        minWidth: '140px'
+      });
+      document.body.appendChild(widget);
+    }
+    return widget;
+  };
+
+  const processSKUs = () => {
+    if (!qcEnabled) {
+      const widget = document.getElementById('igp-sku-summary');
+      if (widget) widget.style.display = 'none';
+      return;
+    }
+
+    const rows = document.querySelectorAll('mat-row');
+    const counts = {};
+    state.trackedSKUs.forEach(s => counts[s.sku] = 0);
+
+    rows.forEach(row => {
+      const taskIdEl = row.querySelector('.task-id');
+      if (!taskIdEl) return;
+
+      const fullId = taskIdEl.textContent.trim();
+      const parts = fullId.split('-');
+      if (parts.length >= 3) {
+        const sku = parts[2];
+        const tracked = state.trackedSKUs.find(s => s.sku === sku);
+        if (tracked) {
+          counts[sku]++;
+          taskIdEl.style.backgroundColor = tracked.color;
+          taskIdEl.style.color = '#fff';
+          taskIdEl.style.padding = '2px 6px';
+          taskIdEl.style.borderRadius = '4px';
+          taskIdEl.style.fontWeight = 'bold';
+        } else {
+          taskIdEl.style.backgroundColor = '';
+          taskIdEl.style.color = '';
+          taskIdEl.style.padding = '';
+          taskIdEl.style.borderRadius = '';
+          taskIdEl.style.fontWeight = '';
+        }
+      }
+    });
+
+    const widget = getSummaryWidget();
+    const activeTracked = state.trackedSKUs.filter(s => counts[s.sku] > 0);
+    
+    if (activeTracked.length > 0) {
+      widget.style.display = 'flex';
+      widget.innerHTML = `
+        <div style="font-weight: 700; color: #64748b; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #f1f5f9; padding-bottom: 4px; margin-bottom: 2px;">Tracked Items</div>
+        ${activeTracked.map(s => `
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+            <span style="display: flex; align-items: center; gap: 6px;">
+              <span style="width: 8px; height: 8px; border-radius: 50%; background-color: ${s.color};"></span>
+              <span style="font-weight: 500;">${s.name}</span>
+            </span>
+            <span style="background: #f1f5f9; padding: 2px 8px; border-radius: 20px; font-weight: 700; color: ${s.color}; min-width: 24px; text-align: center;">${counts[s.sku]}</span>
+          </div>
+        `).join('')}
+      `;
+    } else {
+      widget.style.display = 'none';
+    }
+  };
+
   // ─── DYNAMIC LOGIC ─────────────────────────────────────────────────────────
 
   const identify = (val) => {
@@ -231,7 +328,6 @@
   // ─── IMAGE ENHANCEMENT ─────────────────────────────────────────────────────
 
   document.addEventListener('contextmenu', (e) => {
-    // Master Toggle
     if (!qcEnabled) return;
     
     const ctx = getContext();
@@ -241,20 +337,15 @@
     if (img && img.src && !img.src.startsWith('data:')) {
       e.preventDefault();
       let targetUrl = img.src;
-      
-      // Optimization strings to remove
       const optStrings = ['f_auto,q_auto,t_pnopt3prodlp', 'f_auto,q_auto,t_pnopt4prodlp'];
       
       optStrings.forEach(s => {
         if (targetUrl.includes(s)) {
-          // Remove string and trailing slash if present
           targetUrl = targetUrl.split(s + '/').join('').split(s).join('');
         }
       });
       
-      // Safe double slash cleanup (preserves http:// or https://)
       targetUrl = targetUrl.replace(/([^:])\/\//g, '$1/');
-      
       window.open(targetUrl + '#igp-qc', '_blank');
     }
   }, true);
@@ -265,7 +356,6 @@
     if (!qcEnabled) return;
 
     const ctx = getContext();
-    // Scanner only works on designated scanner paths
     if (!ctx.isActive || !ctx.isScannerPath) return;
 
     if (e.ctrlKey || e.altKey || e.metaKey) return;
@@ -379,8 +469,15 @@
 
   const currentHost = window.location.hostname;
   if (currentHost.includes('joinventures.com') || currentHost.includes('indiangiftsportal.com')) {
-    const loginObserver = new MutationObserver(() => checkAutoLogin());
-    loginObserver.observe(document.body, { childList: true, subtree: true });
+    const observer = new MutationObserver((mutations) => {
+      checkAutoLogin();
+      const hasNewRows = mutations.some(m => Array.from(m.addedNodes).some(n => n.nodeName === 'MAT-ROW' || (n.querySelectorAll && n.querySelectorAll('mat-row').length > 0)));
+      if (hasNewRows) processSKUs();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    
+    processSKUs();
+    setInterval(processSKUs, CONFIG.SKU_REFRESH_INTERVAL);
   }
   checkAutoLogin();
 
