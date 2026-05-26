@@ -1,42 +1,48 @@
-1)QC PAGE 											[✔✔][➖❌✔➖✔❌][❌❌❌][✔✔✔✔✔]
+1)QC PAGE 											[✔✔✔✔✔✔][➖❌➖➖❌][❌❌][✔✔✔✔✔]
 	▶ Scan/Key Route 							       		
 		1)Global SCAN routes the ip to Tray Field(unique toggle)			 ✔
 		2)Global KEY detection works,ips to tray field(4-digits)(unique toggle)		 ✔
-		
+		3)[Auto Login] when session expires(with past login creds)		 	 ✔
+		4)Open Image Easily (right click opens/closes)					 ✔
+		5)Count Things									 ✔
+		6)Making [panel view more] thorough (giving color grades to same SKU?)		 ✔
+		  (This Feature maybe helpful,When panel order increases)	
 	FEATURE(maybe)							       		
 		1)[PKid Route](Added and Removed)					 	 ➖
-			NO need of PKID Route as Qc Panel doesn't gets PKID scans much.
+		  NO need of PKID Route as Qc Panel doesn't gets PKID scans much.
 		2)Detecting print pop up,[Auto print] Complicated Feature			 ❌		 	 
-		3)[Auto Login] when session expires(with past login creds)		 	 ✔
-		4)[Auto Search] in Assembly(natively impossible for even extension,failed to
+		
+		3)[Auto Search] in Assembly(natively impossible for even extension,failed to
 		  implement via debugger access to)						 ➖
-		5)Open Image Easily (right click opens)						 ✔
-		6)Count Things									 ❌
+		4)Import Export settings (no use ,coz extenison can only be shared via files)    ➖
+		5)Paste Feature									 ❌
+
 	ADVANCE FEATURE(damn sure noo!)
-		1)Making [panel view more] thorough (giving color grades to same SKU?)		 ❌
-		  (This Feature maybe helpful,When panel order increases)
-		2)Making [panel view more] thorough (giving color grades to same OID/PKID?)	 ❌
+		1)Making [panel view more] thorough (giving color grades to same OID/PKID?)	 ❌
 		  [Both feature can't be activated at same time,coz it adds complexity]
-		3)[AUTO PASS](with a warning Msg box) Complicated Feature			 ❌
+		2)[AUTO PASS](with a warning Msg box) Complicated Feature			 ❌
 	                                             	         
 
 	BUGS								        	
 		1)[SCAN BUG]Two refresh happens(Scan trigger and extension code	               	 ✔
-		  	  trigger both gets added ig)(GOT fixed in debugging other toggles)
+		  trigger both gets added ig)(GOT fixed in debugging other toggles) (fixed)
 		2)[PKID BUG]Tray starting with 12 Gets into PKID field in PKID feature   	 ✔
-			 (this feature got removed,coz of bug,but bug remains)(fixed)
+		  (this feature got removed,coz of bug,but bug remains)(fixed)
 		3)[PKID BUG]Starting trolley with 12 Gets into PKID field in PKID       	 ✔
-			 feature(this feature got removed,coz of bug)(fixed)
+		  feature(this feature got removed,coz of bug)(fixed)
 		4)GLobally all inputs routes to tray(even letters)				 ✔
-		  (FIX:Now Globally only 4 digits get routed into tray)
+		  (FIX:Now Globally only 4 digits get routed into tray) (fixed)
 		5)QC Toggle bugs out sometime (fixed)						 ✔	
 
 
-2)Extension Feature										[✔]
+2)Extension Feature										[✔][❌]
 	▶Tab Gaurd
 		1)Protects the protected tab from closing,closes all unprotected tab at		 ✔
 		  once with a shortcut(customizable in Extension Tab)(like Ctrl-w) 
 
+	BUGS											
+		1)Tab gaurd info is incorrect (shortcut)				         ❌			        
+ 
 HISTORY
 	6 40 pm 20/5/26 
 			1)added -Right click image feature for QC,SQC(ALL OTHER FEATURE WORKING I GUESS :( )
@@ -83,8 +89,16 @@ HISTORY
 		TODO
 			1)Add intermesh
 			2)Add SQC
-	
 
+
+	04 00 pm 26/5/26
+			1)Adding Sku grouping by colors
+			2)Added Split colors per task (Group Color[caricature]+Product Color[multitasker,best doctor etc])
+	
+		TODO
+			1)Add intermesh
+			2)Add SQC
+			3)ICON for Extension
 
 
 
