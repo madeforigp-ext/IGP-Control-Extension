@@ -6,7 +6,7 @@
 		4)Open Image Easily (right click opens/closes)					 ✔
 		5)Count Things									 ✔
 		6)Making [panel view more] thorough (giving color grades to same SKU?)		 ✔
-		  (This Feature maybe helpful,When panel order increases)	
+		  (This Feature maybe helpful,When panel order increases)(SKU grouping)	
 	FEATURE(maybe)							       		
 		1)[PKid Route](Added and Removed)					 	 ➖
 		  NO need of PKID Route as Qc Panel doesn't gets PKID scans much.
@@ -96,6 +96,7 @@ HISTORY
 	04 00 pm 26/5/26
 			1)Adding Sku grouping by colors
 			2)Added Split colors per task (Group Color[caricature]+Product Color[multitasker,best doctor etc])
+			3)Made sku Grouping modifiable
 	
 		TODO
 			1)Add intermesh
