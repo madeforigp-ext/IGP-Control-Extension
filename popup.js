@@ -1,14 +1,11 @@
-// ─── IGP Control: Popup Logic ────────────────────────────────────────────────
+// ─── IGP Control: Popup Logic (v6 Drag & Drop Tree) ─────────────────────────
 
 const statusEl = document.getElementById('status');
 
 function setStatus(msg, type) {
   statusEl.textContent = msg;
   statusEl.className = 'status ' + (type || '');
-  setTimeout(() => { 
-    statusEl.textContent = 'System Ready'; 
-    statusEl.className = 'status'; 
-  }, 3000);
+  setTimeout(() => { statusEl.textContent = 'System Ready'; statusEl.className = 'status'; }, 3000);
 }
 
 // ─── TABS ────────────────────────────────────────────────────────────────────
@@ -27,311 +24,307 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 function setupToggle(id, storageKey) {
   const el = document.getElementById(id);
   if (!el) return;
-  
-  chrome.storage.local.get([storageKey], (data) => {
-    el.checked = data[storageKey] !== false;
-  });
-  
+  chrome.storage.local.get([storageKey], (data) => { el.checked = data[storageKey] !== false; });
   el.addEventListener('change', () => {
     chrome.storage.local.set({ [storageKey]: el.checked });
-    const name = storageKey.replace('_enabled', '').replace(/_/g, ' ').toUpperCase();
-    setStatus(`${name}: ${el.checked ? 'ON' : 'OFF'}`, 'success');
+    setStatus(`${storageKey.replace('_enabled','').toUpperCase()} UPDATED`, 'success');
   });
 }
+setupToggle('toggle-qc', 'qc_enabled');
+setupToggle('toggle-qc-rightclick', 'qc_rightclick_enabled');
+setupToggle('toggle-qc-routing', 'qc_routing_enabled');
+setupToggle('toggle-qc-global', 'qc_global_enabled');
+setupToggle('toggle-qc-autologin', 'qc_autologin_enabled');
+setupToggle('toggle-tabguard', 'tabguard_enabled');
 
-setupToggle('toggle-qc',              'qc_enabled');
-setupToggle('toggle-qc-rightclick',   'qc_rightclick_enabled');
-setupToggle('toggle-qc-routing',      'qc_routing_enabled');
-setupToggle('toggle-qc-global',       'qc_global_enabled');
-setupToggle('toggle-qc-autologin',    'qc_autologin_enabled');
-setupToggle('toggle-tabguard',        'tabguard_enabled');
+// ─── SKU TRACKING (v6 Drag & Drop) ───────────────────────────────────────────
 
-// ─── CREDENTIALS ─────────────────────────────────────────────────────────────
+let skuTree = { id: 'root', name: 'Home', color: '#334155', groups: [], skus: [] };
+let expandedFolders = new Set(['root']);
+let editingGroupId = null;
+let editingSkuIdx = null;
+let activeParentId = 'root';
+let draggedItem = null; // { type: 'folder'|'sku', id: string, parentId: string, index: number }
 
-chrome.storage.local.get(['qc_user', 'qc_pass'], (data) => {
-  if (data.qc_user) document.getElementById('qc-user').value = data.qc_user;
-  if (data.qc_pass) document.getElementById('qc-pass').value = data.qc_pass;
+chrome.storage.local.get(['skuTree', 'expandedFolders'], (data) => {
+  if (data.skuTree) skuTree = data.skuTree;
+  if (data.expandedFolders) expandedFolders = new Set(data.expandedFolders);
+  renderTree();
 });
 
-document.getElementById('saveQCCredBtn').addEventListener('click', () => {
-  const data = {
-    qc_user:      document.getElementById('qc-user').value.trim(),
-    qc_pass:      document.getElementById('qc-pass').value.trim()
-  };
-  chrome.storage.local.set(data, () => setStatus('QC credentials saved ✅', 'success'));
-});
-
-// ─── TABGUARD ────────────────────────────────────────────────────────────────
-
-let protectedTitles = [];
-
-chrome.storage.local.get(['protectedTitles'], (data) => {
-  protectedTitles = data.protectedTitles || [];
-  renderList();
-});
-
-document.getElementById('addBtn').addEventListener('click', () => {
-  const val = document.getElementById('titleInput').value.trim();
-  if (!val) return;
-  if (protectedTitles.includes(val)) return setStatus('Already in list.', 'error'); 
-  protectedTitles.push(val);
-  chrome.storage.local.set({ protectedTitles }, () => {
-    renderList();
-    document.getElementById('titleInput').value = '';
-    setStatus('Added to protected list', 'success');
-  });
-});
-
-document.getElementById('protectCurrentBtn').addEventListener('click', () => {
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    if (!tabs[0]) return;
-    const title = tabs[0].title;
-    if (protectedTitles.includes(title)) return setStatus('Already protected.', 'error'); 
-    protectedTitles.push(title);
-    chrome.storage.local.set({ protectedTitles }, () => {
-      renderList();
-      setStatus(`Protected: ${title.slice(0, 20)}...`, 'success');
+function save() {
+  chrome.storage.local.set({ skuTree, expandedFolders: Array.from(expandedFolders) }, () => {
+    renderTree();
+    // HARD SYNC
+    chrome.tabs.query({}, (tabs) => {
+      tabs.forEach(tab => {
+        chrome.tabs.sendMessage(tab.id, { action: 'sku-sync', data: skuTree }).catch(() => {});
+      });
     });
   });
-});
-
-function renderList() {
-  const list = document.getElementById('protectedList');
-  const emptyState = document.getElementById('emptyState');
-  Array.from(list.querySelectorAll('.tag')).forEach(el => el.remove());
-  emptyState.style.display = protectedTitles.length === 0 ? 'block' : 'none';
-  protectedTitles.forEach((title, index) => {
-    const tag = document.createElement('div');
-    tag.className = 'tag';
-    tag.innerHTML = `<span>${title}</span><button class="tag-remove" data-index="${index}">✕</button>`;
-    list.appendChild(tag);
-  });
-  list.querySelectorAll('.tag-remove').forEach(btn => {
-    btn.onclick = () => {
-      protectedTitles.splice(parseInt(btn.dataset.index), 1);
-      chrome.storage.local.set({ protectedTitles }, renderList);
-    };
-  });
 }
 
-// ─── SKU TRACKING (V2 - Editable) ────────────────────────────────────────────
+function findFolder(id, root = skuTree) {
+  if (root.id === id) return root;
+  if (root.groups) {
+    for (let g of root.groups) {
+      const f = findFolder(id, g); if (f) return f;
+    }
+  }
+  return null;
+}
 
-let trackedGroups = [];
-let activeGroupId = null;
-let editingSkuIdx = null;
-let editingGroupId = null;
+function renderTree() {
+  const list = document.getElementById('skuList');
+  list.innerHTML = '';
+  renderNode(skuTree, list, 0, []);
+}
 
-chrome.storage.local.get(['trackedGroups'], (data) => {
-  trackedGroups = data.trackedGroups || [];
-  renderGroupList();
-});
+function renderNode(node, container, depth, isLastArray) {
+  const isRoot = node.id === 'root';
+  const isExpanded = expandedFolders.has(node.id);
 
-const handleGroupUpsert = () => {
+  const row = document.createElement('div');
+  row.className = 'tree-row' + (isRoot ? ' root-row' : '');
+  row.style.padding = '4px 0';
+  row.style.display = 'flex';
+  row.style.alignItems = 'center';
+  row.style.gap = '4px';
+  row.style.cursor = 'pointer';
+  row.draggable = !isRoot;
+  row.dataset.id = node.id;
+  row.dataset.type = 'folder';
+
+  // Tree Graphics (Recursive Lines)
+  let prefix = '';
+  for (let i = 0; i < depth - 1; i++) {
+     prefix += `<span style="font-family:monospace; color:#e2e8f0; width:12px; display:inline-block;">${isLastArray[i] ? '&nbsp;' : '│'}</span>&nbsp;&nbsp;`;
+  }
+  const connector = isRoot ? '' : `<span style="font-family:monospace; color:#cbd5e1;">${isLastArray[depth-1] ? '└─' : '├─'}</span> `;
+
+  row.innerHTML = `
+    <div style="white-space:nowrap; display:flex; align-items:center;">${prefix}${connector}</div>
+    <div style="width: 12px; height: 12px; border-radius: 3px; background: ${node.color}; flex-shrink:0; margin-right:4px;"></div>
+    <span style="font-size: 11px; font-weight: ${isRoot ? '800' : '600'}; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${isRoot ? '🏠 Home' : node.name}</span>
+    <div class="row-actions" style="display: flex; gap: 4px; opacity: 0.4;">
+       <button class="t-btn btn-add" title="Add SKU">+</button>
+       ${!isRoot ? `<button class="t-btn btn-edit">✏️</button><button class="t-btn btn-del">✕</button>` : ''}
+    </div>
+  `;
+
+  // Folder Expand/Collapse
+  row.onclick = (e) => {
+    if (e.target.closest('button')) return;
+    if (isExpanded) expandedFolders.delete(node.id);
+    else expandedFolders.add(node.id);
+    save();
+  };
+
+  // Drag Events
+  row.ondragstart = (e) => {
+    draggedItem = { type: 'folder', id: node.id, parentId: null };
+    row.style.opacity = '0.4';
+    e.dataTransfer.setData('text/plain', node.id);
+  };
+  row.ondragend = () => { row.style.opacity = '1'; draggedItem = null; };
+  
+  row.ondragover = (e) => { e.preventDefault(); row.style.background = '#f1f5f9'; };
+  row.ondragleave = () => { row.style.background = 'transparent'; };
+  row.ondrop = (e) => {
+    e.preventDefault();
+    row.style.background = 'transparent';
+    executeDrop(node.id);
+  };
+
+  // Actions
+  row.querySelector('.btn-add').onclick = () => startAddSku(node.id);
+  if (!isRoot) {
+    row.querySelector('.btn-edit').onclick = () => startEditGroup(node.id);
+    row.querySelector('.btn-del').onclick = () => {
+      if (confirm(`Delete folder "${node.name}" and contents?`)) { removeFolder(skuTree, node.id); save(); }
+    };
+  }
+
+  container.appendChild(row);
+
+  if (isExpanded || isRoot) {
+    const groups = node.groups || [];
+    const skus = node.skus || [];
+    
+    groups.forEach((g, i) => {
+      const isLast = (i === groups.length - 1) && (skus.length === 0);
+      renderNode(g, container, depth + 1, [...isLastArray, isLast]);
+    });
+
+    skus.forEach((s, i) => {
+      const isLast = i === skus.length - 1;
+      const skuRow = document.createElement('div');
+      skuRow.className = 'tree-row sku-row';
+      skuRow.draggable = true;
+      skuRow.style.padding = '2px 0';
+      skuRow.style.display = 'flex';
+      skuRow.style.alignItems = 'center';
+      skuRow.style.gap = '4px';
+
+      let sPrefix = '';
+      for (let j = 0; j < depth; j++) {
+         sPrefix += `<span style="font-family:monospace; color:#e2e8f0; width:12px; display:inline-block;">${isLastArray[j] ? '&nbsp;' : '│'}</span>&nbsp;&nbsp;`;
+      }
+      const sConnector = `<span style="font-family:monospace; color:#cbd5e1;">${isLast ? '└─' : '├─'}</span> `;
+
+      skuRow.innerHTML = `
+        <div style="white-space:nowrap; display:flex; align-items:center;">${sPrefix}${sConnector}</div>
+        <div style="width: 6px; height: 6px; border-radius: 50%; background: ${s.color}; flex-shrink:0; margin-right:4px;"></div>
+        <span style="font-size: 10px; color: #64748b; flex: 1;">${s.name}</span>
+        <div class="row-actions" style="display: flex; gap: 4px; opacity: 0.4;">
+           <button class="t-btn btn-edit-s">✏️</button><button class="t-btn btn-del-s">✕</button>
+        </div>
+      `;
+
+      skuRow.ondragstart = (e) => {
+        draggedItem = { type: 'sku', id: s.sku, parentId: node.id, index: i };
+        skuRow.style.opacity = '0.4';
+      };
+      skuRow.ondragend = () => { skuRow.style.opacity = '1'; draggedItem = null; };
+
+      skuRow.querySelector('.btn-edit-s').onclick = () => startEditSku(node.id, i);
+      skuRow.querySelector('.btn-del-s').onclick = () => { skus.splice(i, 1); save(); };
+
+      container.appendChild(skuRow);
+    });
+  }
+}
+
+// ─── DRAG & DROP LOGIC ───────────────────────────────────────────────────────
+
+function executeDrop(targetFolderId) {
+  if (!draggedItem) return;
+  if (draggedItem.id === targetFolderId) return; // Cant drop on self
+
+  const targetFolder = findFolder(targetFolderId);
+  
+  if (draggedItem.type === 'folder') {
+     // Prevent dropping parent into child (recursion death)
+     if (isDescendant(draggedItem.id, targetFolderId)) {
+        setStatus('CANT MOVE PARENT INTO CHILD', 'error');
+        return;
+     }
+     const item = removeFolder(skuTree, draggedItem.id);
+     if (item) targetFolder.groups.push(item);
+  } else {
+     const sourceFolder = findFolder(draggedItem.parentId);
+     const item = sourceFolder.skus.splice(draggedItem.index, 1)[0];
+     targetFolder.skus.push(item);
+  }
+  save();
+  setStatus('ITEM RE-ATTACHED', 'success');
+}
+
+function isDescendant(parentId, targetId) {
+  const p = findFolder(parentId);
+  return !!findFolder(targetId, p && p !== targetId ? p : null);
+}
+
+function removeFolder(root, id) {
+  for (let i = 0; i < root.groups.length; i++) {
+    if (root.groups[i].id === id) return root.groups.splice(i, 1)[0];
+    const f = removeFolder(root.groups[i], id); if (f) return f;
+  }
+  return null;
+}
+
+// ─── FORMS ───────────────────────────────────────────────────────────────────
+
+function startAddSku(parentId) {
+  activeParentId = parentId; editingSkuIdx = null;
+  document.getElementById('addSkuSection').style.display = 'block';
+  document.querySelectorAll('.curr-folder-name').forEach(el => el.textContent = findFolder(parentId).name);
+  document.getElementById('sku-input').focus();
+}
+
+function startEditGroup(id) {
+  const g = findFolder(id); editingGroupId = id;
+  document.getElementById('group-name').value = g.name;
+  document.getElementById('group-color').value = g.color;
+  document.getElementById('group-color-hex').value = g.color.toUpperCase();
+  document.getElementById('groupSectionTitle').textContent = 'Edit Folder';
+  document.getElementById('addGroupBtnSimple').style.display = 'none';
+  document.getElementById('groupEditActions').style.display = 'flex';
+}
+
+function startEditSku(parentId, idx) {
+  const f = findFolder(parentId); const s = f.skus[idx];
+  activeParentId = parentId; editingSkuIdx = idx;
+  document.getElementById('sku-input').value = s.sku;
+  document.getElementById('sku-display-name').value = s.name;
+  document.getElementById('sku-custom-note').value = s.note || '';
+  document.getElementById('sku-color').value = s.color;
+  document.getElementById('sku-color-hex').value = s.color.toUpperCase();
+  document.getElementById('addSkuSection').style.display = 'block';
+}
+
+document.getElementById('addGroupBtnSimple').onclick = handleGroupUpsert;
+document.getElementById('addGroupBtn').onclick = handleGroupUpsert;
+function handleGroupUpsert() {
   const name = document.getElementById('group-name').value.trim();
   const color = document.getElementById('group-color').value;
-  if (!name) return setStatus('Group name required.', 'error');
-  
+  if (!name) return;
   if (editingGroupId) {
-    const group = trackedGroups.find(g => g.id === editingGroupId);
-    if (group) { group.name = name; group.color = color; }
+    const g = findFolder(editingGroupId); g.name = name; g.color = color;
     cancelGroupEdit();
-    setStatus('Group updated', 'success');
   } else {
-    trackedGroups.push({ id: Date.now(), name, color, skus: [] });
+    const p = findFolder(activeParentId) || skuTree;
+    p.groups.push({ id: 'f'+Date.now(), name, color, groups: [], skus: [] });
     document.getElementById('group-name').value = '';
-    setStatus('Group created', 'success');
   }
-  saveGroups();
+  save();
+}
+
+document.getElementById('saveSkuBtn').onclick = () => {
+  const sku = document.getElementById('sku-input').value.trim().toUpperCase();
+  const name = document.getElementById('sku-display-name').value.trim() || sku;
+  const note = document.getElementById('sku-custom-note').value.trim();
+  const color = document.getElementById('sku-color').value;
+  if (!sku) return;
+  const f = findFolder(activeParentId);
+  if (editingSkuIdx !== null) f.skus[editingSkuIdx] = { sku, name, color, note };
+  else f.skus.push({ sku, name, color, note });
+  cancelAddSku(); save();
 };
 
-document.getElementById('addGroupBtn').addEventListener('click', handleGroupUpsert);
-document.getElementById('addGroupBtnSimple').addEventListener('click', handleGroupUpsert);
-
 document.getElementById('cancelGroupEditBtn').onclick = cancelGroupEdit;
-
 function cancelGroupEdit() {
-  editingGroupId = null;
-  document.getElementById('groupSectionTitle').textContent = 'New Group';
+  editingGroupId = null; document.getElementById('groupSectionTitle').textContent = 'New Folder';
   document.getElementById('addGroupBtnSimple').style.display = 'block';
   document.getElementById('groupEditActions').style.display = 'none';
   document.getElementById('group-name').value = '';
 }
 
-document.getElementById('saveSkuBtn').addEventListener('click', () => {
-  const skuVal = document.getElementById('sku-input').value.trim().toUpperCase();
-  const displayName = document.getElementById('sku-display-name').value.trim() || skuVal;
-  const customNote = document.getElementById('sku-custom-note').value.trim();
-  const skuColor = document.getElementById('sku-color').value;
-  if (!skuVal) return setStatus('SKU value required.', 'error');
-
-  const group = trackedGroups.find(g => g.id === activeGroupId);
-  if (group) {
-    if (editingSkuIdx !== null) {
-      group.skus[editingSkuIdx] = { sku: skuVal, name: displayName, color: skuColor, note: customNote };
-      setStatus('SKU updated', 'success');
-    } else {
-      if (group.skus.some(s => s.sku === skuVal)) return setStatus('SKU already in group.', 'error');
-      group.skus.push({ sku: skuVal, name: displayName, color: skuColor, note: customNote });
-      setStatus('SKU added', 'success');
-    }
-    saveGroups();
-    cancelAddSku();
-  }
-});
-
 document.getElementById('cancelSkuBtn').onclick = cancelAddSku;
+function cancelAddSku() { editingSkuIdx = null; document.getElementById('addSkuSection').style.display = 'none'; }
 
-function cancelAddSku() {
-  activeGroupId = null;
-  editingSkuIdx = null;
-  document.getElementById('addSkuSection').style.display = 'none';
-  document.getElementById('sku-input').value = '';
-  document.getElementById('sku-display-name').value = '';
-  document.getElementById('sku-custom-note').value = '';
-  document.getElementById('skuSectionAction').textContent = 'Add to';
+// ─── TABGUARD & ACCORDIONS ───────────────────────────────────────────────────
+
+function setupAccordion(hId, cId, iId) {
+  const h = document.getElementById(hId), c = document.getElementById(cId), i = document.getElementById(iId);
+  if (!h || !c) return;
+  h.onclick = () => { const open = c.style.display === 'block'; c.style.display = open ? 'none' : 'block'; i.textContent = open ? '▼' : '▲'; h.style.color = open ? '' : 'var(--primary)'; };
 }
-
-function saveGroups() {
-  chrome.storage.local.set({ trackedGroups }, renderGroupList);
-}
-
-function renderGroupList() {
-  const list = document.getElementById('skuList');
-  const emptyState = document.getElementById('skuEmptyState');
-  
-  Array.from(list.querySelectorAll('.group-item')).forEach(el => el.remove());
-  emptyState.style.display = trackedGroups.length === 0 ? 'block' : 'none';
-
-  trackedGroups.forEach((group, gIdx) => {
-    const groupDiv = document.createElement('div');
-    groupDiv.className = 'group-item';
-    groupDiv.style.marginBottom = '8px';
-    groupDiv.style.border = '1px solid #e2e8f0';
-    groupDiv.style.borderRadius = '8px';
-    groupDiv.style.overflow = 'hidden';
-
-    groupDiv.innerHTML = `
-      <div style="background: #f8fafc; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e2e8f0;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <div style="width: 12px; height: 12px; border-radius: 3px; background: ${group.color};"></div>
-          <strong style="font-size: 11px;">${group.name}</strong>
-        </div>
-        <div style="display: flex; gap: 4px;">
-          <button class="btn-edit-group" data-idx="${gIdx}" style="border:none; background: #e2e8f0; color: #64748b; border-radius: 4px; padding: 2px 6px; font-size: 10px; cursor:pointer;">Edit</button>
-          <button class="btn-add-sku" data-id="${group.id}" style="border:none; background: #e2e8f0; color: #64748b; border-radius: 4px; padding: 2px 6px; font-size: 10px; cursor:pointer;">+ SKU</button>
-          <button class="btn-del-group" data-idx="${gIdx}" style="border:none; background: transparent; color: #94a3b8; font-size: 12px; cursor:pointer;">✕</button>
-        </div>
-      </div>
-      <div class="sku-sub-list" style="padding: 4px 8px; background: #fff;">
-        ${group.skus.length === 0 ? '<div style="font-size:9px; color:#cbd5e1; font-style:italic; padding: 4px;">No SKUs</div>' : ''}
-        ${group.skus.map((s, sIdx) => `
-          <div style="display:flex; align-items:center; justify-content:space-between; padding: 2px 4px; font-size: 10px; border-bottom: 1px solid #f8fafc;">
-            <div style="display:flex; align-items:center; gap: 6px;">
-              <div style="width: 6px; height: 6px; border-radius: 50%; background: ${s.color};"></div>
-              <span title="${s.sku}">${s.name}</span>
-            </div>
-            <div style="display:flex; gap: 6px;">
-              <button class="btn-edit-sku" data-gidx="${gIdx}" data-sidx="${sIdx}" style="border:none; background:transparent; color:#94a3b8; cursor:pointer; font-size:9px;">Edit</button>
-              <button class="btn-del-sku" data-gidx="${gIdx}" data-sidx="${sIdx}" style="border:none; background:transparent; color:#cbd5e1; cursor:pointer;">✕</button>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    `;
-    list.appendChild(groupDiv);
-  });
-
-  // Event Listeners
-  list.querySelectorAll('.btn-edit-group').forEach(btn => {
-    btn.onclick = () => {
-      const gIdx = parseInt(btn.dataset.idx);
-      const group = trackedGroups[gIdx];
-      editingGroupId = group.id;
-      document.getElementById('group-name').value = group.name;
-      document.getElementById('group-color').value = group.color;
-      document.getElementById('groupSectionTitle').textContent = 'Edit Group';
-      document.getElementById('addGroupBtnSimple').style.display = 'none';
-      document.getElementById('groupEditActions').style.display = 'flex';
-      document.getElementById('group-name').focus();
-    };
-  });
-
-  list.querySelectorAll('.btn-add-sku').forEach(btn => {
-    btn.onclick = () => {
-      activeGroupId = parseInt(btn.dataset.id);
-      editingSkuIdx = null;
-      const group = trackedGroups.find(g => g.id === activeGroupId);
-      document.getElementById('targetGroupName').textContent = group.name;
-      document.getElementById('skuSectionAction').textContent = 'Add to';
-      document.getElementById('addSkuSection').style.display = 'block';
-      document.getElementById('sku-input').focus();
-    };
-  });
-
-  list.querySelectorAll('.btn-edit-sku').forEach(btn => {
-    btn.onclick = () => {
-      const gIdx = parseInt(btn.dataset.gidx);
-      const sIdx = parseInt(btn.dataset.sidx);
-      const group = trackedGroups[gIdx];
-      const sku = group.skus[sIdx];
-      
-      activeGroupId = group.id;
-      editingSkuIdx = sIdx;
-      
-      document.getElementById('targetGroupName').textContent = group.name;
-      document.getElementById('skuSectionAction').textContent = 'Edit';
-      document.getElementById('sku-input').value = sku.sku;
-      document.getElementById('sku-display-name').value = sku.name;
-      document.getElementById('sku-custom-note').value = sku.note || '';
-      document.getElementById('sku-color').value = sku.color;
-      
-      document.getElementById('addSkuSection').style.display = 'block';
-      document.getElementById('sku-input').focus();
-    };
-  });
-
-  list.querySelectorAll('.btn-del-group').forEach(btn => {
-    btn.onclick = () => {
-      trackedGroups.splice(parseInt(btn.dataset.idx), 1);
-      saveGroups();
-    };
-  });
-
-  list.querySelectorAll('.btn-del-sku').forEach(btn => {
-    btn.onclick = () => {
-      const gIdx = parseInt(btn.dataset.gidx);
-      const sIdx = parseInt(btn.dataset.sidx);
-      trackedGroups[gIdx].skus.splice(sIdx, 1);
-      saveGroups();
-    };
-  });
-}
-
-// ─── ACCORDIONS ──────────────────────────────────────────────────────────────
-
-function setupAccordion(headerId, contentId, iconId) {
-  const header = document.getElementById(headerId);
-  const content = document.getElementById(contentId);
-  const icon = document.getElementById(iconId);
-  if (!header || !content) return;
-  header.addEventListener('click', () => {
-    const isOpen = content.style.display === 'block';
-    content.style.display = isOpen ? 'none' : 'block';
-    icon.textContent = isOpen ? '▼' : '▲';
-    header.style.color = isOpen ? '' : 'var(--primary)';
-  });
-}
-
 setupAccordion('qc-cred-accordion', 'qc-cred-content', 'qc-accordion-icon');
 setupAccordion('sku-tracking-accordion', 'sku-tracking-content', 'sku-accordion-icon');
 
-const bindEnter = (ids, btnId) => {
-  ids.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.onkeydown = (e) => { if (e.key === 'Enter') document.getElementById(btnId).click(); };
-  });
-};
+function setupColorSync(cId, hId) {
+  const c = document.getElementById(cId), h = document.getElementById(hId);
+  if (c && h) { 
+    c.oninput = () => h.value = c.value.toUpperCase(); 
+    h.oninput = () => { if (/^#[0-9A-F]{6}$/i.test(h.value)) c.value = h.value; }; 
+  }
+}
+setupColorSync('group-color', 'group-color-hex');
+setupColorSync('sku-color', 'sku-color-hex');
+
+const bindEnter = (ids, bId) => ids.forEach(id => { const el = document.getElementById(id); if (el) el.onkeydown = (e) => { if (e.key === 'Enter') document.getElementById(bId).click(); }; });
 bindEnter(['qc-user', 'qc-pass'], 'saveQCCredBtn');
 bindEnter(['titleInput'], 'addBtn');
-bindEnter(['group-name'], 'addGroupBtn');
-bindEnter(['sku-input'], 'saveSkuBtn');
+bindEnter(['group-name'], 'addGroupBtnSimple');
+bindEnter(['sku-input', 'sku-display-name', 'sku-custom-note'], 'saveSkuBtn');

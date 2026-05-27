@@ -37,6 +37,14 @@ Image right-click feature open any image in qc in a new tab perfectly,can we mak
 
 this is the text block code of caricature products <mat-cell _ngcontent-par-c263="" role="cell" class="mat-cell cdk-cell cdk-column-text mat-column-text ng-tns-c263-3 ng-star-inserted"><!----> - <!----><!----><!----><!----><!----><!----><!----><!----><!----></mat-cell> the text feild for this product remians "-" as there is no need of text ,Need a feature that adds particular text via Sku for this product in same sku grouping pop feature,"Any questions?"
 
+
+
+
+
+
+
+
+
 . When to show the text?
        * Should the custom text always replace whatever is in that cell?
        * Or should it only appear if the system shows a dash -?

@@ -450,29 +450,35 @@
     </div>
 
     <div class="accordion-header" id="sku-tracking-accordion">
-      <span>🎯 SKU Groups (v2)</span>
+      <span>🎯 SKU Tracker (v4)</span>
       <span id="sku-accordion-icon">▼</span>
     </div>
     <div id="sku-tracking-content" class="accordion-content">
-      <div class="shortcut-hint">Group similar SKUs with family & variant colors</div>
+      <!-- Breadcrumbs -->
+      <div id="sku-breadcrumbs" style="padding: 6px 10px; background: #f1f5f9; border-radius: 6px; font-size: 10px; color: #64748b; margin-bottom: 10px; display: flex; align-items: center; gap: 4px; overflow-x: auto; white-space: nowrap;">
+        <!-- Dynamically filled -->
+      </div>
       
       <!-- Create Group -->
       <div style="background: #f8fafc; padding: 10px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #e2e8f0;">
-        <div style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 6px;"><span id="groupSectionTitle">New Group</span></div>
+        <div style="font-size: 9px; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px;"><span id="groupSectionTitle">New Folder</span> in <span class="curr-folder-name">Home</span></div>
         <div class="input-row">
-          <input class="input" id="group-name" type="text" placeholder="Group Name (e.g. LED Lamps)" style="flex: 1;" />
-          <input type="color" id="group-color" value="#c0392b" style="width: 38px; height: 38px; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; background: #fff; padding: 2px;" />
+          <input class="input" id="group-name" type="text" placeholder="Folder Name..." style="flex: 2;" />
+          <div style="display: flex; gap: 4px; flex: 1; align-items: center;">
+            <input type="color" id="group-color" value="#c0392b" style="width: 38px; height: 38px; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; background: #fff; padding: 2px;" />
+            <input class="input" id="group-color-hex" type="text" placeholder="#HEX" style="font-size: 8px; padding: 10px 2px; text-align: center; margin-bottom: 0;" />
+          </div>
         </div>
         <div class="input-row" id="groupEditActions" style="display:none; gap:8px;">
           <button class="btn btn-outline btn-small" id="cancelGroupEditBtn" style="flex: 1;">Cancel</button>
-          <button class="btn btn-primary btn-small" id="addGroupBtn" style="flex: 2;">Update Group</button>
+          <button class="btn btn-primary btn-small" id="addGroupBtn" style="flex: 2;">Update</button>
         </div>
-        <button class="btn btn-primary btn-small" id="addGroupBtnSimple" style="width: 100%; margin-top: 4px;">Create Group</button>
+        <button class="btn btn-primary btn-small" id="addGroupBtnSimple" style="width: 100%; margin-top: 4px;">Create Folder</button>
       </div>
 
-      <!-- Add SKU to Group -->
+      <!-- Add SKU Section -->
       <div id="addSkuSection" style="display: none; background: #fff; padding: 10px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #c0392b;">
-        <div style="font-size: 10px; font-weight: 700; color: var(--primary); text-transform: uppercase; margin-bottom: 6px;"><span id="skuSectionAction">Add to</span>: <span id="targetGroupName"></span></div>
+        <div style="font-size: 9px; font-weight: 700; color: var(--primary); text-transform: uppercase; margin-bottom: 6px;"><span id="skuSectionAction">Add SKU</span> to <span class="curr-folder-name">Home</span></div>
         <div class="input-row">
           <input class="input" id="sku-input" type="text" placeholder="SKU Value" style="flex: 2;" />
           <input class="input" id="sku-display-name" type="text" placeholder="Name" style="flex: 1;" />
@@ -481,14 +487,21 @@
           <input class="input" id="sku-custom-note" type="text" placeholder="Custom Note (replaces '-')" style="flex: 1;" />
         </div>
         <div class="input-row">
-          <input type="color" id="sku-color" value="#3498db" style="width: 38px; height: 38px; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; background: #fff; padding: 2px;" />
+          <div style="display: flex; gap: 4px; flex: 1; align-items: center;">
+            <input type="color" id="sku-color" value="#3498db" style="width: 38px; height: 38px; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; background: #fff; padding: 2px;" />
+            <input class="input" id="sku-color-hex" type="text" placeholder="#HEX" style="font-size: 8px; padding: 10px 2px; text-align: center; margin-bottom: 0;" />
+          </div>
           <button class="btn btn-outline btn-small" id="cancelSkuBtn" style="flex: 1;">Cancel</button>
           <button class="btn btn-primary btn-small" id="saveSkuBtn" style="flex: 2;">Save SKU</button>
         </div>
       </div>
 
-      <div class="protected-list" id="skuList" style="margin-top: 10px; max-height: 200px;">
-        <div class="empty-state" id="skuEmptyState">No groups created</div>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+         <span style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase;">Contents</span>
+      </div>
+
+      <div class="protected-list" id="skuList" style="margin-top: 0; max-height: 280px; padding-bottom: 40px;">
+        <div class="empty-state" id="skuEmptyState">Folder is empty</div>
       </div>
     </div>
 

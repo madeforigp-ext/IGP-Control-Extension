@@ -103,6 +103,16 @@ HISTORY
 			2)Add SQC
 			3)ICON for Extension
 
+	06 18 pm 27/5/26
+			1)debugging sku grouping
+
+		TODO
+			1)Add intermesh
+			2)Add SQC
+			3)ICON for Extension
+			4)Count popup buuged out "no update"
+
+
 
 
 
