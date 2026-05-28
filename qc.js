@@ -19,7 +19,13 @@
       qc_rightclick_enabled: true, 
       qc_routing_enabled: true, 
       qc_global_enabled: true,
-      qc_autologin_enabled: true
+      qc_autologin_enabled: true,
+      qc_paste_routing_enabled: true
+    },
+    patterns: {
+      pkid: { prefix: '1, 12', max: 8 },
+      oid: { prefix: '18', max: 8 },
+      sku: { prefix: 'JVS', max: 10 }
     },
     skuTree: { id: 'root', name: 'Home', groups: [], skus: [] },
     skuLookup: {}, // Cached flat map
@@ -78,10 +84,23 @@
   const findFields = () => {
     const allInputs = Array.from(document.querySelectorAll('input:not([type="hidden"])')).filter(i => i.offsetWidth > 0);
     const mats = allInputs.filter(i => i.classList.contains('mat-input-element'));
+    
+    // Better detection based on labels
+    const findByLabel = (text) => {
+        return allInputs.find(i => {
+            const container = i.closest('.mat-form-field, .mat-form-field-infix');
+            if (!container) return false;
+            // Check for mat-label or label tags
+            const label = container.querySelector('mat-label, label');
+            return label && label.textContent.trim().toLowerCase().includes(text.toLowerCase());
+        });
+    };
+
     return { 
-      pkid: allInputs.find(i => i.id?.includes('packet') || i.placeholder?.toLowerCase().includes('packet')) || mats[3] || mats[0],
-      tray: allInputs.find(i => i.id?.includes('tray') || i.placeholder?.toLowerCase().includes('tray')) || mats[1],
-      oid:  mats[2], taskid: mats[0] 
+      pkid: findByLabel('packet id') || allInputs.find(i => i.id?.includes('packet') || i.placeholder?.toLowerCase().includes('packet')) || mats[3] || mats[0],
+      tray: findByLabel('tray') || allInputs.find(i => i.id?.includes('tray') || i.placeholder?.toLowerCase().includes('tray')) || mats[1],
+      oid:  findByLabel('order id') || mats[2], 
+      sku:  findByLabel('sku') || mats[0] 
     };
   };
 
@@ -117,8 +136,75 @@
     val = val.replace(/[^A-Z0-9]/gi, "").toUpperCase();
     if (!val) return null;
     if (/^\d{4}$/.test(val)) return 'tray';
-    if (/^\d{7,14}$/.test(val)) return 'pkid';
+    
+    const p = state.patterns;
+    for (let type in p) {
+      const prefixes = p[type].prefix.split(',').map(s => s.trim().toUpperCase()).filter(s => s);
+      const isMatch = prefixes.some(pre => val.startsWith(pre));
+      if (isMatch && val.length <= (p[type].max || 99)) return type;
+    }
     return null;
+  };
+
+  const scrapePageTasks = () => {
+    const rows = document.querySelectorAll('mat-row');
+    let addedCount = 0;
+    const currentSkus = new Set(Object.keys(state.skuLookup));
+    const newSkus = [];
+
+    rows.forEach(row => {
+      const taskIdEl = row.querySelector('.task-id');
+      if (!taskIdEl) return;
+      const parts = taskIdEl.textContent.trim().split('-');
+      if (parts.length < 3) return;
+      
+      const skuVal = parts[2];
+      if (currentSkus.has(skuVal)) return;
+
+      // Try to find SKU Name
+      let skuName = skuVal;
+      
+      // 1. Check expanded detail row (most accurate)
+      // In Angular Material tables, the detail row is often the next sibling
+      const detailRow = row.nextElementSibling;
+      if (detailRow && detailRow.classList.contains('example-detail-row')) {
+        const labels = Array.from(detailRow.querySelectorAll('.code-title'));
+        const nameLabel = labels.find(l => l.textContent.includes('SKU Name'));
+        if (nameLabel) {
+          const valEl = nameLabel.nextElementSibling;
+          if (valEl) skuName = valEl.textContent.trim();
+        }
+      }
+
+      // 2. Check mat-cells if not found in detail row
+      if (skuName === skuVal) {
+        const cells = Array.from(row.querySelectorAll('mat-cell'));
+        const nameCell = cells.find(c => 
+          c.classList.contains('mat-column-sku_name') || 
+          c.classList.contains('mat-column-product_name') || 
+          c.classList.contains('mat-column-product') ||
+          c.classList.contains('mat-column-name')
+        );
+        if (nameCell) skuName = nameCell.textContent.trim();
+      }
+
+      if (!currentSkus.has(skuVal)) {
+        newSkus.push({ sku: skuVal, name: skuName, color: '#3498db', note: '' });
+        currentSkus.add(skuVal);
+        addedCount++;
+      }
+    });
+
+    if (newSkus.length > 0) {
+      state.skuTree.skus.push(...newSkus);
+      chrome.storage.local.set({ skuTree: state.skuTree }, () => {
+        state.skuLookup = flattenTree(state.skuTree);
+        processSKUs();
+        // Sync to popup
+        chrome.runtime.sendMessage({ action: 'sku-sync', data: state.skuTree }).catch(() => {});
+      });
+    }
+    return { count: addedCount };
   };
 
   // ─── SKU ENGINE (Optimized) ────────────────────────────────────────────────
@@ -273,16 +359,40 @@
 
   const debouncedProcess = debounce(processSKUs, CONFIG.DEBOUNCE_WAIT);
 
+  // ─── PASTE ROUTING ─────────────────────────────────────────────────────────
+
+  document.addEventListener('paste', (e) => {
+    if (!qcEnabled || state.settings.qc_paste_routing_enabled === false) return;
+    
+    const pastedData = (e.clipboardData || window.clipboardData).getData('text');
+    if (!pastedData) return;
+
+    const val = pastedData.trim().toUpperCase();
+    const type = identify(val);
+    
+    if (type) {
+      const fields = findFields();
+      const target = fields[type];
+      if (target) {
+        // Only prevent default if we actually found a matching field to route to
+        e.preventDefault();
+        forceUpdate(target, val);
+        triggerSearch(target);
+      }
+    }
+  });
+
   // ─── SETTINGS & SYNC ───────────────────────────────────────────────────────
 
   const initSettings = () => {
     if (typeof chrome === 'undefined' || !chrome.storage) return;
-    chrome.storage.local.get([...Object.keys(state.settings), 'skuTree', 'widgetExpanded'], (data) => {
+    chrome.storage.local.get([...Object.keys(state.settings), 'skuTree', 'widgetExpanded', 'patterns'], (data) => {
       for (let k in state.settings) if (data[k] !== undefined) state.settings[k] = data[k];
       if (data.skuTree) {
         state.skuTree = data.skuTree;
         state.skuLookup = flattenTree(state.skuTree);
       }
+      if (data.patterns) state.patterns = data.patterns;
       state.widgetExpanded = data.widgetExpanded !== false;
       qcEnabled = state.settings.qc_enabled !== false;
       processSKUs();
@@ -300,15 +410,25 @@
           state.skuLookup = flattenTree(state.skuTree);
           processSKUs();
         }
+        if (key === 'patterns') {
+          state.patterns = changes[key].newValue;
+        }
       }
     });
 
     // GUARANTEED SYNC: Listen for direct messages from popup
-    chrome.runtime.onMessage.addListener((msg) => {
+    chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       if (msg.action === 'sku-sync') {
-        state.skuTree = msg.data;
-        state.skuLookup = flattenTree(state.skuTree);
+        if (msg.data) {
+          state.skuTree = msg.data;
+          state.skuLookup = flattenTree(state.skuTree);
+        }
+        if (msg.patterns) state.patterns = msg.patterns;
         processSKUs();
+      } else if (msg.action === 'scrape-tasks') {
+        const result = scrapePageTasks();
+        sendResponse(result);
+        return true;
       }
     });
 

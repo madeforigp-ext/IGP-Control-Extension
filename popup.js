@@ -35,6 +35,7 @@ setupToggle('toggle-qc-rightclick', 'qc_rightclick_enabled');
 setupToggle('toggle-qc-routing', 'qc_routing_enabled');
 setupToggle('toggle-qc-global', 'qc_global_enabled');
 setupToggle('toggle-qc-autologin', 'qc_autologin_enabled');
+setupToggle('toggle-qc-paste', 'qc_paste_routing_enabled');
 setupToggle('toggle-tabguard', 'tabguard_enabled');
 
 // ─── SKU TRACKING (v6 Drag & Drop) ───────────────────────────────────────────
@@ -53,12 +54,14 @@ chrome.storage.local.get(['skuTree', 'expandedFolders'], (data) => {
 });
 
 function save() {
-  chrome.storage.local.set({ skuTree, expandedFolders: Array.from(expandedFolders) }, () => {
-    renderTree();
-    // HARD SYNC
-    chrome.tabs.query({}, (tabs) => {
-      tabs.forEach(tab => {
-        chrome.tabs.sendMessage(tab.id, { action: 'sku-sync', data: skuTree }).catch(() => {});
+  chrome.storage.local.get(['patterns'], (data) => {
+    chrome.storage.local.set({ skuTree, expandedFolders: Array.from(expandedFolders) }, () => {
+      renderTree();
+      // HARD SYNC
+      chrome.tabs.query({}, (tabs) => {
+        tabs.forEach(tab => {
+          chrome.tabs.sendMessage(tab.id, { action: 'sku-sync', data: skuTree, patterns: data.patterns }).catch(() => {});
+        });
       });
     });
   });
@@ -312,6 +315,37 @@ function setupAccordion(hId, cId, iId) {
 }
 setupAccordion('qc-cred-accordion', 'qc-cred-content', 'qc-accordion-icon');
 setupAccordion('sku-tracking-accordion', 'sku-tracking-content', 'sku-accordion-icon');
+setupAccordion('patterns-accordion', 'patterns-content', 'patterns-accordion-icon');
+
+const PATTERN_FIELDS = ['pkid', 'oid', 'sku'];
+
+function loadPatterns() {
+  chrome.storage.local.get(['patterns'], (data) => {
+    const p = data.patterns || {
+      pkid: { prefix: '1, 12', max: 8 },
+      oid: { prefix: '18', max: 8 },
+      sku: { prefix: 'JVS', max: 10 }
+    };
+    PATTERN_FIELDS.forEach(f => {
+      document.getElementById(`p-${f}-prefix`).value = p[f].prefix;
+      document.getElementById(`p-${f}-max`).value = p[f].max;
+    });
+  });
+}
+loadPatterns();
+
+document.getElementById('savePatternsBtn').onclick = () => {
+  const p = {};
+  PATTERN_FIELDS.forEach(f => {
+    p[f] = {
+      prefix: document.getElementById(`p-${f}-prefix`).value.trim(),
+      max: parseInt(document.getElementById(`p-${f}-max`).value) || 0
+    };
+  });
+  chrome.storage.local.set({ patterns: p }, () => {
+    setStatus('PATTERNS SAVED', 'success');
+  });
+};
 
 function setupColorSync(cId, hId) {
   const c = document.getElementById(cId), h = document.getElementById(hId);
@@ -328,3 +362,22 @@ bindEnter(['qc-user', 'qc-pass'], 'saveQCCredBtn');
 bindEnter(['titleInput'], 'addBtn');
 bindEnter(['group-name'], 'addGroupBtnSimple');
 bindEnter(['sku-input', 'sku-display-name', 'sku-custom-note'], 'saveSkuBtn');
+
+// ─── SCRAPER ─────────────────────────────────────────────────────────────────
+
+document.getElementById('scrapeTasksBtn').onclick = () => {
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (tabs[0]) {
+      chrome.tabs.sendMessage(tabs[0].id, { action: 'scrape-tasks' }, (response) => {
+        if (chrome.runtime.lastError) {
+          setStatus('SCRAPE FAILED: PAGE NOT READY', 'error');
+        } else if (response && response.count > 0) {
+          setStatus(`SCRAPED ${response.count} NEW SKUS`, 'success');
+          // Tree will be updated via sku-sync message back from content script
+        } else {
+          setStatus('NO NEW SKUS FOUND', '');
+        }
+      });
+    }
+  });
+};

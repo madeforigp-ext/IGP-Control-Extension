@@ -25,6 +25,9 @@
       color: var(--text-main);
       font-family: 'Inter', sans-serif;
       overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 400px;
     }
 
     /* HEADER */
@@ -34,7 +37,7 @@
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
       position: sticky;
       top: 0;
-      z-index: 100;
+      z-index: 1000;
     }
 
     .title {
@@ -84,7 +87,7 @@
     }
 
     /* CONTENT */
-    .tab-content { display: none; padding-bottom: 10px; }
+    .tab-content { display: none; flex: 1; }
     .tab-content.active { display: block; animation: fadeIn 0.2s ease-out; }
 
     @keyframes fadeIn {
@@ -175,7 +178,7 @@
     input:checked + .slider:before { transform: translateX(18px); }
     .toggle.small input:checked + .slider:before { transform: translateX(14px); }
 
-    /* CREDENTIALS ACCORDION */
+    /* ACCORDIONS */
     .accordion-header {
       margin-top: 12px;
       padding: 10px 0 0;
@@ -272,9 +275,9 @@
       font-size: 11px;
     }
 
-    /* TABGUARD LIST */
+    /* LISTS */
     .protected-list {
-      max-height: 160px;
+      max-height: 280px;
       overflow-y: auto;
       margin: 12px 0;
       padding-right: 4px;
@@ -323,8 +326,11 @@
     .input-row { display: flex; gap: 8px; margin-bottom: 8px; }
     .input-row .input { margin-bottom: 0; }
 
-    /* STATUS */
+    /* STATUS (Sticky Bottom) */
     .status {
+      position: sticky;
+      bottom: 0;
+      z-index: 2000;
       padding: 12px 20px;
       font-size: 11px;
       color: var(--text-muted);
@@ -334,6 +340,7 @@
       display: flex;
       align-items: center;
       gap: 6px;
+      width: 100%;
     }
 
     .status::before {
@@ -409,13 +416,23 @@
       visibility: visible;
       bottom: 150%;
     }
+
+    /* TREE UI v6 */
+    .tree-row:hover { background: #f8fafc; }
+    .tree-row .row-actions:hover { opacity: 1 !important; }
+    .t-btn { background:none; border:none; cursor:pointer; font-size:10px; padding:2px; border-radius:4px; }
+    .t-btn:hover { background:#e2e8f0; }
   </style>
 </head>
 <body>
 
 <div class="header">
-  <div class="title">IGP CONTROL</div>
-  <div class="tagline">ROUTING · TABGUARD · AUTO-LOGIN</div>
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+      <div class="title">IGP CONTROL</div>
+      <div class="tagline">QC AUTOMATION · ROUTING · TABGUARD</div>
+    </div>
+  </div>
   <div class="tabs">
     <button class="tab-btn active" data-tab="controls">Controls</button>
     <button class="tab-btn" data-tab="tabguard">TabGuard</button>
@@ -448,20 +465,20 @@
       <span class="toggle-label">Auto-Login (JoinVentures) <i class="info-icon" data-tooltip="Automatically fills credentials and clicks sign-in on the JoinVentures login page.">i</i></span>
       <label class="toggle small"><input type="checkbox" id="toggle-qc-autologin" checked><span class="slider"></span></label>
     </div>
+    <div class="toggle-row">
+      <span class="toggle-label">Global Paste Routing <i class="info-icon" data-tooltip="When you paste an ID anywhere on the page, it automatically fills the correct field and searches.">i</i></span>
+      <label class="toggle small"><input type="checkbox" id="toggle-qc-paste" checked><span class="slider"></span></label>
+    </div>
 
     <div class="accordion-header" id="sku-tracking-accordion">
-      <span>🎯 SKU Tracker (v4)</span>
+      <span>🎯 SKU Tracker (v6 Tree)</span>
       <span id="sku-accordion-icon">▼</span>
     </div>
     <div id="sku-tracking-content" class="accordion-content">
-      <!-- Breadcrumbs -->
-      <div id="sku-breadcrumbs" style="padding: 6px 10px; background: #f1f5f9; border-radius: 6px; font-size: 10px; color: #64748b; margin-bottom: 10px; display: flex; align-items: center; gap: 4px; overflow-x: auto; white-space: nowrap;">
-        <!-- Dynamically filled -->
-      </div>
       
-      <!-- Create Group -->
+      <!-- Create Folder -->
       <div style="background: #f8fafc; padding: 10px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #e2e8f0;">
-        <div style="font-size: 9px; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px;"><span id="groupSectionTitle">New Folder</span> in <span class="curr-folder-name">Home</span></div>
+        <div style="font-size: 9px; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px;"><span id="groupSectionTitle">New Folder</span></div>
         <div class="input-row">
           <input class="input" id="group-name" type="text" placeholder="Folder Name..." style="flex: 2;" />
           <div style="display: flex; gap: 4px; flex: 1; align-items: center;">
@@ -476,9 +493,9 @@
         <button class="btn btn-primary btn-small" id="addGroupBtnSimple" style="width: 100%; margin-top: 4px;">Create Folder</button>
       </div>
 
-      <!-- Add SKU Section -->
+      <!-- Add SKU Section (Now Hidden by Default) -->
       <div id="addSkuSection" style="display: none; background: #fff; padding: 10px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #c0392b;">
-        <div style="font-size: 9px; font-weight: 700; color: var(--primary); text-transform: uppercase; margin-bottom: 6px;"><span id="skuSectionAction">Add SKU</span> to <span class="curr-folder-name">Home</span></div>
+        <div style="font-size: 9px; font-weight: 700; color: var(--primary); text-transform: uppercase; margin-bottom: 6px;"><span id="skuSectionAction">Add SKU</span> to <span class="curr-folder-name">...</span></div>
         <div class="input-row">
           <input class="input" id="sku-input" type="text" placeholder="SKU Value" style="flex: 2;" />
           <input class="input" id="sku-display-name" type="text" placeholder="Name" style="flex: 1;" />
@@ -498,9 +515,10 @@
 
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
          <span style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase;">Contents</span>
+         <button id="scrapeTasksBtn" style="border:none; background: #27ae60; color: #fff; border-radius: 4px; padding: 2px 8px; font-size: 9px; cursor:pointer; font-weight: 700;">🔍 SCRAPE PAGE</button>
       </div>
 
-      <div class="protected-list" id="skuList" style="margin-top: 0; max-height: 280px; padding-bottom: 40px;">
+      <div class="protected-list" id="skuList">
         <div class="empty-state" id="skuEmptyState">Folder is empty</div>
       </div>
     </div>
@@ -513,6 +531,43 @@
       <input class="input" id="qc-user" type="text" placeholder="Email / Username" />
       <input class="input" id="qc-pass" type="password" placeholder="Password" />
       <button class="btn btn-primary" id="saveQCCredBtn">Save QC Credentials</button>
+    </div>
+
+    <div class="accordion-header" id="patterns-accordion">
+      <span>📋 Scanner Patterns</span>
+      <span id="patterns-accordion-icon">▼</span>
+    </div>
+    <div id="patterns-content" class="accordion-content">
+      <div style="font-size: 10px; color: #94a3b8; margin-bottom: 10px;">Define rules to identify IDs. Use commas for multiple prefixes.</div>
+      
+      <!-- PKID -->
+      <div style="margin-bottom: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+        <div style="font-size: 9px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Packet ID (PKID)</div>
+        <div class="input-row">
+          <input class="input" id="p-pkid-prefix" type="text" placeholder="Prefix (e.g. 1, 12)" style="flex: 2;" />
+          <input class="input" id="p-pkid-max" type="number" placeholder="Max" style="flex: 1;" />
+        </div>
+      </div>
+
+      <!-- OID -->
+      <div style="margin-bottom: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+        <div style="font-size: 9px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Order ID (OID)</div>
+        <div class="input-row">
+          <input class="input" id="p-oid-prefix" type="text" placeholder="Prefix (e.g. 18)" style="flex: 2;" />
+          <input class="input" id="p-oid-max" type="number" placeholder="Max" style="flex: 1;" />
+        </div>
+      </div>
+
+      <!-- SKU -->
+      <div style="margin-bottom: 12px;">
+        <div style="font-size: 9px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">SKU Code</div>
+        <div class="input-row">
+          <input class="input" id="p-sku-prefix" type="text" placeholder="Prefix (e.g. JVS)" style="flex: 2;" />
+          <input class="input" id="p-sku-max" type="number" placeholder="Max" style="flex: 1;" />
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-small" id="savePatternsBtn">Save Patterns</button>
     </div>
   </div>
 

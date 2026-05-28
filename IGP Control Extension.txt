@@ -1,4 +1,4 @@
-1)QC PAGE 											[✔✔✔✔✔✔][➖❌➖➖❌❌][❌❌][✔✔✔✔✔]
+1)QC PAGE 											[✔✔✔✔✔✔][➖❌➖➖✔❌][❌❌][✔✔✔✔✔]
 	▶ Scan/Key Route 							       		
 		1)Global SCAN routes the ip to Tray Field(unique toggle)			 ✔
 		2)Global KEY detection works,ips to tray field(4-digits)(unique toggle)		 ✔
@@ -16,7 +16,7 @@
 		  implement via debugger access to)						 ➖
 		4)Import Export settings (no use ,coz extenison can only be shared via files)    ➖
 		5)Paste Feature	(pasting OID/Pkid/Sku/Barcode should route to thier 
-		  respected field								 ❌
+		  respected field								 ✔
 		6)Clicking the products in Icon will route the product sku to Sku field 	 ❌
 
 	ADVANCE FEATURE(damn sure noo!)
@@ -105,12 +105,27 @@ HISTORY
 
 	06 18 pm 27/5/26
 			1)debugging sku grouping
+			2)drag and drop sku,groups in Sku Grouping
 
 		TODO
 			1)Add intermesh
 			2)Add SQC
 			3)ICON for Extension
 			4)Count popup buuged out "no update"
+
+	01 02 pm 28/5/26
+			1)Adding feature scrapper and debugging sku grouping scrapper
+			2)Paste feature for Qc
+			3)Fixed PopUp UI bug(kinda)
+			4)Added Icon for extension
+
+		TODO
+			1)Add intermesh
+			2)Add SQC
+			3)ICON for Extension
+			4)Count popup buuged out "no update"
+			5)paste feature for Intermesh
+
 
 
 

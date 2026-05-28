@@ -3,6 +3,11 @@
   "name": "IGP Control",
   "version": "1.0",
   "description": "ScanRouter + TabGuard + Auto-Login — All in one.",
+  "icons": {
+    "16": "IGP 128x128.png",
+    "48": "IGP 128x128.png",
+    "128": "IGP 128x128.png"
+  },
   "permissions": ["tabs", "storage", "scripting", "activeTab"],
   "host_permissions": ["*://*/*"],
   "content_scripts": [
@@ -39,6 +44,13 @@
     }
   },
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "IGP 128x128.png",
+      "24": "IGP 128x128.png",
+      "32": "IGP 128x128.png",
+      "48": "IGP 128x128.png",
+      "128": "IGP 128x128.png"
+    }
   }
 }
