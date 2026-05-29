@@ -1,59 +1,71 @@
-1)QC PAGE 											[✔✔✔✔✔✔][➖❌➖➖✔❌][❌❌][✔✔✔✔✔]
-	▶ Scan/Key Route 							       		
-		1)Global SCAN routes the ip to Tray Field(unique toggle)			 ✔
-		2)Global KEY detection works,ips to tray field(4-digits)(unique toggle)		 ✔
-		3)[Auto Login] when session expires(with past login creds)		 	 ✔
-		4)Open Image Easily (right click opens/closes)					 ✔
-		5)Count Things									 ✔
-		6)Making [panel view more] thorough (giving color grades to same SKU?)		 ✔
-		  (This Feature maybe helpful,When panel order increases)(SKU grouping)	
+1)QC PAGE 											[+++++++][-x--+x][+x][+++++]
+	▶ SCAN/KEY ROUTE
+		+ 1)Global SCAN routes the ip to Tray Field(unique toggle)			 
+		+ 2)Global KEY detection works,ips to tray field(4-digits)(unique toggle)
+	▶ AUTO LOGIN   
+		+ 3)[Auto Login] when session expires(with past login creds)
+	▶ IMAGE OPENER
+		+ 4)Open Image Easily (right click opens/closes)
+	▶ SKU GROUPING
+		+ 5)Count Things (via sku grouping)						 
+		+ 6)Making [panel view more] thorough (giving color grades to same SKU?)		 
+		+  (This Feature maybe helpful,When panel order increases)(SKU grouping)
+	▶ GLOBAL PASTING 
+		+ 7)Routes the pasted data to their respected feild
+	▶ ICONS
+		+ 8)ICON for Extension	                 					 
 	FEATURE(maybe)							       		
-		1)[PKid Route](Added and Removed)					 	 ➖
-		  NO need of PKID Route as Qc Panel doesn't gets PKID scans much.
-		2)Detecting print pop up,[Auto print] Complicated Feature			 ❌		 	 
-		
-		3)[Auto Search] in Assembly(natively impossible for even extension,failed to
-		  implement via debugger access to)						 ➖
-		4)Import Export settings (no use ,coz extenison can only be shared via files)    ➖
-		5)Paste Feature	(pasting OID/Pkid/Sku/Barcode should route to thier 
-		  respected field								 ✔
-		6)Clicking the products in Icon will route the product sku to Sku field 	 ❌
+		- 1)[PKid Route](Added and Removed)					 	 
+		-   NO need of PKID Route as Qc Panel doesn't gets PKID scans much.
+		-   This feature is added kinda in a different way,in "paste FEATURE"
+		x 2)Detecting print pop up,[Auto print] Complicated Feature			 
+		x (coz of chrome security policies,so native popups can't be accessed by Ext)		
+		- 3)[Auto Search] in Assembly(natively impossible for even extension,failed to
+		-   implement via debugger access to)						 
+		- 4)Import Export settings (no use ,coz extenison can only be shared via files)    
+		+ 5)Paste Feature	(pasting OID/Pkid/Sku/Barcode should route to thier 
+		+  respected field								 
+		x 6)Clicking the products in Icon will route the product sku to Sku field 	 
 
 	ADVANCE FEATURE(damn sure noo!)
-		1)Making [panel view more] thorough (giving color grades to same OID/PKID?)	 ❌
-		  [Both feature can't be activated at same time,coz it adds complexity]
-		2)[AUTO PASS](with a warning Msg box) Complicated Feature			 ❌
+		+ 1)Making [panel view more] thorough (giving color grades to same OID/PKID?)	 
+		+  [Both feature can't be activated at same time,coz it adds complexity]
+		x 2)[AUTO PASS](with a warning Msg box) Complicated Feature			 
 	                                             	         
 
 	BUGS								        	
-		1)[SCAN BUG]Two refresh happens(Scan trigger and extension code	               	 ✔
-		  trigger both gets added ig)(GOT fixed in debugging other toggles) (fixed)
-		2)[PKID BUG]Tray starting with 12 Gets into PKID field in PKID feature   	 ✔
-		  (this feature got removed,coz of bug,but bug remains)(fixed)
-		3)[PKID BUG]Starting trolley with 12 Gets into PKID field in PKID       	 ✔
-		  feature(this feature got removed,coz of bug)(fixed)
-		4)GLobally all inputs routes to tray(even letters)				 ✔
-		  (FIX:Now Globally only 4 digits get routed into tray) (fixed)
-		5)QC Toggle bugs out sometime (fixed)						 ✔	
+		+ 1)[SCAN BUG]Two refresh happens(Scan trigger and extension code	               	
+		+   trigger both gets added ig)(GOT fixed in debugging other toggles) (fixed)
+		+ 2)[PKID BUG]Tray starting with 12 Gets into PKID field in PKID feature   	
+		+   (this feature got removed,coz of bug,but bug remains)(fixed)
+		+ 3)[PKID BUG]Starting trolley with 12 Gets into PKID field in PKID       	
+		+   feature(this feature got removed,coz of bug)(fixed)
+		+ 4)GLobally all inputs routes to tray(even letters)				
+		+   (FIX:Now Globally only 4 digits get routed into tray) (fixed)
+		+ 5)QC Toggle bugs out sometime (fixed)						 
 
 
-2)Extension Feature										[✔][❌]
+2)Extension Feature										[+][x]
 	▶Tab Gaurd
-		1)Protects the protected tab from closing,closes all unprotected tab at		 ✔
-		  once with a shortcut(customizable in Extension Tab)(like Ctrl-w) 
+		+ 1)Protects the protected tab from closing,closes all unprotected tab at		 
+		+   once with a shortcut(customizable in Extension Tab)(like Ctrl-w) 
 
 	BUGS											
-		1)Tab gaurd info is incorrect (shortcut)				         ❌			        
+		x 1)Tab gaurd info is incorrect (shortcut)				         			        
  
 HISTORY
-	6 40 pm 20/5/26 
+	
+	6 40 pm 20/5/26
+	{ 
 			1)added -Right click image feature for QC,SQC(ALL OTHER FEATURE WORKING I GUESS :( )
 		TODO
 			Intermesh image feature not added
 		BUGS 
 			QC Toggle bugs out sometime
+	}
 	
-	10 50 am 21/5/26 
+	10 50 am 21/5/26
+	{	
 			1)removed PKID GLobal detection from QC(Which was bugging out coz
 			  of 12 pattern in PKID and TrayNO.
 			2)fixed bug (QC Toggle bugs out sometime) 
@@ -61,72 +73,92 @@ HISTORY
 			4)fixed bug(unable to tab space to press button in QC coz of global detection feature)
 			5)Added FEATURE [Auto Login] in QC(dropdown like) change ui of intermesh auto
 			  login to dropdown like
+	}
 		BUGS 
-			Intermesh auto login bugged out (fixed)
+			-+ Intermesh auto login bugged out (fixed)
+	
 
 	11 50 am 22/5/26
+	{
 			1)removed whole SQC logic (bugging out too much	)
 			2)removed intermesh
 			3)debugged all toggles in qc to work in realtime.
 			4)Added advance setting for pattern matching of PKID,OID in intermesh.(buugy?)
+	}
 
 
 	04 19 pm 23/5/26
+	{
 			1)removed intermesh (COMPLETELY SCRAPED - ALL FILES AND LOGIC DELETED)
 			2)debugged all bugs in qc ,all featue working(Scan Routing,Image Right-Click,Global Type Detection,Auto-Login (JoinVentures))
 			3)added a main branch(as a backup)master branch has old Extension code.
 			4)right click opens a image, now rightclicking again the closes it.
 			5)info icon for all toggle explaining about the toggles.
+	}
 		TODO 
-			1)Add intermesh again ,all logics.
+			-+ 1)Add intermesh again ,all logics.
+	
 
 
 	04 19 pm 25/5/26
+	{
 			1)making image feature only work in Qc panel(but why, idk too)
 			2)image features work for all (intermesh,Qc,Sqc)
 			3)Making [panel view more] thorough (giving color grades to same OID/PKID?)	 
 		          [Both feature can't be activated at same time,coz it adds complexity] ,
 			  Count Things Adding this features (testing remains)
-
+	}
 		TODO
-			1)Add intermesh
-			2)Add SQC
+			x 1)Add intermesh
+			x 2)Add SQC
+	
 
 
 	04 00 pm 26/5/26
+	{
 			1)Adding Sku grouping by colors
-			2)Added Split colors per task (Group Color[caricature]+Product Color[multitasker,best doctor etc])
+			2)Added Split colors per task (Group Color[caricature] and Product Color[multitasker,best doctor etc])
 			3)Made sku Grouping modifiable
-	
+	}
 		TODO
-			1)Add intermesh
-			2)Add SQC
-			3)ICON for Extension
+			x 1)Add intermesh
+			x 2)Add SQC
+			+ 3)ICON for Extension
+	
 
 	06 18 pm 27/5/26
+	{
 			1)debugging sku grouping
 			2)drag and drop sku,groups in Sku Grouping
-
+	}
 		TODO
-			1)Add intermesh
-			2)Add SQC
-			3)ICON for Extension
-			4)Count popup buuged out "no update"
+			x 1)Add intermesh
+			x 2)Add SQC
+			+ 3)ICON for Extension
+			x 4)Count popup buuged out "no update"
+	
 
 	01 02 pm 28/5/26
+	{
 			1)Adding feature scrapper and debugging sku grouping scrapper
 			2)Paste feature for Qc
 			3)Fixed PopUp UI bug(kinda)
 			4)Added Icon for extension
-
+	}
 		TODO
-			1)Add intermesh
-			2)Add SQC
-			3)ICON for Extension
-			4)Count popup buuged out "no update"
-			5)paste feature for Intermesh
+			x 1)Add intermesh
+			x 2)Add SQC
+			x 4)Count popup buuged out "no update"
+			x 5)paste feature for Intermesh
+		BUGS	
+			x 1)Count popup buuged out "no update"
+	
+	
+	10 19 pm 29/5/26
+	{
+			1)
 
-
+}
 
 
 
