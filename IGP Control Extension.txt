@@ -5,11 +5,12 @@
 	▶ AUTO LOGIN   
 		+ 3)[Auto Login] when session expires(with past login creds)
 	▶ IMAGE OPENER
-		+ 4)Open Image Easily (right click opens/closes)
+		+ 4)Open Image Easily (right click opens/closes)(Global Feature-Works in SQC,QC,Intermesh)
 	▶ SKU GROUPING
 		+ 5)Count Things (via sku grouping)						 
 		+ 6)Making [panel view more] thorough (giving color grades to same SKU?)		 
 		+  (This Feature maybe helpful,When panel order increases)(SKU grouping)
+		+ 9)Search Feature in Sku tracking(to ease SKU Editing)
 	▶ GLOBAL PASTING 
 		+ 7)Routes the pasted data to their respected feild
 	▶ ICONS
@@ -160,9 +161,28 @@ HISTORY
 			1)debugged Sku tracking?
 
 }
+		TODO
+			x 1)Add intermesh
+			x 2)Add SQC
+			x 4)Count popup buuged out "no update"
+			x 5)paste feature for Intermesh
+		BUGS	
+			+ 1)Count popup buuged out "no update"
 
 
 
+05 35 pm 2/6/26
+	{
+			1)Search Feature in Sku tracking(to ease SKU Editing)
 
-
+}
+		TODO
+			x 1)Add intermesh
+			x 2)Add SQC
+			+ 4)Count popup buuged out "no update"
+			x 5)paste feature for Intermesh
+			+ 2)AUTO LOGIN bugged out
+		BUGS	
+			+ 1)Count popup buuged out "no update"
+			+ 2)AUTO LOGIN bugged out
 	

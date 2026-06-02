@@ -77,7 +77,7 @@
       isActive: (isJV || isIGP) && (settings.qc_enabled !== false),
       routingEnabled: isQCScannerPath && (settings.qc_routing_enabled !== false),
       globalEnabled: isQCScannerPath && (settings.qc_global_enabled !== false),
-      autoLoginEnabled: isJV && (settings.qc_autologin_enabled !== false)
+      autoLoginEnabled: (isJV || isIGP) && (settings.qc_autologin_enabled !== false)
     };
   };
 
@@ -175,6 +175,44 @@
       });
     }
     return { count: addedCount };
+  };
+
+  const handleAutoLogin = () => {
+    const ctx = getContext();
+    if (!ctx.autoLoginEnabled) return;
+
+    chrome.storage.local.get(['qc_user', 'qc_pass'], (data) => {
+      if (!data.qc_user || !data.qc_pass) return;
+
+      const attempt = () => {
+        if (state.isProcessing) return;
+        const user = document.querySelector('input[formcontrolname="email"], input[name="email"], input[type="email"], input#email');
+        const pass = document.querySelector('input[formcontrolname="password"], input[name="password"], input[type="password"], input#password');
+        const btn = Array.from(document.querySelectorAll('button')).find(b => {
+          const t = (b.innerText || "").toLowerCase();
+          return (t.includes('sign in') || t.includes('login') || b.type === 'submit') && b.offsetWidth > 0;
+        });
+
+        if (user && pass && btn) {
+          if (user.value === data.qc_user && pass.value === data.qc_pass) return;
+          state.isProcessing = true;
+          console.log('[IGP] Auto-Login: Filling credentials...');
+          forceUpdate(user, data.qc_user);
+          forceUpdate(pass, data.qc_pass);
+          setTimeout(() => {
+            if (!btn.disabled) {
+              console.log('[IGP] Auto-Login: Clicking button...');
+              btn.click();
+            }
+            state.isProcessing = false;
+          }, 1000);
+        }
+      };
+      
+      attempt();
+      const loginInt = setInterval(attempt, 3000);
+      setTimeout(() => clearInterval(loginInt), 15000);
+    });
   };
 
   // ─── SKU ENGINE (v6 Stable Tree) ───────────────────────────────────────────
@@ -350,12 +388,13 @@
 
   const initSettings = () => {
     if (typeof chrome === 'undefined' || !chrome.storage) return;
-    chrome.storage.local.get([...Object.keys(state.settings), 'skuTree', 'patterns'], (data) => {
+    chrome.storage.local.get([...Object.keys(state.settings), 'skuTree', 'patterns', 'qc_user', 'qc_pass'], (data) => {
       for (let k in state.settings) if (data[k] !== undefined) state.settings[k] = data[k];
       if (data.skuTree) { state.skuTree = data.skuTree; state.skuLookup = flattenTree(state.skuTree); }
       if (data.patterns) state.patterns = data.patterns;
       qcEnabled = state.settings.qc_enabled !== false;
       processSKUs();
+      handleAutoLogin();
     });
 
     chrome.storage.onChanged.addListener((changes, area) => {
@@ -368,6 +407,7 @@
           state.skuLookup = flattenTree(state.skuTree); refresh = true;
         }
         if (key === 'patterns') { state.patterns = changes[key].newValue; refresh = true; }
+        if (key === 'qc_user' || key === 'qc_pass') { handleAutoLogin(); }
       }
       if (refresh) processSKUs();
     });

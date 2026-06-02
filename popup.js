@@ -111,12 +111,21 @@ let draggedItem = null;
 let editingGroupId = null;
 let editingSkuIdx = null;
 let activeParentId = 'root';
+let searchTerm = '';
 
 chrome.storage.local.get(['skuTree', 'expandedFolders'], (data) => {
   if (data.skuTree) skuTree = data.skuTree;
   if (data.expandedFolders) expandedFolders = new Set(data.expandedFolders);
   renderTree();
 });
+
+const searchInput = document.getElementById('sku-search');
+if (searchInput) {
+  searchInput.oninput = (e) => {
+    searchTerm = e.target.value.trim().toLowerCase();
+    renderTree();
+  };
+}
 
 function saveTree() {
   chrome.storage.local.get(['patterns'], (data) => {
@@ -141,6 +150,14 @@ function findFolder(id, root = skuTree) {
   return null;
 }
 
+function checkMatchRecursive(node) {
+  if (!searchTerm) return true;
+  if (node.name.toLowerCase().includes(searchTerm)) return true;
+  if (node.skus && node.skus.some(s => s.name.toLowerCase().includes(searchTerm) || s.sku.toLowerCase().includes(searchTerm))) return true;
+  if (node.groups && node.groups.some(g => checkMatchRecursive(g))) return true;
+  return false;
+}
+
 function renderTree() {
   const list = document.getElementById('skuList');
   if (!list) return;
@@ -150,7 +167,18 @@ function renderTree() {
 
 function renderNode(node, container, depth, isLastArray) {
   const isRoot = node.id === 'root';
-  const isExpanded = expandedFolders.has(node.id);
+  
+  // Search Logic: Check if this node or any children match
+  let hasMatch = false;
+  if (searchTerm) {
+    const nameMatch = node.name.toLowerCase().includes(searchTerm);
+    const skuMatch = node.skus && node.skus.some(s => s.name.toLowerCase().includes(searchTerm) || s.sku.toLowerCase().includes(searchTerm));
+    const groupMatch = node.groups && node.groups.some(g => checkMatchRecursive(g));
+    hasMatch = nameMatch || skuMatch || groupMatch;
+    if (!hasMatch && !isRoot) return; // Hide if no match in this branch
+  }
+
+  const isExpanded = searchTerm ? true : expandedFolders.has(node.id); // Force expand if searching
 
   const row = document.createElement('div');
   row.className = 'tree-row' + (isRoot ? ' root-row' : '');
@@ -226,6 +254,9 @@ function renderNode(node, container, depth, isLastArray) {
     });
 
     skus.forEach((s, i) => {
+      // Filter SKUs
+      if (searchTerm && !s.name.toLowerCase().includes(searchTerm) && !s.sku.toLowerCase().includes(searchTerm) && !node.name.toLowerCase().includes(searchTerm)) return;
+
       const isLast = i === skus.length - 1;
       const skuRow = document.createElement('div');
       skuRow.className = 'tree-row sku-row';
