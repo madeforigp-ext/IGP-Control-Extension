@@ -1,5 +1,5 @@
-// ─── IGP Control: QC Engine (v6.2 Stable) ────────────────────────────────────
-// Final stabilization: fixed ID mismatches, sync bugs, and tree rendering.
+// ─── IGP Control: QC Engine (v6.4 Stable) ────────────────────────────────────
+// Sidebar Integration: "Task Tracker" integrated into native sidebar.
 
 (function() {
   'use strict';
@@ -29,7 +29,6 @@
     },
     skuTree: { id: 'root', name: 'Home', groups: [], skus: [] },
     skuLookup: {}, 
-    widgetExpanded: true,
     openGroupIds: ['root'], 
     scanBuffer: '',
     lastKeyTime: Date.now(),
@@ -52,12 +51,13 @@
 
   const flattenTree = (node, parentGroup = null) => {
     let skus = {};
-    if (node && node.skus) {
+    if (!node) return skus;
+    if (node.skus) {
       node.skus.forEach(s => {
         skus[s.sku] = { ...s, parent: parentGroup };
       });
     }
-    if (node && node.groups) {
+    if (node.groups) {
       node.groups.forEach(g => {
         Object.assign(skus, flattenTree(g, g));
       });
@@ -192,15 +192,18 @@
     const groups = node.groups || [];
     const skus = (node.skus || []).filter(s => (skuCounts[s.sku] || 0) > 0);
 
+    if (depth === 0 && groups.length === 0 && skus.length === 0) {
+       for (let skuVal in skuCounts) {
+         if (skuCounts[skuVal] > 0) skus.push({ sku: skuVal, name: skuVal, color: '#3498db' });
+       }
+    }
+
     groups.forEach((g, i) => {
-      if (g._total === 0) return;
+      if ((g._total || 0) === 0) return;
       const isExpanded = state.openGroupIds.includes(String(g.id));
       const isLast = (i === groups.length - 1) && (skus.length === 0);
-      
       let prefix = '';
-      for (let j = 0; j < depth; j++) {
-         prefix += `<span style="font-family:monospace; color:#cbd5e1; width:10px; display:inline-block;">${isLastArray[j] ? '&nbsp;' : '│'}</span>&nbsp;`;
-      }
+      for (let j = 0; j < depth; j++) prefix += `<span style="font-family:monospace; color:#cbd5e1; width:10px; display:inline-block;">${isLastArray[j] ? '&nbsp;' : '│'}</span>&nbsp;`;
       const connector = `<span style="font-family:monospace; color:#cbd5e1;">${isLast ? '└─' : '├─'}</span>`;
 
       html += `
@@ -208,11 +211,11 @@
           <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; cursor:pointer; padding: 1px 0;">
             <span style="display:flex; align-items:center; gap:4px; overflow:hidden;">
               <span style="white-space:nowrap;">${prefix}${connector}</span>
-              <span style="font-size:7px; color:#94a3b8; transition: transform 0.2s; transform: ${isExpanded ? 'rotate(180deg)' : 'rotate(90deg)'};">▲</span>
-              <span style="width:7px; height:7px; border-radius:2px; background:${g.color}; flex-shrink:0;"></span>
+              <span style="font-size:7px; color:#94a3b8; transform: ${isExpanded ? 'rotate(180deg)' : 'rotate(90deg)'};">▲</span>
+              <span style="width:7px; height:7px; border-radius:2px; background:${g.color || '#334155'}; flex-shrink:0;"></span>
               <span style="font-weight:600; font-size:11px; color:#1e293b; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${g.name}</span>
             </span>
-            <span style="font-size:10px; font-weight:800; color:${g.color};">${g._total}</span>
+            <span style="font-size:10px; font-weight:800; color:${g.color || '#334155'};">${g._total}</span>
           </div>
           ${isExpanded ? `<div class="igp-children">${renderTreeNodes(g, skuCounts, depth + 1, [...isLastArray, isLast])}</div>` : ''}
         </div>
@@ -222,52 +225,82 @@
     skus.forEach((s, i) => {
       const isLast = i === skus.length - 1;
       let prefix = '';
-      for (let j = 0; j < depth; j++) {
-         prefix += `<span style="font-family:monospace; color:#cbd5e1; width:10px; display:inline-block;">${isLastArray[j] ? '&nbsp;' : '│'}</span>&nbsp;`;
-      }
+      for (let j = 0; j < depth; j++) prefix += `<span style="font-family:monospace; color:#cbd5e1; width:10px; display:inline-block;">${isLastArray[j] ? '&nbsp;' : '│'}</span>&nbsp;`;
       const connector = `<span style="font-family:monospace; color:#cbd5e1;">${isLast ? '└─' : '├─'}</span>`;
-
       html += `
-        <div style="display:flex; align-items:center; justify-content:space-between; font-size:10px; color:#64748b; padding: 1px 0;">
+        <div style="display:flex; align-items:center; justify-content:space-between; font-size:11px; color:#334155; padding: 2px 0;">
           <span style="display:flex; align-items:center; gap:4px; overflow:hidden;">
             <span style="white-space:nowrap;">${prefix}${connector}</span>
-            <span style="width:4px; height:4px; border-radius:50%; background:${s.color}; flex-shrink:0;"></span>
-            <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${s.name}</span>
+            <span style="width:4px; height:4px; border-radius:50%; background:${s.color || '#3498db'}; flex-shrink:0;"></span>
+            <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:500;">${s.name}</span>
           </span>
-          <span style="font-weight:600;">${skuCounts[s.sku]}</span>
+          <span style="font-weight:800; color:#1e293b; background:#f1f5f9; padding:0 4px; border-radius:3px;">${skuCounts[s.sku]}</span>
         </div>
       `;
     });
     return html;
   };
 
-  const getSummaryWidget = () => {
-    let widget = document.getElementById('igp-sku-summary');
-    if (!widget) {
-      widget = document.createElement('div');
-      widget.id = 'igp-sku-summary';
-      Object.assign(widget.style, {
-        position: 'fixed', bottom: '20px', right: '20px', zIndex: '2147483647',
-        backgroundColor: 'rgba(255, 255, 255, 0.98)', border: '1px solid #e2e8f0', borderRadius: '12px',
-        boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', fontFamily: 'Inter, sans-serif',
-        backdropFilter: 'blur(12px)', transition: 'all 0.2s', display: 'none', overflow: 'hidden'
-      });
-      document.body.appendChild(widget);
-    }
-    return widget;
+  // ─── SIDEBAR INTEGRATION ───────────────────────────────────────────────────
+
+  const injectSidebarItem = () => {
+    const menu = document.getElementById('menu');
+    if (!menu || document.getElementById('igp-sidebar-li')) return;
+
+    const li = document.createElement('li');
+    li.id = 'igp-sidebar-li';
+    li.className = 'ng-star-inserted igp-sidebar-tracker-container';
+    li.style.position = 'relative';
+
+    li.innerHTML = `
+      <a class="ai-icon ng-star-inserted" href="javascript:void(0)" style="cursor:default;">
+        <i class="material-icons-outlined">track_changes</i>
+        <span class="nav-text" id="igp-sidebar-label">Task Tracker</span>
+      </a>
+      <div id="igp-sidebar-popup" style="
+        position: absolute; left: 100%; top: 0; min-width: 260px; 
+        background: #FFFFFF; border: 1px solid #e2e8f0; border-radius: 8px;
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); padding: 12px;
+        display: none; z-index: 99999; margin-left: 10px;
+        max-height: 500px; overflow-y: auto; cursor: default;
+      ">
+        <div style="font-size: 12px; font-weight: 600; color: #0f172a; display: inline-block; text-decoration: underline; text-decoration-color: #000000; text-decoration-thickness: 1px; text-underline-offset: 2px; margin-bottom: 8px;">
+  Pending Task
+</div>
+
+
+        <div id="igp-sidebar-tree-root"></div>
+      </div>
+    `;
+	//font-weight: 900;
+    // CSS for Hover
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .igp-sidebar-tracker-container:hover #igp-sidebar-popup { display: block !important; }
+      .igp-sidebar-tracker-container a i { color: #64748b; }
+      .igp-sidebar-tracker-container:hover a i { color: var(--primary); }
+      #igp-sidebar-popup::-webkit-scrollbar { width: 4px; }
+      #igp-sidebar-popup::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
+    `;
+    document.head.appendChild(style);
+    menu.appendChild(li);
   };
 
   const processSKUs = () => {
     if (!qcEnabled) {
-      const w = document.getElementById('igp-sku-summary');
-      if (w) w.style.display = 'none';
+      const li = document.getElementById('igp-sidebar-li');
+      if (li) li.style.display = 'none';
       return;
     }
-    const rows = document.querySelectorAll('mat-row');
-    if (rows.length === 0) return;
 
+    injectSidebarItem();
+    const li = document.getElementById('igp-sidebar-li');
+    if (li) li.style.display = 'block';
+
+    const rows = document.querySelectorAll('mat-row');
     const counts = {};
     let grandTotal = 0;
+    
     rows.forEach(row => {
       const taskIdEl = row.querySelector('.task-id');
       if (!taskIdEl) return;
@@ -289,27 +322,17 @@
     });
 
     countTree(state.skuTree, counts);
-    const widget = getSummaryWidget();
-    widget.style.display = 'block';
     
-    if (!state.widgetExpanded) {
-      widget.style.width = '48px'; widget.style.height = '48px'; widget.style.padding = '0';
-      widget.innerHTML = `<div id="igp-widget-toggle" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:20px;">🎯</div>`;
-    } else {
-      widget.style.width = '240px'; widget.style.padding = '12px';
-      widget.innerHTML = `
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid #f1f5f9; padding-bottom:6px;">
-          <span style="font-size:11px; font-weight:800; color:#1e293b;">TRACKER v6 (${grandTotal})</span>
-          <div style="display:flex; gap:8px;">
-            <span id="igp-collapse-all" title="Collapse All" style="cursor:pointer; color:#94a3b8; font-size:12px;">↔️</span>
-            <span id="igp-widget-toggle" style="cursor:pointer; color:#94a3b8; font-size:12px;">✕</span>
-          </div>
-        </div>
-        <div style="max-height:400px; overflow-y:auto; padding-right:4px;">
-          ${renderTreeNodes(state.skuTree, counts)}
-        </div>
-      `;
-      widget.querySelectorAll('.igp-tree-node').forEach(el => {
+    // Update Sidebar Label
+    const label = document.getElementById('igp-sidebar-label');
+    if (label) label.textContent = `Task Tracker (${grandTotal})`;
+
+    // Update Sidebar Tree
+    const treeContainer = document.getElementById('igp-sidebar-tree-root');
+    if (treeContainer) {
+      treeContainer.innerHTML = grandTotal > 0 ? renderTreeNodes(state.skuTree, counts) : '<div style="font-size:10px; color:#94a3b8; text-align:center; padding:10px;">No matches on page</div>';
+      
+      treeContainer.querySelectorAll('.igp-tree-node').forEach(el => {
         el.onclick = (e) => {
           e.stopPropagation();
           const id = String(el.dataset.id);
@@ -318,16 +341,7 @@
           processSKUs();
         };
       });
-      document.getElementById('igp-collapse-all').onclick = (e) => {
-        e.stopPropagation();
-        state.openGroupIds = (state.openGroupIds.length > 0) ? [] : ['root', ...Array.from(widget.querySelectorAll('.igp-tree-node')).map(el => String(el.dataset.id))];
-        processSKUs();
-      };
     }
-    document.getElementById('igp-widget-toggle').onclick = (e) => {
-      e.stopPropagation(); state.widgetExpanded = !state.widgetExpanded;
-      chrome.storage.local.set({ widgetExpanded: state.widgetExpanded }); processSKUs();
-    };
   };
 
   const debouncedProcess = debounce(processSKUs, CONFIG.DEBOUNCE_WAIT);
@@ -336,27 +350,26 @@
 
   const initSettings = () => {
     if (typeof chrome === 'undefined' || !chrome.storage) return;
-    chrome.storage.local.get([...Object.keys(state.settings), 'skuTree', 'widgetExpanded', 'patterns'], (data) => {
+    chrome.storage.local.get([...Object.keys(state.settings), 'skuTree', 'patterns'], (data) => {
       for (let k in state.settings) if (data[k] !== undefined) state.settings[k] = data[k];
       if (data.skuTree) { state.skuTree = data.skuTree; state.skuLookup = flattenTree(state.skuTree); }
       if (data.patterns) state.patterns = data.patterns;
-      state.widgetExpanded = data.widgetExpanded !== false;
       qcEnabled = state.settings.qc_enabled !== false;
       processSKUs();
     });
 
     chrome.storage.onChanged.addListener((changes, area) => {
       if (area !== 'local') return;
+      let refresh = false;
       for (let key in changes) {
-        if (state.settings.hasOwnProperty(key)) state.settings[key] = changes[key].newValue;
-        if (key === 'qc_enabled') qcEnabled = changes[key].newValue !== false;
+        if (state.settings.hasOwnProperty(key)) { state.settings[key] = changes[key].newValue; refresh = true; }
         if (key === 'skuTree') {
-          state.skuTree = changes[key].newValue || { id: 'root', groups: [], skus: [] };
-          state.skuLookup = flattenTree(state.skuTree);
+          state.skuTree = changes[key].newValue || { id: 'root', name: 'Home', groups: [], skus: [] };
+          state.skuLookup = flattenTree(state.skuTree); refresh = true;
         }
-        if (key === 'patterns') state.patterns = changes[key].newValue;
+        if (key === 'patterns') { state.patterns = changes[key].newValue; refresh = true; }
       }
-      processSKUs();
+      if (refresh) processSKUs();
     });
 
     chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -367,14 +380,6 @@
       } else if (msg.action === 'scrape-tasks') {
         sendResponse(scrapePageTasks());
         return true;
-      }
-    });
-
-    document.addEventListener('click', (e) => {
-      if (!state.widgetExpanded) return;
-      const w = document.getElementById('igp-sku-summary');
-      if (w && !w.contains(e.target)) {
-        state.widgetExpanded = false; chrome.storage.local.set({ widgetExpanded: false }); processSKUs();
       }
     });
   };
@@ -411,11 +416,9 @@
     if (!qcEnabled || e.ctrlKey || e.altKey || e.metaKey) return;
     const ctx = getContext();
     if (!ctx.isActive || !ctx.isScannerPath) return;
-
     const now = Date.now(), gap = now - state.lastKeyTime;
     state.lastKeyTime = now;
     if (gap > CONFIG.TYPING_GAP_THRESHOLD) { state.scanBuffer = ''; state.isRedirected = false; }
-
     if (e.key === 'Enter') {
       if (now - state.lastAutoSearchTime < CONFIG.SHIELD_TIME) { e.preventDefault(); e.stopImmediatePropagation(); return; }
       if (!ctx.routingEnabled) { state.scanBuffer = ''; state.isRedirected = false; return; }

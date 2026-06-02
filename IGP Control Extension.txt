@@ -42,7 +42,8 @@
 		+   feature(this feature got removed,coz of bug)(fixed)
 		+ 4)GLobally all inputs routes to tray(even letters)				
 		+   (FIX:Now Globally only 4 digits get routed into tray) (fixed)
-		+ 5)QC Toggle bugs out sometime (fixed)						 
+		+ 5)QC Toggle bugs out sometime (fixed)
+		x 6)Count popup buuged out "no update"
 
 
 2)Extension Feature										[+][x]
@@ -140,7 +141,7 @@ HISTORY
 
 	01 02 pm 28/5/26
 	{
-			1)Adding feature scrapper and debugging sku grouping scrapper
+			1)Adding feature scrapper and debugging sku grouping scrapper (can add many Groups)
 			2)Paste feature for Qc
 			3)Fixed PopUp UI bug(kinda)
 			4)Added Icon for extension
@@ -156,7 +157,7 @@ HISTORY
 	
 	10 19 pm 29/5/26
 	{
-			1)
+			1)debugged Sku tracking?
 
 }
 
