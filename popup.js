@@ -21,6 +21,28 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
   });
 });
 
+// ─── SECTION SWITCHER ───────────────────────────────────────────────────────
+
+const switchQC = document.getElementById('switch-qc');
+const switchIntermesh = document.getElementById('switch-intermesh');
+const qcSection = document.getElementById('qc-section');
+const intermeshSection = document.getElementById('intermesh-section');
+
+if (switchQC && switchIntermesh && qcSection && intermeshSection) {
+  switchQC.onclick = () => {
+    switchQC.classList.add('active');
+    switchIntermesh.classList.remove('active');
+    qcSection.style.display = 'block';
+    intermeshSection.style.display = 'none';
+  };
+  switchIntermesh.onclick = () => {
+    switchIntermesh.classList.add('active');
+    switchQC.classList.remove('active');
+    intermeshSection.style.display = 'block';
+    qcSection.style.display = 'none';
+  };
+}
+
 function setupToggle(id, storageKey) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -36,6 +58,8 @@ setupToggle('toggle-qc-routing', 'qc_routing_enabled');
 setupToggle('toggle-qc-global', 'qc_global_enabled');
 setupToggle('toggle-qc-autologin', 'qc_autologin_enabled');
 setupToggle('toggle-qc-paste', 'qc_paste_routing_enabled');
+setupToggle('toggle-intermesh-routing', 'intermesh_routing_enabled');
+setupToggle('toggle-intermesh-autologin', 'intermesh_autologin_enabled');
 setupToggle('toggle-tabguard', 'tabguard_enabled');
 
 // ─── QC CREDENTIALS ────────────────────────────────────────────────────────
@@ -55,6 +79,29 @@ if (saveQCCredBtn) {
       qc_pass: document.getElementById('qc-pass').value.trim()
     };
     chrome.storage.local.set(data, () => setStatus('QC credentials saved ✅', 'success'));
+  };
+}
+
+// ─── INTERMESH CREDENTIALS ──────────────────────────────────────────────────
+
+chrome.storage.local.get(['intermesh_user', 'intermesh_assoc', 'intermesh_pass'], (data) => {
+  const a = document.getElementById('intermesh-assoc');
+  const u = document.getElementById('intermesh-user');
+  const p = document.getElementById('intermesh-pass');
+  if (a && data.intermesh_assoc) a.value = data.intermesh_assoc;
+  if (u && data.intermesh_user) u.value = data.intermesh_user;
+  if (p && data.intermesh_pass) p.value = data.intermesh_pass;
+});
+
+const saveIntermeshBtn = document.getElementById('saveIntermeshCredBtn');
+if (saveIntermeshBtn) {
+  saveIntermeshBtn.onclick = () => {
+    const data = {
+      intermesh_assoc: document.getElementById('intermesh-assoc').value.trim(),
+      intermesh_user: document.getElementById('intermesh-user').value.trim(),
+      intermesh_pass: document.getElementById('intermesh-pass').value.trim()
+    };
+    chrome.storage.local.set(data, () => setStatus('Intermesh credentials saved ✅', 'success'));
   };
 }
 
@@ -436,20 +483,22 @@ function cancelAddSku() {
 
 // ─── PATTERNS ────────────────────────────────────────────────────────────────
 
-const PATTERN_FIELDS = ['pkid', 'oid', 'sku'];
+const PATTERN_FIELDS = ['pkid', 'oid', 'sku', 'barcode'];
 
 function loadPatterns() {
   chrome.storage.local.get(['patterns'], (data) => {
-    const p = data.patterns || {
+    const defaults = {
       pkid: { prefix: '1, 12', max: 8 },
       oid: { prefix: '18', max: 8 },
-      sku: { prefix: 'JVS', max: 10 }
+      sku: { prefix: 'JVS', max: 10 },
+      barcode: { prefix: 'HLSDP', max: 20 }
     };
+    const p = { ...defaults, ...(data.patterns || {}) };
     PATTERN_FIELDS.forEach(f => {
       const prefEl = document.getElementById(`p-${f}-prefix`);
       const maxEl = document.getElementById(`p-${f}-max`);
-      if (prefEl) prefEl.value = p[f].prefix;
-      if (maxEl) maxEl.value = p[f].max;
+      if (prefEl && p[f]) prefEl.value = p[f].prefix;
+      if (maxEl && p[f]) maxEl.value = p[f].max;
     });
   });
 }
@@ -510,6 +559,7 @@ function setupAccordion(hId, cId, iId) {
 }
 
 setupAccordion('qc-cred-accordion', 'qc-cred-content', 'qc-accordion-icon');
+setupAccordion('intermesh-cred-accordion', 'intermesh-cred-content', 'intermesh-accordion-icon');
 setupAccordion('sku-tracking-accordion', 'sku-tracking-content', 'sku-accordion-icon');
 setupAccordion('patterns-accordion', 'patterns-content', 'patterns-accordion-icon');
 setupAccordion('data-management-accordion', 'data-management-content', 'data-accordion-icon');
@@ -584,6 +634,7 @@ const bindEnter = (ids, bId) => ids.forEach(id => {
   }; 
 });
 bindEnter(['qc-user', 'qc-pass'], 'saveQCCredBtn');
+bindEnter(['intermesh-assoc', 'intermesh-user', 'intermesh-pass'], 'saveIntermeshCredBtn');
 bindEnter(['titleInput'], 'addBtn');
 bindEnter(['group-name'], 'addGroupBtnSimple');
 bindEnter(['sku-input', 'sku-display-name', 'sku-custom-note'], 'saveSkuBtn');

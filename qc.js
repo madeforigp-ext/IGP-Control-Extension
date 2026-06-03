@@ -20,12 +20,14 @@
       qc_routing_enabled: true, 
       qc_global_enabled: true,
       qc_autologin_enabled: true,
-      qc_paste_routing_enabled: true
+      qc_paste_routing_enabled: true,
+      intermesh_routing_enabled: true
     },
     patterns: {
       pkid: { prefix: '1, 12', max: 8 },
       oid: { prefix: '18', max: 8 },
-      sku: { prefix: 'JVS', max: 10 }
+      sku: { prefix: 'JVS', max: 10 },
+      barcode: { prefix: 'HLSDP', max: 12 }
     },
     skuTree: { id: 'root', name: 'Home', groups: [], skus: [] },
     skuLookup: {}, 
@@ -68,14 +70,17 @@
   const getContext = () => {
     const url = window.location.href;
     const isQCScannerPath = url.includes('qc-panel') || url.includes('/qc/');
-    const isImageFeatureActive = url.includes('/personalization/qc-panel') || url.includes('/super-qc') || url.includes('orders_vendor.php') || url.includes('persInfo.php');
+    const isIntermeshOrderPath = url.includes('orders_vendor.php');
+    const isImageFeatureActive = url.includes('/personalization/qc-panel') || url.includes('/super-qc') || isIntermeshOrderPath || url.includes('persInfo.php');
     const isJV = url.includes('joinventures.com'), isIGP = url.includes('indiangiftsportal.com');
     const settings = state.settings;
     return {
-      isScannerPath: isQCScannerPath,
+      isQCPath: isQCScannerPath,
+      isIntermeshPath: isIntermeshOrderPath,
+      isScannerPath: isQCScannerPath || isIntermeshOrderPath,
       isImageFeatureActive,
       isActive: (isJV || isIGP) && (settings.qc_enabled !== false),
-      routingEnabled: isQCScannerPath && (settings.qc_routing_enabled !== false),
+      routingEnabled: (isQCScannerPath && settings.qc_routing_enabled !== false) || (isIntermeshOrderPath && settings.intermesh_routing_enabled !== false),
       globalEnabled: isQCScannerPath && (settings.qc_global_enabled !== false),
       autoLoginEnabled: (isJV || isIGP) && (settings.qc_autologin_enabled !== false)
     };
@@ -85,25 +90,30 @@
     const allInputs = Array.from(document.querySelectorAll('input:not([type="hidden"])')).filter(i => i.offsetWidth > 0);
     const mats = allInputs.filter(i => i.classList.contains('mat-input-element'));
     const findByLabel = (text) => {
+        const cleanTarget = text.replace(/[^\w]/g, '').toLowerCase();
         return allInputs.find(i => {
             const container = i.closest('.mat-form-field, .mat-form-field-infix');
             if (!container) return false;
             const label = container.querySelector('mat-label, label');
-            return label && label.textContent.trim().toLowerCase().includes(text.toLowerCase());
+            if (!label) return false;
+            const cleanLabel = label.textContent.replace(/[^\w]/g, '').toLowerCase();
+            return cleanLabel.includes(cleanTarget);
         });
     };
     return { 
-      pkid: findByLabel('packet id') || allInputs.find(i => i.id?.includes('packet') || i.placeholder?.toLowerCase().includes('packet')) || mats[3] || mats[0],
+      pkid: findByLabel('packet id') || allInputs.find(i => i.name === 'packetid' || i.id?.includes('packet') || i.placeholder?.toLowerCase().includes('packet')) || mats[3] || mats[0],
       tray: findByLabel('tray') || allInputs.find(i => i.id?.includes('tray') || i.placeholder?.toLowerCase().includes('tray')) || mats[1],
-      oid:  findByLabel('order id') || mats[2], 
-      sku:  findByLabel('sku') || mats[0] 
+      oid:  findByLabel('order id') || allInputs.find(i => i.name === 'orders_id' || i.id?.includes('order')) || mats[2], 
+      sku:  findByLabel('sku') || mats[0],
+      barcode: findByLabel('barcode') || findByLabel('external') || findByLabel('hlsdp') || allInputs.find(i => i.id === 'mat-input-5' || i.getAttribute('aria-label')?.toLowerCase().includes('barcode') || i.name?.toLowerCase().includes('barcode') || i.placeholder?.toLowerCase().includes('barcode'))
     };
   };
 
   const forceUpdate = (el, val) => {
     if (!el) return;
     el.focus(); el.value = ''; el.select();
-    document.execCommand('insertText', false, val);
+    const ok = document.execCommand('insertText', false, val);
+    if (!ok) el.value = val;
     ['input', 'change', 'blur', 'keyup', 'keydown'].forEach(evt => el.dispatchEvent(new Event(evt, { bubbles: true })));
   };
 
@@ -115,12 +125,28 @@
     setTimeout(() => {
       const enterEvt = { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true };
       field.dispatchEvent(new KeyboardEvent('keydown', enterEvt));
-      const container = field?.closest('form, mat-card, .search-container') || document.body;
-      const btn = Array.from(container.querySelectorAll('button')).find(b => {
-        const t = (b.innerText || "").toLowerCase();
-        return (t === 'go' || t === 'search' || t.includes('find')) && !b.disabled;
-      });
-      if (btn) { state.lastAutoSearchTime = Date.now(); btn.click(); }
+      
+      const findBtn = (container) => {
+        if (!container) return null;
+        return Array.from(container.querySelectorAll('button, [role="button"], mat-icon-button, input[type="image"], input[type="submit"]')).find(b => {
+          const t = (b.innerText || b.value || b.getAttribute('alt') || b.getAttribute('aria-label') || "").toLowerCase();
+          return (t === 'go' || t.includes('search') || t.includes('find') || b.type === 'submit' || b.type === 'image') && !b.disabled && b.offsetWidth > 0;
+        });
+      };
+
+      // Progressively widen the search container: td -> tr -> form -> body
+      let btn = findBtn(field?.closest('td'));
+      if (!btn) btn = findBtn(field?.closest('tr'));
+      if (!btn) btn = findBtn(field?.closest('form, mat-card, .search-container'));
+      if (!btn) btn = findBtn(document.body);
+
+      if (btn) {
+        console.log(`[IGP] Clicking search button: ${btn.value || btn.innerText || btn.getAttribute('alt') || 'SUBMIT'}`);
+        state.lastAutoSearchTime = Date.now();
+        btn.click();
+      } else {
+        console.warn(`[IGP] No search button found for ${field.id || field.name || 'field'}`);
+      }
       state.isProcessing = false;
     }, CONFIG.SEARCH_DELAY);
   };
@@ -391,7 +417,7 @@
     chrome.storage.local.get([...Object.keys(state.settings), 'skuTree', 'patterns', 'qc_user', 'qc_pass'], (data) => {
       for (let k in state.settings) if (data[k] !== undefined) state.settings[k] = data[k];
       if (data.skuTree) { state.skuTree = data.skuTree; state.skuLookup = flattenTree(state.skuTree); }
-      if (data.patterns) state.patterns = data.patterns;
+      if (data.patterns) state.patterns = { ...state.patterns, ...data.patterns };
       qcEnabled = state.settings.qc_enabled !== false;
       processSKUs();
       handleAutoLogin();
@@ -406,7 +432,7 @@
           state.skuTree = changes[key].newValue || { id: 'root', name: 'Home', groups: [], skus: [] };
           state.skuLookup = flattenTree(state.skuTree); refresh = true;
         }
-        if (key === 'patterns') { state.patterns = changes[key].newValue; refresh = true; }
+        if (key === 'patterns') { state.patterns = { ...state.patterns, ...(changes[key].newValue || {}) }; refresh = true; }
         if (key === 'qc_user' || key === 'qc_pass') { handleAutoLogin(); }
       }
       if (refresh) processSKUs();
@@ -415,7 +441,7 @@
     chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       if (msg.action === 'sku-sync') {
         if (msg.data) { state.skuTree = msg.data; state.skuLookup = flattenTree(state.skuTree); }
-        if (msg.patterns) state.patterns = msg.patterns;
+        if (msg.patterns) state.patterns = { ...state.patterns, ...msg.patterns };
         processSKUs();
       } else if (msg.action === 'scrape-tasks') {
         sendResponse(scrapePageTasks());
@@ -427,12 +453,22 @@
   // ─── GLOBAL LISTENERS ──────────────────────────────────────────────────────
 
   document.addEventListener('paste', (e) => {
-    if (!qcEnabled || state.settings.qc_paste_routing_enabled === false) return;
+    if (!qcEnabled) return;
+    const ctx = getContext();
+    if (!ctx.isActive) return;
+
+    let pasteAllowed = false;
+    if (ctx.isQCPath && state.settings.qc_paste_routing_enabled !== false) pasteAllowed = true;
+    if (ctx.isIntermeshPath && state.settings.intermesh_routing_enabled !== false) pasteAllowed = true;
+    
+    if (!pasteAllowed) return;
+
     const pasted = (e.clipboardData || window.clipboardData).getData('text');
     if (!pasted) return;
     const val = pasted.trim().toUpperCase(), type = identify(val);
     if (type) {
       const f = findFields(), target = f[type];
+      console.log(`[IGP] Paste detected: Type=${type}, FoundTarget=${!!target}`);
       if (target) { e.preventDefault(); forceUpdate(target, val); triggerSearch(target); }
     }
   });
@@ -464,10 +500,13 @@
       if (!ctx.routingEnabled) { state.scanBuffer = ''; state.isRedirected = false; return; }
       const val = state.scanBuffer.replace(/[^A-Z0-9]/gi, "").toUpperCase();
       const type = identify(val);
-      if (type) {
+      if (type && type !== 'barcode') {
         e.preventDefault(); e.stopImmediatePropagation();
         const f = findFields(), target = f[type];
-        if (target) { forceUpdate(target, val); triggerSearch(target); }
+        if (target) {
+          forceUpdate(target, val);
+          triggerSearch(target);
+        }
       }
       state.scanBuffer = ''; state.isRedirected = false;
     } else if (e.key.length === 1) {

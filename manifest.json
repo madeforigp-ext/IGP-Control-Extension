@@ -24,6 +24,11 @@
       "js": ["image-closer.js"],
       "run_at": "document_idle",
       "all_frames": true
+    },
+    {
+      "matches": ["*://admin.indiangiftsportal.com/*"],
+      "js": ["intermesh.js"],
+      "run_at": "document_idle"
     }
   ],
   "background": {

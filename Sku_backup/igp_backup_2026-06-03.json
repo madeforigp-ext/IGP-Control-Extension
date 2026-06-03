@@ -1,0 +1,755 @@
+{
+  "expandedFolders": [
+    "f1780134974604",
+    "f1780310964734",
+    "f1780134776260"
+  ],
+  "patterns": {
+    "barcode": {
+      "max": 13,
+      "prefix": "HLSDP"
+    },
+    "oid": {
+      "max": 8,
+      "prefix": "18"
+    },
+    "pkid": {
+      "max": 8,
+      "prefix": "12"
+    },
+    "sku": {
+      "max": 10,
+      "prefix": "JVS"
+    }
+  },
+  "skuTree": {
+    "_total": 0,
+    "groups": [
+      {
+        "_total": 0,
+        "color": "#ff958a",
+        "groups": [
+          {
+            "_total": 0,
+            "color": "#b1957b",
+            "groups": [],
+            "id": "f1780131131220",
+            "name": "Caricature",
+            "skus": [
+              {
+                "color": "#d68483",
+                "name": "Carry Your Love Personalized Caricature Stand",
+                "note": "",
+                "sku": "J11153405"
+              },
+              {
+                "color": "#3498db",
+                "name": "Father And Son Personalized Caricature",
+                "note": "",
+                "sku": "J11140246"
+              },
+              {
+                "color": "#3498db",
+                "name": "Gamer Brothers Personalized Caricature",
+                "note": "",
+                "sku": "JVS1202907"
+              },
+              {
+                "color": "#3498db",
+                "name": "Always Elegant Personalized Caricature for Men",
+                "note": "",
+                "sku": "J11117914"
+              },
+              {
+                "color": "#640f08",
+                "name": "Personalized Queen Of Everything Caricature For Women",
+                "note": "Queen Of Everything",
+                "sku": "JVS1283248"
+              },
+              {
+                "color": "#030207",
+                "name": "Personalized Multitasker Caricature",
+                "note": "Multitasker",
+                "sku": "JVS1178507"
+              },
+              {
+                "color": "#3498db",
+                "name": "Personalized Soulmates Caricature On Wooden Base",
+                "note": "",
+                "sku": "J11124673"
+              },
+              {
+                "color": "#fff57a",
+                "name": "Best Friends Forever Caricature",
+                "note": "#Best Friends Forever",
+                "sku": "J11112549"
+              },
+              {
+                "color": "#3498db",
+                "name": "Funky Personalized Doctor Caricature",
+                "note": "",
+                "sku": "J11060184"
+              },
+              {
+                "color": "#3498db",
+                "name": "Karate Champ Personalized Caricature Mobile Stand",
+                "note": "",
+                "sku": "JVS1272311"
+              },
+              {
+                "color": "#f6a8f1",
+                "name": "Lady Boss Personalized Caricature",
+                "note": "\" LADY BOSS \"",
+                "sku": "J11112551"
+              },
+              {
+                "color": "#3498db",
+                "name": "Personalized Photographer Caricature with Wooden Stand",
+                "note": "",
+                "sku": "J11124674"
+              },
+              {
+                "color": "#3498db",
+                "name": "Personalized You & Me Bhaiya Bhabhi Caricature",
+                "note": "",
+                "sku": "JVS1300352"
+              },
+              {
+                "color": "#9c2020",
+                "name": "Personalized Together Is Our Favorite Place Couple's Caricature",
+                "note": "\" Together Is Our Favorite Place \"",
+                "sku": "JVS1438164"
+              },
+              {
+                "color": "#d94e43",
+                "name": "Cozy Couple Personalized Caricature",
+                "note": "\" You Make My Heart Smile \"",
+                "sku": "JVS1438165"
+              },
+              {
+                "color": "#b1957b",
+                "name": "Birthday Bliss Personalized Photo Wooden Stand",
+                "note": "\" Happy Birthday To You \"",
+                "sku": "JVS1425041"
+              },
+              {
+                "color": "#3498db",
+                "name": "Personalized Wanderlust Caricature Secret Santa Gift For Him",
+                "note": "",
+                "sku": "JVS1435809"
+              },
+              {
+                "color": "#3498db",
+                "name": "Cute Personalized Doctor Caricature",
+                "note": "",
+                "sku": "J11060183"
+              },
+              {
+                "color": "#3498db",
+                "name": "Wonder Woman Personalized LED Caricature",
+                "note": "",
+                "sku": "JVS1395252"
+              },
+              {
+                "color": "#395e94",
+                "name": "Personalized Gentleman Caricature",
+                "note": "#Workaholic",
+                "sku": "J11060185"
+              },
+              {
+                "color": "#3498db",
+                "name": "I'm Penguin-Sized Personalized Can Tumbler - White",
+                "note": "",
+                "sku": "JVS1266091"
+              },
+              {
+                "color": "#b1957b",
+                "name": "Personalized Photo Frame With Easel",
+                "note": "",
+                "sku": "JVS1441123"
+              },
+              {
+                "color": "#3498db",
+                "name": "Blossoming Love Personalized Anniversary Photo Stand",
+                "note": "",
+                "sku": "JVS1427550"
+              },
+              {
+                "color": "#9a0602",
+                "name": "Partners In Crime Personalized Caricature",
+                "note": "",
+                "sku": "JVS1267465"
+              },
+              {
+                "color": "#b1957b",
+                "name": "Soulmates Personalized Photo Frame With Easel",
+                "note": "\" Soulmates  \"",
+                "sku": "JVS1427090"
+              },
+              {
+                "color": "#3498db",
+                "name": "Personalized Lawsome Lawyer Caricature For Women",
+                "note": "",
+                "sku": "JVS1301377"
+              }
+            ]
+          },
+          {
+            "_total": 0,
+            "color": "#e3c7ff",
+            "groups": [],
+            "id": "f1780135030003",
+            "name": "Mug",
+            "skus": [
+              {
+                "color": "#3498db",
+                "name": "Evil Eye Mug And Coaster Combo",
+                "note": "",
+                "sku": "JVS1266172"
+              },
+              {
+                "color": "#3498db",
+                "name": "World's Best Brother Personalized Cermaic Mug",
+                "note": "",
+                "sku": "JVS1448788"
+              },
+              {
+                "color": "#3498db",
+                "name": "Heart Accent Personalized Ceramic Mug",
+                "note": "",
+                "sku": "JVS1438498"
+              },
+              {
+                "color": "#3498db",
+                "name": "Evil Eye Mug",
+                "note": "",
+                "sku": "JVS1266175"
+              },
+              {
+                "color": "#3498db",
+                "name": "Personalized Animated Couple Portrait Mug",
+                "note": "",
+                "sku": "JVS1438076"
+              },
+              {
+                "color": "#d89d9a",
+                "name": "Cat Couple Mugs",
+                "note": "",
+                "sku": "JVS1439521"
+              },
+              {
+                "color": "#3498db",
+                "name": "Sleek Convenience Personalized Mug",
+                "note": "",
+                "sku": "JVS1435710"
+              },
+              {
+                "color": "#3498db",
+                "name": "Rosy Charm Personalized Mug",
+                "note": "",
+                "sku": "JVS1438987"
+              }
+            ]
+          },
+          {
+            "_total": 0,
+            "color": "#47424c",
+            "groups": [],
+            "id": "f1780135146443",
+            "name": "Magnet",
+            "skus": [
+              {
+                "color": "#3498db",
+                "name": "You And Me Forever Personalized Fridge Magnet - Set Of 3",
+                "note": "",
+                "sku": "JVS1272788"
+              }
+            ]
+          },
+          {
+            "_total": 0,
+            "color": "#e22208",
+            "groups": [],
+            "id": "f1780309479037",
+            "name": "Other",
+            "skus": [
+              {
+                "color": "#e8eaec",
+                "name": "Heartfelt Memories Personalized Heart Frame",
+                "note": "",
+                "sku": "JVS1397345"
+              },
+              {
+                "color": "#3498db",
+                "name": "Happy Anniversary Personalized Rotating Wooden Photo Frame",
+                "note": "",
+                "sku": "JVS1440257"
+              }
+            ]
+          },
+          {
+            "_total": 0,
+            "color": "#f2c5c0",
+            "groups": [],
+            "id": "f1780310964734",
+            "name": "Bottle",
+            "skus": []
+          },
+          {
+            "_total": 0,
+            "color": "#b1957b",
+            "groups": [],
+            "id": "f1780471510899",
+            "name": "Photo Frame",
+            "skus": [
+              {
+                "color": "#3498db",
+                "name": "Personalized Daddy And Me Photo Frame",
+                "note": "\" Daddy And Me \"",
+                "sku": "JVS1280938"
+              },
+              {
+                "color": "#652a0a",
+                "name": "Personalized Love And Blessings Collage Photo Frame For Birthday",
+                "note": "\" Love And Blessings \"",
+                "sku": "JVS1283826"
+              },
+              {
+                "color": "#2a5957",
+                "name": "Personalized Love You Mom Photo Keychain",
+                "note": "\" Love You Mom \"",
+                "sku": "JVS1451233"
+              },
+              {
+                "color": "#0a0406",
+                "name": "3D Love Pop - Personalized Caricature Photo Frame",
+                "note": "",
+                "sku": "JVS1272315"
+              }
+            ]
+          }
+        ],
+        "id": "f1780134776260",
+        "name": "Sublimation",
+        "skus": []
+      },
+      {
+        "_total": 0,
+        "color": "#4d95f5",
+        "groups": [
+          {
+            "_total": 0,
+            "color": "#d4b6ec",
+            "groups": [
+              {
+                "_total": 0,
+                "color": "#100f0f",
+                "groups": [],
+                "id": "f1780136041945",
+                "name": "Black Box",
+                "skus": [
+                  {
+                    "color": "#0b060a",
+                    "name": "Jungle Joy Personalized LED Lamp For Kids",
+                    "note": "",
+                    "sku": "JVS1408437"
+                  },
+                  {
+                    "color": "#0b060a",
+                    "name": "Glowing Love Personalized Photo Frame For Couples",
+                    "note": "",
+                    "sku": "JVS1399019"
+                  },
+                  {
+                    "color": "#0b060a",
+                    "name": "Special Memory Personalized LED Lamp",
+                    "note": "",
+                    "sku": "JVS1438990"
+                  },
+                  {
+                    "color": "#0b060a",
+                    "name": "Personalized Daily Journal LED Lamp",
+                    "note": "",
+                    "sku": "JVS1277880"
+                  },
+                  {
+                    "color": "#0b060a",
+                    "name": "Unique Personalized LED Photo Frame",
+                    "note": "\" TOO GLAM TO GIVE A DAMN \"",
+                    "sku": "JVS1443895"
+                  },
+                  {
+                    "color": "#0b060a",
+                    "name": "Eternal Love - Personalized LED Lamp",
+                    "note": "",
+                    "sku": "JVS1273938"
+                  }
+                ]
+              },
+              {
+                "_total": 0,
+                "color": "#c34f1d",
+                "groups": [],
+                "id": "f1780136203905",
+                "name": "Brown Box",
+                "skus": [
+                  {
+                    "color": "#c34f1d",
+                    "name": "Personalized Couple's Spotify LED Lamp",
+                    "note": "",
+                    "sku": "JVS1399020"
+                  },
+                  {
+                    "color": "#c34f1d",
+                    "name": "Personalized Special LED Lamp",
+                    "note": "",
+                    "sku": "JVS1399864"
+                  }
+                ]
+              },
+              {
+                "_total": 0,
+                "color": "#ff887a",
+                "groups": [],
+                "id": "f1780136323288",
+                "name": "Other",
+                "skus": [
+                  {
+                    "color": "#70411b",
+                    "name": "Personalized I Love You Acrylic Collage Frame",
+                    "note": "",
+                    "sku": "JVS1400594"
+                  }
+                ]
+              }
+            ],
+            "id": "f1780134974604",
+            "name": "Acrylic",
+            "skus": [
+              {
+                "color": "#3498db",
+                "name": "Insta Memories LED Lamp - Personalized - Birthday",
+                "note": "",
+                "sku": "JVS1240712"
+              },
+              {
+                "color": "#3498db",
+                "name": "Infinite Love Personalized LED Lamp Black Base",
+                "note": "",
+                "sku": "JVS1396884"
+              },
+              {
+                "color": "#3498db",
+                "name": "Personalized LED Photo Frame Lamp for Mother's Day",
+                "note": "",
+                "sku": "JVS1448212"
+              }
+            ]
+          },
+          {
+            "_total": 0,
+            "color": "#0c0f64",
+            "groups": [],
+            "id": "f1780305718186",
+            "name": "Leather",
+            "skus": [
+              {
+                "color": "#0c0f64",
+                "name": "Wallet combo",
+                "note": "",
+                "sku": "JVS1285263"
+              },
+              {
+                "color": "#3498db",
+                "name": "Personalized Black Leather Wallet for Men",
+                "note": "",
+                "sku": "L11125146"
+              },
+              {
+                "color": "#3498db",
+                "name": "Floral Essence Personalized PU Leather Diary",
+                "note": "",
+                "sku": "JVS1278319"
+              }
+            ]
+          },
+          {
+            "_total": 0,
+            "color": "#d3ccc6",
+            "groups": [],
+            "id": "f1780311674567",
+            "name": "Bottle/Tumbler",
+            "skus": []
+          }
+        ],
+        "id": "f1780134900147",
+        "name": "UV Machine",
+        "skus": []
+      },
+      {
+        "_total": 0,
+        "color": "#ff301a",
+        "groups": [],
+        "id": "f1780135898866",
+        "name": "Laser",
+        "skus": [
+          {
+            "color": "#3498db",
+            "name": "Stay Pawsitive Personalized Keychain",
+            "note": "",
+            "sku": "JVS1203234"
+          }
+        ]
+      },
+      {
+        "_total": 0,
+        "color": "#c0392b",
+        "groups": [],
+        "id": "f1780306105116",
+        "name": "Paper",
+        "skus": []
+      },
+      {
+        "_total": 0,
+        "color": "#3487f4",
+        "groups": [],
+        "id": "f1780309571941",
+        "name": "3D",
+        "skus": [
+          {
+            "color": "#3498db",
+            "name": "Personalized 3D Name Penstand - Blue",
+            "note": "",
+            "sku": "JVS1271294"
+          },
+          {
+            "color": "#f6a3b5",
+            "name": "3D Initial And Name Penstand",
+            "note": "",
+            "sku": "JVS1263442"
+          }
+        ]
+      }
+    ],
+    "id": "root",
+    "name": "Home",
+    "skus": [
+      {
+        "color": "#3498db",
+        "name": "Happy Birthday Personalized LED String Lights",
+        "note": "",
+        "sku": "M11146597"
+      },
+      {
+        "color": "#3498db",
+        "name": "Personalized Our Song Spotify Photo Mug With Photo Code",
+        "note": "",
+        "sku": "JVS1438077"
+      },
+      {
+        "color": "#3498db",
+        "name": "Cherished Memories Personalized Collage Photo Frame",
+        "note": "",
+        "sku": "JVS1272340"
+      },
+      {
+        "color": "#3498db",
+        "name": "Personalized Main Character Energy Acrylic Photo Frame",
+        "note": "",
+        "sku": "JVS1440255"
+      },
+      {
+        "color": "#3498db",
+        "name": "Lavender Love Personalized Birthday Body Care Combo For Her",
+        "note": "",
+        "sku": "JVS1405397"
+      },
+      {
+        "color": "#3498db",
+        "name": "Happy Memories Personalized Photo Pop-Up Box",
+        "note": "",
+        "sku": "JVS1440253"
+      },
+      {
+        "color": "#3498db",
+        "name": "Personalized Crochet Roses LED Frame",
+        "note": "",
+        "sku": "JVS1439524"
+      },
+      {
+        "color": "#3498db",
+        "name": "Personalized Mom And Daughter Caricature",
+        "note": "",
+        "sku": "JVS1205545"
+      },
+      {
+        "color": "#3498db",
+        "name": "Father's Day Personalized Gaming Caricature",
+        "note": "",
+        "sku": "JVS1223481"
+      },
+      {
+        "color": "#3498db",
+        "name": "Personalized Couple Ring LED Lamp - Wooden Finish Base",
+        "note": "",
+        "sku": "JVS1270965"
+      },
+      {
+        "color": "#3498db",
+        "name": "Personalized SuperBoy Caricature for Kids",
+        "note": "",
+        "sku": "J11113911"
+      },
+      {
+        "color": "#3498db",
+        "name": "Cool Boss Personalized Caricature",
+        "note": "",
+        "sku": "JVS1265458"
+      },
+      {
+        "color": "#3498db",
+        "name": "Personalized Lucky To Have You Rotating Frame",
+        "note": "",
+        "sku": "JVS1281344"
+      },
+      {
+        "color": "#3498db",
+        "name": "Personalized Coolest Iron Man LED Lamp",
+        "note": "",
+        "sku": "JVS1204679"
+      },
+      {
+        "color": "#3498db",
+        "name": "I Dream Of Space Personalized Caricature",
+        "note": "",
+        "sku": "JVS1176984"
+      },
+      {
+        "color": "#3498db",
+        "name": "Personalized Not Older Just Legendary Birthday Collage Photo Frame",
+        "note": "",
+        "sku": "JVS1283827"
+      },
+      {
+        "color": "#3498db",
+        "name": "Personalized Master Chef Mom Caricature",
+        "note": "",
+        "sku": "JVS1301379"
+      },
+      {
+        "color": "#3498db",
+        "name": "Personalized Cat and Heart Mug",
+        "note": "",
+        "sku": "JVS1448220"
+      },
+      {
+        "color": "#3498db",
+        "name": "Personalized Sleek Blue Diary And Pen Gift Combo For Him",
+        "note": "",
+        "sku": "JVS1425856"
+      },
+      {
+        "color": "#3498db",
+        "name": "Personalized Rollerball Pen with Blue Marble Design",
+        "note": "",
+        "sku": "JVS1446899"
+      },
+      {
+        "color": "#3498db",
+        "name": "Personalized Doctor Coat Pen Stand",
+        "note": "",
+        "sku": "JVS1223644"
+      },
+      {
+        "color": "#3498db",
+        "name": "LED Personalized Mom's Garden Table Lamp",
+        "note": "",
+        "sku": "JVS1448262"
+      },
+      {
+        "color": "#3498db",
+        "name": "Personalized Floral Temperature Tumbler",
+        "note": "",
+        "sku": "JVS1415494"
+      },
+      {
+        "color": "#3498db",
+        "name": "Classic Genuine Leather Personalized Blue Wallet Set",
+        "note": "",
+        "sku": "JVS1410339"
+      },
+      {
+        "color": "#3498db",
+        "name": "Personalized Slay The Day Mirror With Wooden Easel",
+        "note": "",
+        "sku": "JVS1435865"
+      },
+      {
+        "color": "#3498db",
+        "name": "Personalized Tan Leather Essentials",
+        "note": "",
+        "sku": "JVS1406067"
+      },
+      {
+        "color": "#3498db",
+        "name": "Insulated Smart LED Travel Mug with Temperature Display",
+        "note": "",
+        "sku": "JVS1442760"
+      },
+      {
+        "color": "#3498db",
+        "name": "Personalized Best Boss Ever LED Lamp - Brown Base",
+        "note": "",
+        "sku": "JVS1359790"
+      },
+      {
+        "color": "#3498db",
+        "name": "Personalized Doctor Clip Rollerball Pen",
+        "note": "",
+        "sku": "JVS1446898"
+      },
+      {
+        "color": "#3498db",
+        "name": "Classic Essentials Personalized Gift Hamper For Him",
+        "note": "",
+        "sku": "JVS1431637"
+      },
+      {
+        "color": "#3498db",
+        "name": "Personalized Vacuum-Insulated Coffee Mug",
+        "note": "",
+        "sku": "JVS1424308"
+      },
+      {
+        "color": "#3498db",
+        "name": "Personalized Doctor Clip Rollerball Pens - Set of 2",
+        "note": "",
+        "sku": "JVS1446844"
+      },
+      {
+        "color": "#3498db",
+        "name": "Vacation Mood Personalized Caricature Gift For Couples",
+        "note": "",
+        "sku": "JVS1438163"
+      },
+      {
+        "color": "#3498db",
+        "name": "Personalized French Essence Luxury Oud Perfume for Men - 30ml",
+        "note": "",
+        "sku": "JVS1453595"
+      },
+      {
+        "color": "#3498db",
+        "name": "Personalized Leather Essentials Gift Hamper for Dad",
+        "note": "",
+        "sku": "JVS1415345"
+      },
+      {
+        "color": "#3498db",
+        "name": "Personalized Penguin Love Mug",
+        "note": "",
+        "sku": "JVS1438823"
+      }
+    ]
+  }
+}

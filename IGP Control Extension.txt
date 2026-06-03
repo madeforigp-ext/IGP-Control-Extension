@@ -44,10 +44,29 @@
 		+ 4)GLobally all inputs routes to tray(even letters)				
 		+   (FIX:Now Globally only 4 digits get routed into tray) (fixed)
 		+ 5)QC Toggle bugs out sometime (fixed)
-		x 6)Count popup buuged out "no update"
+		+ 6)Count popup buuged out "no update"
+		+ 7)AUTO LOGIN Bugged out.
+		x 1)OID/PKID scan routes to their respected feild and tray feild also, so the search fails coz of tray input conflict
 
 
-2)Extension Feature										[+][x]
+
+ ----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+2)Intermesh PAGE 									[++]
+	▶ AUTO LOGIN   
+		+ 1)[Auto Login] when session expires(with login creds) [same as qc]
+	▶ GLOBAL PASTING 
+		+ 2)Paste feature for intermesh
+
+
+
+
+
+
+
+ ----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+3)Extension Feature										[+][x]
 	▶Tab Gaurd
 		+ 1)Protects the protected tab from closing,closes all unprotected tab at		 
 		+   once with a shortcut(customizable in Extension Tab)(like Ctrl-w) 
@@ -55,6 +74,9 @@
 	BUGS											
 		x 1)Tab gaurd info is incorrect (shortcut)				         			        
  
+ 
+ 
+ ----------------------------------------------------------------------------------------------------------------------------------------------------------
 HISTORY
 	
 	6 40 pm 20/5/26
@@ -181,8 +203,27 @@ HISTORY
 			x 2)Add SQC
 			+ 4)Count popup buuged out "no update"
 			x 5)paste feature for Intermesh
-			+ 2)AUTO LOGIN bugged out
+			+ 5)AUTO LOGIN bugged out
+			x 6)Barcode PASTING Feature
 		BUGS	
-			+ 1)Count popup buuged out "no update"
-			+ 2)AUTO LOGIN bugged out
-	
+			+ 1)AUTO LOGIN bugged out
+			
+09 50 am 3/6/26
+	{
+			1)Added Buttons in Controls for QC and Intermesh
+			2)Added logic for intermesh AUTO LOGIN.
+			3)Added Ui in popup.html
+			4)Added paste Feature for Intermesh
+			5)Fixed auto login bug [Intermesh]
+			6)added toggles for paste and auto LOGIN
+			7)debuged both added toggles
+
+}
+		TODO
+			+ 1)Add intermesh
+			x 2)Add SQC
+			+ 3)paste feature for Intermesh
+	        x 4)Barcode PASTING Feature [debugging a lot,with claude and myself]
+		BUGS
+			x 1)OID/PKID scan routes to their respected feild and tray feild so the search fails
+			
