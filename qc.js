@@ -292,7 +292,7 @@
       for (let j = 0; j < depth; j++) prefix += `<span style="font-family:monospace; color:#cbd5e1; width:10px; display:inline-block;">${isLastArray[j] ? '&nbsp;' : '│'}</span>&nbsp;`;
       const connector = `<span style="font-family:monospace; color:#cbd5e1;">${isLast ? '└─' : '├─'}</span>`;
       html += `
-        <div style="display:flex; align-items:center; justify-content:space-between; font-size:11px; color:#334155; padding: 2px 0;">
+        <div class="igp-sku-node" data-sku="${s.sku}" style="display:flex; align-items:center; justify-content:space-between; font-size:11px; color:#334155; padding: 4px; cursor:pointer; margin: 1px 0; transition: background 0.1s;">
           <span style="display:flex; align-items:center; gap:4px; overflow:hidden;">
             <span style="white-space:nowrap;">${prefix}${connector}</span>
             <span style="width:4px; height:4px; border-radius:50%; background:${s.color || '#3498db'}; flex-shrink:0;"></span>
@@ -325,8 +325,9 @@
         position: absolute; left: 100%; top: 0; min-width: 260px; 
         background: #FFFFFF; border: 1px solid #e2e8f0; border-radius: 8px;
         box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); padding: 12px;
-        display: none; z-index: 99999; margin-left: 10px;
+        z-index: 99999; margin-left: 10px;
         max-height: 500px; overflow-y: auto; cursor: default;
+        visibility: hidden; opacity: 0; transition: visibility 0s 0.2s, opacity 0.2s linear;
       ">
         <div style="font-size: 12px; font-weight: 600; color: #0f172a; display: inline-block; text-decoration: underline; text-decoration-color: #000000; text-decoration-thickness: 1px; text-underline-offset: 2px; margin-bottom: 8px;">
   Pending Task
@@ -340,11 +341,16 @@
     // CSS for Hover
     const style = document.createElement('style');
     style.innerHTML = `
-      .igp-sidebar-tracker-container:hover #igp-sidebar-popup { display: block !important; }
+      .igp-sidebar-tracker-container:hover #igp-sidebar-popup { 
+        visibility: visible !important; 
+        opacity: 1 !important; 
+        transition-delay: 0.3s; 
+      }
       .igp-sidebar-tracker-container a i { color: #64748b; }
       .igp-sidebar-tracker-container:hover a i { color: var(--primary); }
       #igp-sidebar-popup::-webkit-scrollbar { width: 4px; }
       #igp-sidebar-popup::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
+      .igp-sku-node:hover { background: #f1f5f9; border-radius: 4px; }
     `;
     document.head.appendChild(style);
     menu.appendChild(li);
@@ -403,6 +409,22 @@
           if (state.openGroupIds.includes(id)) state.openGroupIds = state.openGroupIds.filter(x => x !== id);
           else state.openGroupIds.push(id);
           processSKUs();
+        };
+      });
+
+      treeContainer.querySelectorAll('.igp-sku-node').forEach(el => {
+        el.onclick = (e) => {
+          e.stopPropagation();
+          const skuVal = el.dataset.sku;
+          if (!skuVal) return;
+          const fields = findFields();
+          if (fields.sku) {
+             console.log(`[IGP] Routing Sidebar click for SKU: ${skuVal}`);
+             forceUpdate(fields.sku, skuVal);
+             triggerSearch(fields.sku);
+          } else {
+             console.warn(`[IGP] No SKU field found to route ${skuVal}`);
+          }
         };
       });
     }
