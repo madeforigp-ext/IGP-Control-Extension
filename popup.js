@@ -60,6 +60,8 @@ setupToggle('toggle-qc-autologin', 'qc_autologin_enabled');
 setupToggle('toggle-qc-paste', 'qc_paste_routing_enabled');
 setupToggle('toggle-intermesh-routing', 'intermesh_routing_enabled');
 setupToggle('toggle-intermesh-autologin', 'intermesh_autologin_enabled');
+setupToggle('toggle-sku-styling', 'sku_styling_enabled');
+setupToggle('toggle-sku-pending', 'sku_pending_enabled');
 setupToggle('toggle-tabguard', 'tabguard_enabled');
 
 // ─── QC CREDENTIALS ────────────────────────────────────────────────────────
@@ -160,6 +162,118 @@ let editingSkuIdx = null;
 let activeParentId = 'root';
 let searchTerm = '';
 
+// Advanced Styling State
+let currentAdvStyle = { texture: 'solid', gloss: 50, stripes: 30, dots: 0 };
+let styleModalTarget = null; // 'group' or 'sku'
+
+function getStyleString(color, adv) {
+  const { texture = 'solid', gloss = 50, stripes = 30, dots = 0 } = adv || {};
+  let bg = `linear-gradient(90deg, ${color} 50%, ${color} 50%)`;
+  let bgSize = 'auto';
+
+  // 1. Textures
+  if (texture === 'wood') {
+    bg = `repeating-linear-gradient(90deg, rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 1px, transparent 1px, transparent 10px), ${bg}`;
+  } else if (texture === 'metal') {
+    bg = `linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(0,0,0,0.1) 100%), ${bg}`;
+  } else if (texture === 'carbon') {
+    bg = `linear-gradient(45deg, rgba(0,0,0,0.2) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.2) 75%, rgba(0,0,0,0.2)), 
+          linear-gradient(45deg, rgba(0,0,0,0.2) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.2) 75%, rgba(0,0,0,0.2)), ${bg}`;
+    bgSize = '4px 4px, 4px 4px, 100% 100%';
+  } else if (texture === 'honey') {
+    bg = `repeating-linear-gradient(120deg, rgba(255,255,255,0.1), rgba(255,255,255,0.1) 1px, transparent 1px, transparent 10px), ${bg}`;
+  } else if (texture === 'glass') {
+    bg = `linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 100%), ${bg}`;
+  }
+
+  // 2. Effects
+  if (dots > 0) {
+    bg = `radial-gradient(rgba(255,255,255,${dots/100}) 1.5px, transparent 1.5px), ${bg}`;
+    bgSize = bgSize === 'auto' ? '6px 6px, 100% 100%' : `6px 6px, ${bgSize}`;
+  }
+  if (stripes > 0) {
+    bg = `repeating-linear-gradient(45deg, rgba(255,255,255,${stripes/100}), rgba(255,255,255,${stripes/100}) 4px, transparent 4px, transparent 8px), ${bg}`;
+  }
+  if (gloss > 0) {
+    const gl = gloss / 100;
+    bg = `radial-gradient(ellipse at 50% 25%, rgba(255,255,255,${gl * 0.9}) 0%, transparent 60%), 
+          linear-gradient(to bottom, rgba(255,255,255,${gl * 0.3}) 0%, transparent 50%, rgba(0,0,0,${gl * 0.4}) 100%), ${bg}`;
+  }
+
+  return `background: ${bg}; background-size: ${bgSize};`;
+}
+
+// Modal Handlers
+function openStyleModal(target) {
+  styleModalTarget = target;
+  const color = target === 'group' ? document.getElementById('group-color').value : document.getElementById('sku-color').value;
+  updateModalPreview(color);
+  document.getElementById('styleModalOverlay').style.display = 'flex';
+}
+
+function updateModalPreview(color) {
+  const preview = document.getElementById('modalPreview');
+  preview.style.cssText = getStyleString(color, currentAdvStyle);
+}
+
+// Initialize Sliders
+['gloss', 'stripes', 'dots'].forEach(key => {
+  const range = document.getElementById(`range-${key}`);
+  const val = document.getElementById(`val-${key}`);
+  range.oninput = () => {
+    currentAdvStyle[key] = range.value;
+    val.textContent = range.value + '%';
+    const color = styleModalTarget === 'group' ? document.getElementById('group-color').value : document.getElementById('sku-color').value;
+    updateModalPreview(color);
+  };
+});
+
+// Texture Buttons
+document.querySelectorAll('.texture-btn').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.texture-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentAdvStyle.texture = btn.dataset.texture;
+    const color = styleModalTarget === 'group' ? document.getElementById('group-color').value : document.getElementById('sku-color').value;
+    updateModalPreview(color);
+  };
+});
+
+document.getElementById('applyStyleBtn').onclick = () => {
+  document.getElementById('styleModalOverlay').style.display = 'none';
+  renderTree(); // Update tree previews
+};
+
+// Bind Modal Open Buttons
+document.querySelectorAll('.open-style-btn').forEach(btn => {
+  btn.onclick = (e) => {
+     e.preventDefault();
+     // Load existing style if editing
+     if (btn.dataset.target === 'group' && editingGroupId) {
+       const g = findFolder(editingGroupId);
+       if (g.advStyle) Object.assign(currentAdvStyle, g.advStyle);
+     } else if (btn.dataset.target === 'sku' && editingSkuIdx !== null) {
+       const f = findFolder(activeParentId);
+       const s = f.skus[editingSkuIdx];
+       if (s.advStyle) Object.assign(currentAdvStyle, s.advStyle);
+     } else {
+       // Reset for new
+       currentAdvStyle = { texture: 'solid', gloss: 50, stripes: 30, dots: 0 };
+     }
+     
+     // Sync sliders UI
+     ['gloss', 'stripes', 'dots'].forEach(k => {
+       document.getElementById(`range-${k}`).value = currentAdvStyle[k];
+       document.getElementById(`val-${k}`).textContent = currentAdvStyle[k] + '%';
+     });
+     document.querySelectorAll('.texture-btn').forEach(b => {
+       b.classList.toggle('active', b.dataset.texture === currentAdvStyle.texture);
+     });
+
+     openStyleModal(btn.dataset.target);
+  };
+});
+
 chrome.storage.local.get(['skuTree', 'expandedFolders'], (data) => {
   if (data.skuTree) skuTree = data.skuTree;
   if (data.expandedFolders) expandedFolders = new Set(data.expandedFolders);
@@ -246,7 +360,7 @@ function renderNode(node, container, depth, isLastArray) {
 
   row.innerHTML = `
     <div style="white-space:nowrap; display:flex; align-items:center;">${prefix}${connector}</div>
-    <div style="width: 12px; height: 12px; border-radius: 3px; background: ${node.color || '#334155'}; flex-shrink:0; margin-right:4px;"></div>
+    <div style="width: 12px; height: 12px; border-radius: 3px; flex-shrink:0; margin-right:4px; ${getStyleString(node.color || '#334155', node.advStyle)}"></div>
     <span style="font-size: 11px; font-weight: ${isRoot ? '800' : '600'}; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${isRoot ? '🏠 Home' : node.name}</span>
     <div class="row-actions" style="display: flex; gap: 4px; opacity: 0.4;">
        <button class="t-btn btn-add" title="Add SKU">+</button>
@@ -321,7 +435,7 @@ function renderNode(node, container, depth, isLastArray) {
 
       skuRow.innerHTML = `
         <div style="white-space:nowrap; display:flex; align-items:center;">${sPrefix}${sConnector}</div>
-        <div style="width: 6px; height: 6px; border-radius: 50%; background: ${s.color}; flex-shrink:0; margin-right:4px;"></div>
+        <div style="width: 6px; height: 6px; border-radius: 50%; flex-shrink:0; margin-right:4px; ${getStyleString(s.color || '#3498db', s.advStyle)}"></div>
         <span style="font-size: 10px; color: #64748b; flex: 1;">${s.name} <span style="opacity:0.6">(${s.sku})</span></span>
         <div class="row-actions" style="display: flex; gap: 4px; opacity: 0.4;">
            <button class="t-btn btn-edit-s" title="Edit">✏️</button>
@@ -387,9 +501,18 @@ function removeFolder(root, id) {
 
 function startAddSku(parentId) {
   activeParentId = parentId; editingSkuIdx = null;
+  currentAdvStyle = { texture: 'solid', gloss: 50, stripes: 30, dots: 0 }; // Reset for new
   const s = document.getElementById('addSkuSection');
   if (s) s.style.display = 'block';
   document.querySelectorAll('.curr-folder-name').forEach(el => el.textContent = findFolder(parentId).name);
+  
+  // Clear inputs
+  document.getElementById('sku-input').value = '';
+  document.getElementById('sku-display-name').value = '';
+  document.getElementById('sku-custom-note').value = '';
+  document.getElementById('sku-color').value = '#3498db';
+  document.getElementById('sku-color-hex').value = '#3498DB';
+
   const inp = document.getElementById('sku-input');
   if (inp) inp.focus();
 }
@@ -402,6 +525,11 @@ function startEditGroup(id) {
   if (gn) gn.value = g.name;
   if (gc) gc.value = g.color;
   if (gch) gch.value = g.color.toUpperCase();
+  
+  // Load advanced style
+  if (g.advStyle) currentAdvStyle = { ...g.advStyle };
+  else currentAdvStyle = { texture: 'solid', gloss: 50, stripes: 30, dots: 0 };
+
   document.getElementById('groupSectionTitle').textContent = 'Edit Folder';
   document.getElementById('addGroupBtnSimple').style.display = 'none';
   document.getElementById('groupEditActions').style.display = 'flex';
@@ -420,8 +548,14 @@ function startEditSku(parentId, idx) {
   if (sc) sc.value = s.color;
   const sch = document.getElementById('sku-color-hex');
   if (sch) sch.value = s.color.toUpperCase();
+
+  // Load advanced style
+  if (s.advStyle) currentAdvStyle = { ...s.advStyle };
+  else currentAdvStyle = { texture: 'solid', gloss: 50, stripes: 30, dots: 0 };
+
   const sSect = document.getElementById('addSkuSection');
   if (sSect) sSect.style.display = 'block';
+  document.getElementById('skuSectionAction').textContent = 'Edit SKU';
 }
 
 const btnGrpSimple = document.getElementById('addGroupBtnSimple');
@@ -431,15 +565,22 @@ if (btnGrp) btnGrp.onclick = handleGroupUpsert;
 
 function handleGroupUpsert() {
   const name = document.getElementById('group-name').value.trim();
-  const color = document.getElementById('group-color').value;
+  const colorPicker = document.getElementById('group-color').value;
+  const colorHex = document.getElementById('group-color-hex').value.trim();
+  const color = /^#[0-9A-F]{6}$/i.test(colorHex) ? colorHex : colorPicker;
+
   if (!name) return;
   if (editingGroupId) {
-    const g = findFolder(editingGroupId); g.name = name; g.color = color;
+    const g = findFolder(editingGroupId); 
+    g.name = name; 
+    g.color = color; 
+    g.advStyle = { ...currentAdvStyle };
     cancelGroupEdit();
   } else {
     const p = findFolder(activeParentId) || skuTree;
-    p.groups.push({ id: 'f'+Date.now(), name, color, groups: [], skus: [] });
+    p.groups.push({ id: 'f'+Date.now(), name, color, advStyle: { ...currentAdvStyle }, groups: [], skus: [] });
     document.getElementById('group-name').value = '';
+    currentAdvStyle = { texture: 'solid', gloss: 50, stripes: 30, dots: 0 };
   }
   saveTree();
 }
@@ -450,12 +591,20 @@ if (saveSkuBtn) {
     const sku = document.getElementById('sku-input').value.trim().toUpperCase();
     const name = document.getElementById('sku-display-name').value.trim() || sku;
     const note = document.getElementById('sku-custom-note').value.trim();
-    const color = document.getElementById('sku-color').value;
+    const colorPicker = document.getElementById('sku-color').value;
+    const colorHex = document.getElementById('sku-color-hex').value.trim();
+    const color = /^#[0-9A-F]{6}$/i.test(colorHex) ? colorHex : colorPicker;
+
     if (!sku) return;
     const f = findFolder(activeParentId);
-    if (editingSkuIdx !== null) f.skus[editingSkuIdx] = { sku, name, color, note };
-    else f.skus.push({ sku, name, color, note });
+    const advStyle = { ...currentAdvStyle };
+    if (editingSkuIdx !== null) {
+      f.skus[editingSkuIdx] = { sku, name, color, note, advStyle };
+    } else {
+      f.skus.push({ sku, name, color, note, advStyle });
+    }
     cancelAddSku(); saveTree();
+    currentAdvStyle = { texture: 'solid', gloss: 50, stripes: 30, dots: 0 };
   };
 }
 
@@ -471,6 +620,7 @@ function cancelGroupEdit() {
   if (acts) acts.style.display = 'none';
   const name = document.getElementById('group-name');
   if (name) name.value = '';
+  currentAdvStyle = { texture: 'solid', gloss: 50, stripes: 30, dots: 0 };
 }
 
 const cancelSkuBtn = document.getElementById('cancelSkuBtn');
@@ -479,6 +629,8 @@ function cancelAddSku() {
   editingSkuIdx = null; 
   const sect = document.getElementById('addSkuSection');
   if (sect) sect.style.display = 'none'; 
+  document.getElementById('skuSectionAction').textContent = 'Add SKU';
+  currentAdvStyle = { texture: 'solid', gloss: 50, stripes: 30, dots: 0 };
 }
 
 // ─── PATTERNS ────────────────────────────────────────────────────────────────
