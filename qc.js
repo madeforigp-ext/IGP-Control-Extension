@@ -56,9 +56,10 @@
   const flattenTree = (node, parentGroup = null) => {
     let skus = {};
     if (!node) return skus;
+    const effectiveParent = parentGroup || (node.id === 'root' ? node : null);
     if (node.skus) {
       node.skus.forEach(s => {
-        skus[s.sku] = { ...s, parent: parentGroup };
+        if (s.sku) skus[s.sku.toUpperCase()] = { ...s, parent: effectiveParent };
       });
     }
     if (node.groups) {
@@ -400,25 +401,26 @@
       if (!taskIdEl) return;
       const parts = taskIdEl.textContent.trim().split('-');
       if (parts.length >= 3) {
-        const skuVal = parts[2];
+        const skuVal = parts[2].toUpperCase();
         const match = state.skuLookup[skuVal];
         if (match) {
           counts[skuVal] = (counts[skuVal] || 0) + 1; grandTotal++;
           
           if (state.settings.sku_styling_enabled !== false) {
-            const pColor = match.parent?.color || match.color || '#333';
-            const tColor = match.color || pColor || '#3498db';
+            const pColor = (match.parent && match.parent.color) ? match.parent.color : (state.skuTree.color || '#334155');
+            const tColor = match.color || '#3498db';
             
             // 50/50 split with solid flat colors
-            taskIdEl.style.backgroundColor = 'transparent'; 
-            taskIdEl.style.background = `linear-gradient(to right, ${pColor} 50%, ${tColor} 50%)`;
-            taskIdEl.style.backgroundSize = 'auto';
-
-            taskIdEl.style.color = '#fff'; 
-            taskIdEl.style.padding = '2px 8px'; 
-            taskIdEl.style.borderRadius = '4px';
-            taskIdEl.style.fontWeight = 'bold'; 
-            taskIdEl.style.textShadow = '0 1px 2px rgba(0,0,0,0.8), 0 0 2px rgba(0,0,0,0.5)';
+            taskIdEl.setAttribute('style', `
+              background: linear-gradient(to right, ${pColor} 50%, ${tColor} 50%) !important;
+              background-color: transparent !important;
+              background-size: auto !important;
+              color: #fff !important;
+              padding: 2px 8px !important;
+              border-radius: 4px !important;
+              font-weight: bold !important;
+              text-shadow: 0 1px 2px rgba(0,0,0,0.8), 0 0 2px rgba(0,0,0,0.5) !important;
+            `);
           } else {
             // Reset to plain if disabled
             taskIdEl.style.background = '';

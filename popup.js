@@ -163,7 +163,7 @@ let activeParentId = 'root';
 let searchTerm = '';
 
 // Advanced Styling State
-let currentAdvStyle = { texture: 'solid', gloss: 50, stripes: 30, dots: 0 };
+let currentAdvStyle = { texture: 'solid', gloss: 0, stripes: 0, dots: 0 };
 let styleModalTarget = null; // 'group' or 'sku'
 
 function getStyleString(color, adv) {
@@ -258,7 +258,7 @@ document.querySelectorAll('.open-style-btn').forEach(btn => {
        if (s.advStyle) Object.assign(currentAdvStyle, s.advStyle);
      } else {
        // Reset for new
-       currentAdvStyle = { texture: 'solid', gloss: 50, stripes: 30, dots: 0 };
+       currentAdvStyle = { texture: 'solid', gloss: 0, stripes: 0, dots: 0 };
      }
      
      // Sync sliders UI
@@ -301,12 +301,12 @@ function saveTree() {
   });
 }
 
-function findFolder(id, root = skuTree) {
-  if (root.id === id) return root;
-  if (root.groups) {
-    for (let g of root.groups) {
-      const f = findFolder(id, g); if (f) return f;
-    }
+function findFolder(id, node = skuTree) {
+  if (!id || !node) return null;
+  if (node.id === id) return node;
+  for (const g of (node.groups || [])) {
+    const found = findFolder(id, g);
+    if (found) return found;
   }
   return null;
 }
@@ -328,129 +328,115 @@ function renderTree() {
 
 function renderNode(node, container, depth, isLastArray) {
   const isRoot = node.id === 'root';
-  
-  // Search Logic: Check if this node or any children match
-  let hasMatch = false;
+  if (isRoot) {
+    // Root just renders its children
+    if (node.groups) node.groups.forEach((g, i) => renderNode(g, container, 1, [i === node.groups.length - 1 && (!node.skus || node.skus.length === 0)]));
+    if (node.skus) node.skus.forEach((s, i) => renderNode({ ...s, type: 'sku', _parentId: 'root', _index: i }, container, 1, [i === node.skus.length - 1]));
+    return;
+  }
+
+  const isSku = node.type === 'sku' || !!node.sku;
+
+  // Search Logic
   if (searchTerm) {
-    const nameMatch = node.name.toLowerCase().includes(searchTerm);
-    const skuMatch = node.skus && node.skus.some(s => s.name.toLowerCase().includes(searchTerm) || s.sku.toLowerCase().includes(searchTerm));
-    const groupMatch = node.groups && node.groups.some(g => checkMatchRecursive(g));
-    hasMatch = nameMatch || skuMatch || groupMatch;
-    if (!hasMatch && !isRoot) return; // Hide if no match in this branch
+    if (isSku) {
+      if (!node.name.toLowerCase().includes(searchTerm) && !node.sku.toLowerCase().includes(searchTerm)) return;
+    } else {
+      if (!checkMatchRecursive(node)) return;
+    }
   }
 
-  const isExpanded = searchTerm ? true : expandedFolders.has(node.id); // Force expand if searching
-
+  const isExpanded = searchTerm ? true : expandedFolders.has(node.id);
   const row = document.createElement('div');
-  row.className = 'tree-row' + (isRoot ? ' root-row' : '');
-  row.style.padding = '4px 0';
-  row.style.display = 'flex';
-  row.style.alignItems = 'center';
-  row.style.gap = '4px';
-  row.style.cursor = 'pointer';
-  row.draggable = !isRoot;
-  row.dataset.id = node.id;
-  row.dataset.type = 'folder';
+  row.className = 'tree-row' + (isSku ? ' sku-row' : '');
 
-  let prefix = '';
-  for (let i = 0; i < depth - 1; i++) {
-     prefix += `<span style="font-family:monospace; color:#e2e8f0; width:12px; display:inline-block;">${isLastArray[i] ? '&nbsp;' : '│'}</span>&nbsp;&nbsp;`;
+  // Color dot
+  const dot = document.createElement('div');
+  dot.className = 'color-dot';
+  dot.style.cssText += getStyleString(node.color || (isSku ? '#3498db' : '#334155'), node.advStyle);
+  row.appendChild(dot);
+
+  // Text
+  const text = document.createElement('span');
+  text.className = 'node-text';
+  text.textContent = isSku ? `${node.name} (${node.sku})` : node.name;
+  if (!isSku) text.style.fontWeight = '700';
+  row.appendChild(text);
+
+  // Actions
+  const actions = document.createElement('div');
+  actions.className = 'row-actions';
+  if (isSku) {
+    actions.innerHTML = `
+      <button class="t-btn btn-edit-s" title="Edit">✏️</button>
+      <button class="t-btn btn-move-s" title="Move">📦</button>
+      <button class="t-btn btn-del-s" title="Delete">✕</button>
+    `;
+  } else {
+    actions.innerHTML = `
+      <button class="t-btn btn-add" title="Add SKU">+</button>
+      <button class="t-btn btn-edit" title="Edit">✏️</button>
+      <button class="t-btn btn-move" title="Move">📦</button>
+      <button class="t-btn btn-del" title="Delete">✕</button>
+    `;
   }
-  const connector = isRoot ? '' : `<span style="font-family:monospace; color:#cbd5e1;">${isLastArray[depth-1] ? '└─' : '├─'}</span> `;
+  row.appendChild(actions);
 
-  row.innerHTML = `
-    <div style="white-space:nowrap; display:flex; align-items:center;">${prefix}${connector}</div>
-    <div style="width: 12px; height: 12px; border-radius: 3px; flex-shrink:0; margin-right:4px; ${getStyleString(node.color || '#334155', node.advStyle)}"></div>
-    <span style="font-size: 11px; font-weight: ${isRoot ? '800' : '600'}; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${isRoot ? '🏠 Home' : node.name}</span>
-    <div class="row-actions" style="display: flex; gap: 4px; opacity: 0.4;">
-       <button class="t-btn btn-add" title="Add SKU">+</button>
-       ${!isRoot ? `<button class="t-btn btn-edit" title="Edit">✏️</button><button class="t-btn btn-move" title="Move">📦</button><button class="t-btn btn-del" title="Delete">✕</button>` : ''}
-    </div>
-  `;
-
-  row.onclick = (e) => {
-    if (e.target.closest('button')) return;
-    if (isExpanded) expandedFolders.delete(node.id);
-    else expandedFolders.add(node.id);
-    saveTree();
-  };
-
-  row.ondragstart = (e) => {
-    draggedItem = { type: 'folder', id: node.id, parentId: null };
-    row.style.opacity = '0.4';
-    e.dataTransfer.setData('text/plain', node.id);
-  };
-  row.ondragend = () => { row.style.opacity = '1'; draggedItem = null; };
-  row.ondragover = (e) => { e.preventDefault(); row.style.background = '#f1f5f9'; };
-  row.ondragleave = () => { row.style.background = 'transparent'; };
-  row.ondrop = (e) => { e.preventDefault(); row.style.background = 'transparent'; executeDrop(node.id); };
-
-  if (movingItem && movingItem.id !== node.id) {
-     const moveHere = document.createElement('button');
-     moveHere.textContent = 'MOVE HERE';
-     moveHere.style.fontSize = '8px'; moveHere.style.background = '#10b981'; moveHere.style.color = '#fff';
-     moveHere.style.border = 'none'; moveHere.style.borderRadius = '3px';
-     moveHere.onclick = (e) => { e.stopPropagation(); executeDrop(node.id); };
-     row.querySelector('.row-actions').prepend(moveHere);
-  }
-
-  row.querySelector('.btn-add').onclick = (e) => { e.stopPropagation(); startAddSku(node.id); };
-  if (!isRoot) {
+  // Click & Drag logic
+  if (!isSku) {
+    row.onclick = (e) => {
+      if (e.target.closest('button')) return;
+      if (movingItem) {
+        executeDrop(node.id);
+      } else {
+        if (isExpanded) expandedFolders.delete(node.id);
+        else expandedFolders.add(node.id);
+        saveTree();
+      }
+    };
+    row.querySelector('.btn-add').onclick = (e) => { e.stopPropagation(); startAddSku(node.id); };
     row.querySelector('.btn-edit').onclick = (e) => { e.stopPropagation(); startEditGroup(node.id); };
     row.querySelector('.btn-move').onclick = (e) => { e.stopPropagation(); startMove('folder', node.id); };
     row.querySelector('.btn-del').onclick = (e) => { 
       e.stopPropagation(); 
       if (confirm(`Delete folder "${node.name}" and contents?`)) { removeFolder(skuTree, node.id); saveTree(); }
     };
+  } else {
+    // Sku specific actions
+    const idx = node._index; 
+    row.onclick = (e) => {
+       if (movingItem && !e.target.closest('button')) {
+          // If we click a SKU while moving, treat it as clicking its parent folder
+          executeDrop(node._parentId);
+       }
+    };
+    row.querySelector('.btn-edit-s').onclick = (e) => { e.stopPropagation(); startEditSku(node._parentId, node._index); };
+    row.querySelector('.btn-move-s').onclick = (e) => { e.stopPropagation(); startMove('sku', node.sku, node._parentId, node._index); };
+    row.querySelector('.btn-del-s').onclick = (e) => { 
+      e.stopPropagation(); 
+      const parent = findFolder(node._parentId);
+      if (parent) { parent.skus.splice(node._index, 1); saveTree(); }
+    };
   }
+
   container.appendChild(row);
 
-  if (isExpanded || isRoot) {
+  if (!isSku && (isExpanded || isRoot)) {
+    const childrenContainer = document.createElement('div');
+    childrenContainer.className = 'igp-children';
+    container.appendChild(childrenContainer);
+
     const groups = node.groups || [];
     const skus = node.skus || [];
     
     groups.forEach((g, i) => {
       const isLast = (i === groups.length - 1) && (skus.length === 0);
-      renderNode(g, container, depth + 1, [...isLastArray, isLast]);
+      renderNode(g, childrenContainer, depth + 1, [...isLastArray, isLast]);
     });
 
     skus.forEach((s, i) => {
-      // Filter SKUs
-      if (searchTerm && !s.name.toLowerCase().includes(searchTerm) && !s.sku.toLowerCase().includes(searchTerm) && !node.name.toLowerCase().includes(searchTerm)) return;
-
       const isLast = i === skus.length - 1;
-      const skuRow = document.createElement('div');
-      skuRow.className = 'tree-row sku-row';
-      skuRow.draggable = true;
-      skuRow.style.padding = '2px 0';
-      skuRow.style.display = 'flex';
-      skuRow.style.alignItems = 'center';
-      skuRow.style.gap = '4px';
-
-      let sPrefix = '';
-      for (let j = 0; j < depth; j++) {
-         sPrefix += `<span style="font-family:monospace; color:#e2e8f0; width:12px; display:inline-block;">${isLastArray[j] ? '&nbsp;' : '│'}</span>&nbsp;&nbsp;`;
-      }
-      const sConnector = `<span style="font-family:monospace; color:#cbd5e1;">${isLast ? '└─' : '├─'}</span> `;
-
-      skuRow.innerHTML = `
-        <div style="white-space:nowrap; display:flex; align-items:center;">${sPrefix}${sConnector}</div>
-        <div style="width: 6px; height: 6px; border-radius: 50%; flex-shrink:0; margin-right:4px; ${getStyleString(s.color || '#3498db', s.advStyle)}"></div>
-        <span style="font-size: 10px; color: #64748b; flex: 1;">${s.name} <span style="opacity:0.6">(${s.sku})</span></span>
-        <div class="row-actions" style="display: flex; gap: 4px; opacity: 0.4;">
-           <button class="t-btn btn-edit-s" title="Edit">✏️</button>
-           <button class="t-btn btn-move-s" title="Move">📦</button>
-           <button class="t-btn btn-del-s" title="Delete">✕</button>
-        </div>
-      `;
-
-      skuRow.ondragstart = () => { draggedItem = { type: 'sku', id: s.sku, parentId: node.id, index: i }; skuRow.style.opacity = '0.4'; };
-      skuRow.ondragend = () => { skuRow.style.opacity = '1'; draggedItem = null; };
-
-      skuRow.querySelector('.btn-edit-s').onclick = () => startEditSku(node.id, i);
-      skuRow.querySelector('.btn-move-s').onclick = () => startMove('sku', s.sku, node.id, i);
-      skuRow.querySelector('.btn-del-s').onclick = () => { skus.splice(i, 1); saveTree(); };
-      container.appendChild(skuRow);
+      renderNode({ ...s, type: 'sku', _parentId: node.id, _index: i }, childrenContainer, depth + 1, [...isLastArray, isLast]);
     });
   }
 }
@@ -466,33 +452,53 @@ function startMove(type, id, parentId, index) {
 function executeDrop(targetFolderId) {
   const itemToMove = draggedItem || movingItem;
   if (!itemToMove) return;
-  if (itemToMove.id === targetFolderId) return; 
+
+  // Cancel move if dropped on itself or its own parent
+  if (itemToMove.id === targetFolderId || (itemToMove.type === 'sku' && itemToMove.parentId === targetFolderId)) {
+      movingItem = null; draggedItem = null; setStatus('MOVE CANCELLED', ''); renderTree(); return;
+  }
 
   const targetFolder = findFolder(targetFolderId);
-  
+  if (!targetFolder) return;
+
+  if (!targetFolder.groups) targetFolder.groups = [];
+  if (!targetFolder.skus) targetFolder.skus = [];
+
   if (itemToMove.type === 'folder') {
      if (isDescendant(itemToMove.id, targetFolderId)) {
-        setStatus('CANT MOVE PARENT INTO CHILD', 'error'); return;
+        setStatus('CANT MOVE PARENT INTO CHILD', 'error');
+        movingItem = null; draggedItem = null; renderTree(); return;
      }
      const item = removeFolder(skuTree, itemToMove.id);
      if (item) targetFolder.groups.push(item);
   } else {
      const sourceFolder = findFolder(itemToMove.parentId);
-     const item = sourceFolder.skus.splice(itemToMove.index, 1)[0];
-     targetFolder.skus.push(item);
+     if (sourceFolder && sourceFolder.skus) {
+       let sIdx = itemToMove.index;
+       if (sourceFolder.skus[sIdx]?.sku !== itemToMove.id) {
+           sIdx = sourceFolder.skus.findIndex(s => s.sku === itemToMove.id);
+       }
+       if (sIdx !== -1) {
+         const item = sourceFolder.skus.splice(sIdx, 1)[0];
+         targetFolder.skus.push(item);
+       }
+     }
   }
   movingItem = null; draggedItem = null; saveTree(); setStatus('ITEM RE-ATTACHED', 'success');
 }
 
 function isDescendant(parentId, targetId) {
   const p = findFolder(parentId);
-  return !!findFolder(targetId, p && p !== targetId ? p : null);
+  if (!p) return false;
+  return !!findFolder(targetId, p);
 }
 
 function removeFolder(root, id) {
+  if (!root || !root.groups) return null;
   for (let i = 0; i < root.groups.length; i++) {
     if (root.groups[i].id === id) return root.groups.splice(i, 1)[0];
-    const f = removeFolder(root.groups[i], id); if (f) return f;
+    const f = removeFolder(root.groups[i], id); 
+    if (f) return f;
   }
   return null;
 }
@@ -501,7 +507,7 @@ function removeFolder(root, id) {
 
 function startAddSku(parentId) {
   activeParentId = parentId; editingSkuIdx = null;
-  currentAdvStyle = { texture: 'solid', gloss: 50, stripes: 30, dots: 0 }; // Reset for new
+  currentAdvStyle = { texture: 'solid', gloss: 0, stripes: 0, dots: 0 }; // Reset for new
   const s = document.getElementById('addSkuSection');
   if (s) s.style.display = 'block';
   document.querySelectorAll('.curr-folder-name').forEach(el => el.textContent = findFolder(parentId).name);
@@ -528,7 +534,7 @@ function startEditGroup(id) {
   
   // Load advanced style
   if (g.advStyle) currentAdvStyle = { ...g.advStyle };
-  else currentAdvStyle = { texture: 'solid', gloss: 50, stripes: 30, dots: 0 };
+  else currentAdvStyle = { texture: 'solid', gloss: 0, stripes: 0, dots: 0 };
 
   document.getElementById('groupSectionTitle').textContent = 'Edit Folder';
   document.getElementById('addGroupBtnSimple').style.display = 'none';
@@ -551,7 +557,7 @@ function startEditSku(parentId, idx) {
 
   // Load advanced style
   if (s.advStyle) currentAdvStyle = { ...s.advStyle };
-  else currentAdvStyle = { texture: 'solid', gloss: 50, stripes: 30, dots: 0 };
+  else currentAdvStyle = { texture: 'solid', gloss: 0, stripes: 0, dots: 0 };
 
   const sSect = document.getElementById('addSkuSection');
   if (sSect) sSect.style.display = 'block';
@@ -580,7 +586,7 @@ function handleGroupUpsert() {
     const p = findFolder(activeParentId) || skuTree;
     p.groups.push({ id: 'f'+Date.now(), name, color, advStyle: { ...currentAdvStyle }, groups: [], skus: [] });
     document.getElementById('group-name').value = '';
-    currentAdvStyle = { texture: 'solid', gloss: 50, stripes: 30, dots: 0 };
+    currentAdvStyle = { texture: 'solid', gloss: 0, stripes: 0, dots: 0 };
   }
   saveTree();
 }
@@ -604,7 +610,7 @@ if (saveSkuBtn) {
       f.skus.push({ sku, name, color, note, advStyle });
     }
     cancelAddSku(); saveTree();
-    currentAdvStyle = { texture: 'solid', gloss: 50, stripes: 30, dots: 0 };
+    currentAdvStyle = { texture: 'solid', gloss: 0, stripes: 0, dots: 0 };
   };
 }
 
@@ -620,7 +626,7 @@ function cancelGroupEdit() {
   if (acts) acts.style.display = 'none';
   const name = document.getElementById('group-name');
   if (name) name.value = '';
-  currentAdvStyle = { texture: 'solid', gloss: 50, stripes: 30, dots: 0 };
+  currentAdvStyle = { texture: 'solid', gloss: 0, stripes: 0, dots: 0 };
 }
 
 const cancelSkuBtn = document.getElementById('cancelSkuBtn');
@@ -630,7 +636,7 @@ function cancelAddSku() {
   const sect = document.getElementById('addSkuSection');
   if (sect) sect.style.display = 'none'; 
   document.getElementById('skuSectionAction').textContent = 'Add SKU';
-  currentAdvStyle = { texture: 'solid', gloss: 50, stripes: 30, dots: 0 };
+  currentAdvStyle = { texture: 'solid', gloss: 0, stripes: 0, dots: 0 };
 }
 
 // ─── PATTERNS ────────────────────────────────────────────────────────────────

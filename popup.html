@@ -24,10 +24,10 @@
       background: var(--bg);
       color: var(--text-main);
       font-family: 'Inter', sans-serif;
-      overflow-x: hidden;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
-      min-height: 400px;
+      height: 600px;
     }
 
     /* HEADER */
@@ -122,11 +122,11 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 6px 0;
+      padding: 3px 0;
     }
 
     .toggle-label {
-      font-size: 12px;
+      font-size: 13px;
       color: var(--text-muted);
       font-weight: 500;
     }
@@ -248,7 +248,7 @@
     .accordion-header {
       margin-top: 12px;
       padding: 10px 0 0;
-      border-top: 1px solid var(--border);
+      border-top: 1px solid rgba(0,0,0,0.08);
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -263,7 +263,7 @@
 
     .accordion-content {
       display: none;
-      padding-top: 12px;
+      padding: 10px 12px;
     }
 
     /* INPUTS */
@@ -345,8 +345,9 @@
     .protected-list {
       max-height: 280px;
       overflow-y: auto;
-      margin: 12px 0;
+      margin: 8px 0;
       padding-right: 4px;
+      position: relative;
     }
 
     .protected-list::-webkit-scrollbar { width: 4px; }
@@ -484,10 +485,80 @@
     }
 
     /* TREE UI v6 */
-    .tree-row:hover { background: #f8fafc; }
-    .tree-row .row-actions:hover { opacity: 1 !important; }
+    .tree-row {
+      display: flex;
+      align-items: center;
+      height: 22px; /* Fixed row height */
+      cursor: pointer;
+      position: relative;
+      transition: background 0.1s;
+      white-space: nowrap;
+      overflow: hidden;
+      padding-right: 60px;
+      margin-bottom: 2px; /* 2px gap between items */
+    }
+    .tree-row:hover { background: #f1f5f9; border-radius: 4px; }
+    
+    .tree-row .row-actions { 
+      display: flex; 
+      gap: 4px; 
+      opacity: 0; 
+      transition: opacity 0.1s;
+      margin-left: auto;
+      background: linear-gradient(90deg, transparent, #f1f5f9 30%);
+      padding-left: 12px;
+      position: absolute;
+      right: 4px;
+      height: 18px;
+      align-items: center;
+      z-index: 10;
+    }
+    .tree-row:hover .row-actions { opacity: 1; }
+
     .t-btn { background:none; border:none; cursor:pointer; font-size:10px; padding:2px; border-radius:4px; }
     .t-btn:hover { background:#e2e8f0; }
+
+    /* Tree Branch Lines */
+    .igp-children {
+      border-left: 2px solid rgba(0,0,0,0.25);
+      margin-left: 14px;
+      padding-left: 8px;
+    }
+
+    .tree-row::before {
+      content: "";
+      position: absolute;
+      left: -8px;
+      top: 50%;
+      width: 8px;
+      height: 2px;
+      background: rgba(0,0,0,0.25);
+    }
+
+    /* Top level nodes don't have connectors */
+    #skuList > .tree-row::before {
+      display: none;
+    }
+
+    .color-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-right: 8px;
+      border: 1px solid rgba(0,0,0,0.05);
+      z-index: 2;
+    }
+
+    .node-text {
+      font-size: 11px;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: #334155;
+      font-weight: 500;
+    }
 
     /* SWITCHER */
     .switcher-container {
@@ -699,8 +770,8 @@
         <div style="font-size: 10px; color: #94a3b8; margin-bottom: 10px;">Define rules to identify IDs. Use commas for multiple prefixes.</div>
         
         <!-- PKID -->
-        <div style="margin-bottom: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
-          <div style="font-size: 9px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Packet ID (PKID)</div>
+        <div style="margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+          <div style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Packet ID (PKID)</div>
           <div class="input-row">
             <input class="input" id="p-pkid-prefix" type="text" placeholder="Prefix (e.g. 1, 12)" style="flex: 2;" />
             <input class="input" id="p-pkid-max" type="number" placeholder="Max" style="flex: 1;" />
@@ -708,8 +779,8 @@
         </div>
 
         <!-- OID -->
-        <div style="margin-bottom: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
-          <div style="font-size: 9px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Order ID (OID)</div>
+        <div style="margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+          <div style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Order ID (OID)</div>
           <div class="input-row">
             <input class="input" id="p-oid-prefix" type="text" placeholder="Prefix (e.g. 18)" style="flex: 2;" />
             <input class="input" id="p-oid-max" type="number" placeholder="Max" style="flex: 1;" />
@@ -717,8 +788,8 @@
         </div>
 
         <!-- SKU -->
-        <div style="margin-bottom: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
-          <div style="font-size: 9px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">SKU Code</div>
+        <div style="margin-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+          <div style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">SKU Code</div>
           <div class="input-row">
             <input class="input" id="p-sku-prefix" type="text" placeholder="Prefix (e.g. JVS)" style="flex: 2;" />
             <input class="input" id="p-sku-max" type="number" placeholder="Max" style="flex: 1;" />
@@ -726,8 +797,8 @@
         </div>
 
         <!-- Barcode -->
-        <div style="margin-bottom: 12px;">
-          <div style="font-size: 9px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Barcode (HLSDP)</div>
+        <div style="margin-bottom: 8px;">
+          <div style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 4px;">Barcode (HLSDP)</div>
           <div class="input-row">
             <input class="input" id="p-barcode-prefix" type="text" placeholder="Prefix (e.g. HLSDP)" style="flex: 2;" />
             <input class="input" id="p-barcode-max" type="number" placeholder="Max" style="flex: 1;" />
@@ -744,8 +815,10 @@
       </div>
       <div id="data-management-content" class="accordion-content">
         <div style="font-size: 10px; color: #94a3b8; margin-bottom: 10px;">Export or Import your tracking data and patterns.</div>
-        <button class="btn btn-outline" id="exportDataBtn">📤 Export Data (.json)</button>
-        <button class="btn btn-outline" id="importDataBtn">📥 Import Data</button>
+        <div class="input-row" style="gap: 8px;">
+          <button class="btn btn-outline" id="exportDataBtn" style="margin-top:0; flex: 1;">📤 Export</button>
+          <button class="btn btn-outline" id="importDataBtn" style="margin-top:0; flex: 1;">📥 Import</button>
+        </div>
         <input type="file" id="importFile" style="display: none;" accept=".json" />
       </div>
     </div>
