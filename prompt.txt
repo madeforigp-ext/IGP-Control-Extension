@@ -70,3 +70,99 @@ add a feature a button in popup if i click it should scrape the sku and skuname 
 
 add a paste feature (toggle to ,toggles should  synchronize correctly and that features
 strictly respect their "OFF" states in real-time.)
+
+this is the sidebar code, when ever i hover it id displays a small popup inside of it. look at this image top left @sidebar
+<ul id="menu" metis-menu="" class="metismenu"><li class="ng-star-inserted"><a aria-expanded="false" class="ai-icon ng-star-inserted" href="#/dashboard"><i class="material-icons-outlined"> space_dashboard </i><span class="nav-text">Dashboard</span></a><!----><!----></li><!----><li class="ng-star-inserted"><!----><a href="javascript:void()" aria-expanded="false" class="has-arrow ai-icon ng-star-inserted"><i class="material-icons-outlined"> brush </i><span class="nav-text">Personalization</span></a><!----><ul aria-expanded="false" class="mm-collapse ng-star-inserted"><!----><li class="ng-star-inserted"><a href="#/personalization/qc-panel">QC</a></li><!----></ul><!----><!----><!----><!----></li><!----><li class="ng-star-inserted"><!----><a href="javascript:void()" aria-expanded="false" class="has-arrow ai-icon ng-star-inserted"><i class="material-icons-outlined"> warehouse </i><span class="nav-text">WH Ops Panel</span></a><!----><ul aria-expanded="false" class="mm-collapse ng-star-inserted"><!----><li class="ng-star-inserted"><a href="#/order-mgmt-panel/super-qc">Super QC</a></li><!----></ul><!----><!----><!----><!----></li><!----><!----><li></li></ul>
+my idea is  to create a button inside it (same as panel)whenever i hover it should display the tracker info,(theme and text should match the panel) and removeing the reductant button(old feature,tracker)""how is this idea? any thought, first answer this then we move to adding feature""
+
+
+<div style="font-size: 12px; font-weight: 500; color: #0f172a; border-bottom: 8px solid #cbd5e1; padding-bottom: 6px; margin-bottom: 8px;">
+          TASK TRACKER
+        </div>
+		
+		
+add a search Feature in sku tracking it should be searchable via skuname (this will help in editing the sku later on in a large sku list)""Ask the question related to the Featureif u want""
+
+
+
++ In scanner pattern add a pattern for BArcode for paste feature ,if it mathes the pattern (starts with HLSDP) it should route to barcode code block "<div class="mat-form-field-infix ng-tns-c95-21"><input _ngcontent-emi-c263="" matinput="" autocomplete="off" class="mat-input-element mat-form-field-autofill-control ng-tns-c95-21 ng-untouched ng-pristine ng-valid cdk-text-field-autofill-monitored" id="mat-input-5" data-placeholder="" aria-invalid="false" aria-required="false"><span class="mat-form-field-label-wrapper ng-tns-c95-21"><label class="mat-form-field-label ng-tns-c95-21 mat-empty mat-form-field-empty ng-star-inserted" id="mat-form-field-label-23" for="mat-input-5" aria-owns="mat-input-5"><!----><mat-label _ngcontent-emi-c263="" class="ng-tns-c95-21 ng-star-inserted">B​arcode</mat-label><!----><!----></label><!----></span></div>"""Tf the feature exist debug it as pasting feature for barcode does'nt work""
+
+In qc.js, make two small additions:
+1. findFields() function — Add a barcode field to the returned object, after the existing fields:
+barcode: findByLabel('barcode') || allInputs.find(i => i.id === 'mat-input-5')
+2. state.patterns object — Add a new entry:
+barcode: { prefix: 'HLSDP', max: 12 }
+That's it. The existing identify(), paste listener, and triggerSearch() logic will automatically handle routing to the barcode field — no other changes needed.
+Do NOT touch anything else in qc.js.
+
++ associate name "<td bgcolor="#ffffff"><input type="TEXT" name="v_name" size="30" data-listener-added_9368ff50="true"></td>" username "<td bgcolor="#ffffff"><input type="TEXT" name="usr_name" size="30" data-listener-added_9368ff50="true"></td>"  password "<td bgcolor="#ffffff"><input type="PASSWORD" name="usr_pass" size="30" maxlength="24"></td>" Submit button "<td bgcolor="#ffffff" colspan="2" align="center"><input type="submit" name="Submit1" value="Login"></td>" submit button "<td bgcolor="#ffffff" colspan="2" align="center"><input type="submit" name="Submit1" value="Login"></td>"
+
+
+Create a new file intermesh.js. It should handle Intermesh auto-login only.
+
+Only runs on: http://admin.indiangiftsportal.com/index.php
+Reads intermesh_user, intermesh_assoc, intermesh_pass from chrome.storage.local
+Fills: input[name="v_name"] = assoc, input[name="usr_name"] = user, input[name="usr_pass"] = pass
+Then clicks input[name="Submit1"]
+Use retry logic (attempt every 500ms, max 10 tries) in case fields load late
+Wrap everything in an IIFE (function(){ 'use strict'; ... })()
+
+In manifest.json, add a new content_script entry:
+json{
+  "matches": ["http://admin.indiangiftsportal.com/index.php*"],
+  "js": ["intermesh.js"],
+  "run_at": "document_idle"
+}
+Also add http://admin.indiangiftsportal.com/* to host_permissions if not already there.
+Do NOT touch qc.js, background.js, or any existing file except manifest.json.
+
+
+
+
+> In `popup.html` and `popup.js`, add an Intermesh credentials section inside the `#intermesh-controls` div.
+>
+> **`popup.html`** — Add an accordion inside `#intermesh-controls`, identical in structure to the existing "QC Credentials" accordion. Fields:
+> - Associate Name → id `intermesh-assoc`
+> - Username → id `intermesh-user`  
+> - Password (type=password) → id `intermesh-pass`
+> - Save button → id `saveIntermeshCredBtn`
+>
+> **`popup.js`** — Add load/save logic:
+> - On load: read `intermesh_assoc`, `intermesh_user`, `intermesh_pass` from `chrome.storage.local` and populate the fields
+> - Save button: write all three to `chrome.storage.local`, call `setStatus('Intermesh credentials saved ✅', 'success')`
+> - Also call `setupAccordion()` for the new accordion — copy exact pattern from existing QC credentials accordion
+> - Add `bindEnter` for the three fields pointing to `saveIntermeshCredBtn`
+>
+> Do NOT touch any existing code. Only add new blocks at the end of relevant sections.
+
+
+adding pasting feature for intermesh "http://admin.indiangiftsportal.com/orders_vendor.php?orders_id=18345674&x=0&y=0" pkid block "<input type="text" name="packetid" value="" size="5" data-listener-added_af039683="true">" Oid block <input type="text" name="orders_id" value="18345674" size="5"> 
+search button both feild has separate button it should press the nearest button to the feild  ,search button <input type="image" src="http://admin.indiangiftsportal.com/images/button_search.gif" width="66" height="20" border="0" alt=" Search ">
+
+
++add a toggle for the Routing of this pasting feature in intermesh blovk of pop up,  ensure that  toggle synchronize correctly and that features
+strictly respect their "OFF" states in real-time.
+
+
+in left sidebar navigation panl, add a small delay (user friendly)to the popup when we hover over our tracking feature "Pending TAsk",and if any products get clicked it should route the sku of the product to the page and open the same sku which was clicked ""Ask the questions you want!""
+
+
+x Root mai jo sku hai vo bug ho gye hai root mai jo bi sku hai vo edits nhi hora hai , unable to edit, baki ke sab edit hora hai parent folder child sku sab
+
+In popup.html and popup.js, fix the SKU tree branch lines. Currently they look broken and inconsistent.
+Replace the current tree line approach entirely with a pure CSS solution:
+
+Each .tree-row gets a position: relative left border approach — no absolutely positioned div elements for lines
+Use ::before and ::after pseudo-elements on .tree-row for branch lines
+Vertical line: continuous 2px solid rgba(0,0,0,0.25) running down the left edge of each indent level
+Horizontal connector: 8px horizontal line from vertical line to the dot
+Lines should be continuous across siblings — not broken between rows
+
+Simplest reliable implementation:
+css.igp-children {
+  border-left: 2px solid rgba(0,0,0,0.45);
+  margin-left: 14px;
+  padding-left: 8px;
+}
+Remove all existing JS-generated tree-v-line and tree-connector div elements from renderNode. Let CSS handle the lines entirely via igp-children border-left.
+Do NOT change any logic, storage, or non-visual code.

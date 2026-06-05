@@ -594,30 +594,17 @@
 <div class="modal-overlay" id="styleModalOverlay">
   <div class="modal">
     <div class="modal-title">🎨 Advanced Styling</div>
-    
+
     <div class="preview-box" id="modalPreview">PREVIEW</div>
 
-    <div class="slider-group">
-      <div class="slider-header"><span class="slider-label">Glossy Intensity</span><span class="slider-val" id="val-gloss">50%</span></div>
-      <input type="range" class="range-input" id="range-gloss" min="0" max="100" value="50">
+    <div class="slider-label" style="margin-bottom: 6px; display: flex; justify-content: space-between;">
+      <span>Base Texture</span>
+      <span style="font-size: 8px; color: #94a3b8; text-transform: none;">Click to cycle intensity</span>
     </div>
-
-    <div class="slider-group">
-      <div class="slider-header"><span class="slider-label">Stripes Intensity</span><span class="slider-val" id="val-stripes">30%</span></div>
-      <input type="range" class="range-input" id="range-stripes" min="0" max="100" value="30">
-    </div>
-
-    <div class="slider-group">
-      <div class="slider-header"><span class="slider-label">Dots Intensity</span><span class="slider-val" id="val-dots">0%</span></div>
-      <input type="range" class="range-input" id="range-dots" min="0" max="100" value="0">
-    </div>
-
-    <div class="slider-label" style="margin-bottom: 6px;">Base Texture</div>
     <div class="texture-grid">
       <button class="texture-btn active" data-texture="solid">Solid</button>
       <button class="texture-btn" data-texture="wood">Wood</button>
       <button class="texture-btn" data-texture="metal">Metal</button>
-      <button class="texture-btn" data-texture="carbon">Carbon</button>
       <button class="texture-btn" data-texture="honey">Honey</button>
       <button class="texture-btn" data-texture="glass">Glass</button>
     </div>

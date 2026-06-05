@@ -12,9 +12,14 @@
 		+  (This Feature maybe helpful,When panel order increases)(SKU grouping)
 		+ 9)Search Feature in Sku tracking(to ease SKU Editing)
 	▶ GLOBAL PASTING 
-		+ 7)Routes the pasted data to their respected feild
+		+ 7)Routes the pasted data to their respected feild (OID/Pkid/Sku/Barcode should route to thier 
+		+  respected field)
 	▶ ICONS
-		+ 8)ICON for Extension	                 					 
+		+ 8)ICON for Extension	 
+	▶ PENDING TASK
+		+ 9)added a popup which lively shows pending task of panel
+		+ 10)made the side bar [pending task ] user friendly , the tasks are clickable[when clicked it routes the product sku to sku feilds ]
+
 	FEATURE(maybe)							       		
 		- 1)[PKid Route](Added and Removed)					 	 
 		-   NO need of PKID Route as Qc Panel doesn't gets PKID scans much.
@@ -26,7 +31,7 @@
 		- 4)Import Export settings (no use ,coz extenison can only be shared via files)    
 		+ 5)Paste Feature	(pasting OID/Pkid/Sku/Barcode should route to thier 
 		+  respected field								 
-		x 6)Clicking the products in Icon will route the product sku to Sku field 	 
+		+ 6)Clicking the products in Icon will route the product sku to Sku field 	 
 
 	ADVANCE FEATURE(damn sure noo!)
 		+ 1)Making [panel view more] thorough (giving color grades to same OID/PKID?)	 
@@ -56,7 +61,7 @@
 	▶ AUTO LOGIN   
 		+ 1)[Auto Login] when session expires(with login creds) [same as qc]
 	▶ GLOBAL PASTING 
-		+ 2)Paste feature for intermesh
+		+ 2)Paste feature for intermesh []
 
 
 
@@ -181,8 +186,7 @@ HISTORY
 	10 19 pm 29/5/26
 	{
 			1)debugged Sku tracking?
-
-}
+	}
 		TODO
 			x 1)Add intermesh
 			x 2)Add SQC
@@ -196,8 +200,7 @@ HISTORY
 05 35 pm 2/6/26
 	{
 			1)Search Feature in Sku tracking(to ease SKU Editing)
-
-}
+	}
 		TODO
 			x 1)Add intermesh
 			x 2)Add SQC
@@ -217,13 +220,25 @@ HISTORY
 			5)Fixed auto login bug [Intermesh]
 			6)added toggles for paste and auto LOGIN
 			7)debuged both added toggles
-
-}
+			8)made the side bar [pending task ] user friendly , the task are clickable[when clicked it ruotes the product sku to its field] 
+	}
 		TODO
 			+ 1)Add intermesh
 			x 2)Add SQC
 			+ 3)paste feature for Intermesh
-	        x 4)Barcode PASTING Feature [debugging a lot,with claude and myself]
+	        + 4)Barcode PASTING Feature [debugging a lot,with claude and myself]
 		BUGS
 			x 1)OID/PKID scan routes to their respected feild and tray feild so the search fails
+			+ 2)Sqc double input bug (got fixed auto)
+			
+09 50 am 3/6/26
+	{
+			1)Added style elements in Sku tracker
+			3)reworked style element
+			2)Added Toogles for skutracker and pending task independent.
+
+	}
+		TODOh
+			x 1)Add SQC
+			+ 2)Add Advance Styling Way in sku tracking
 			

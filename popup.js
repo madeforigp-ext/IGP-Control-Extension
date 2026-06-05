@@ -163,44 +163,27 @@ let activeParentId = 'root';
 let searchTerm = '';
 
 // Advanced Styling State
-let currentAdvStyle = { texture: 'solid', gloss: 0, stripes: 0, dots: 0 };
+let currentAdvStyle = { texture: 'solid', intensity: 0 };
 let styleModalTarget = null; // 'group' or 'sku'
 
 function getStyleString(color, adv) {
-  const { texture = 'solid', gloss = 50, stripes = 30, dots = 0 } = adv || {};
-  let bg = `linear-gradient(90deg, ${color} 50%, ${color} 50%)`;
-  let bgSize = 'auto';
+  const { texture = 'solid', intensity = 0 } = adv || {};
+  const alpha = (intensity || 0) / 100;
+  let bgImg = 'none';
 
-  // 1. Textures
-  if (texture === 'wood') {
-    bg = `repeating-linear-gradient(90deg, rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 1px, transparent 1px, transparent 10px), ${bg}`;
-  } else if (texture === 'metal') {
-    bg = `linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(0,0,0,0.1) 100%), ${bg}`;
-  } else if (texture === 'carbon') {
-    bg = `linear-gradient(45deg, rgba(0,0,0,0.2) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.2) 75%, rgba(0,0,0,0.2)), 
-          linear-gradient(45deg, rgba(0,0,0,0.2) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.2) 75%, rgba(0,0,0,0.2)), ${bg}`;
-    bgSize = '4px 4px, 4px 4px, 100% 100%';
-  } else if (texture === 'honey') {
-    bg = `repeating-linear-gradient(120deg, rgba(255,255,255,0.1), rgba(255,255,255,0.1) 1px, transparent 1px, transparent 10px), ${bg}`;
-  } else if (texture === 'glass') {
-    bg = `linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 100%), ${bg}`;
+  if (alpha > 0) {
+    if (texture === 'wood') {
+      bgImg = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='20'%3E%3Cpath d='M0 10 Q25 5 50 10 Q75 15 100 10' stroke='rgba(0,0,0,${0.12 * alpha})' stroke-width='1.5' fill='none'/%3E%3Cpath d='M0 16 Q25 11 50 16 Q75 21 100 16' stroke='rgba(0,0,0,${0.07 * alpha})' stroke-width='1' fill='none'/%3E%3C/svg%3E")`;
+    } else if (texture === 'metal') {
+      bgImg = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Cline x1='0' y1='40' x2='40' y2='0' stroke='rgba(255,255,255,${0.15 * alpha})' stroke-width='2'/%3E%3Cline x1='-10' y1='40' x2='30' y2='0' stroke='rgba(255,255,255,${0.07 * alpha})' stroke-width='1'/%3E%3C/svg%3E")`;
+    } else if (texture === 'honey') {
+      bgImg = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='24'%3E%3Cpolygon points='14,2 26,8 26,16 14,22 2,16 2,8' stroke='rgba(0,0,0,${0.15 * alpha})' stroke-width='1.2' fill='none'/%3E%3C/svg%3E")`;
+    } else if (texture === 'glass') {
+      bgImg = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Crect width='60' height='60' fill='rgba(255,255,255,${0.08 * alpha})'/%3E%3Cline x1='0' y1='0' x2='60' y2='60' stroke='rgba(255,255,255,${0.2 * alpha})' stroke-width='6'/%3E%3C/svg%3E")`;
+    }
   }
 
-  // 2. Effects
-  if (dots > 0) {
-    bg = `radial-gradient(rgba(255,255,255,${dots/100}) 1.5px, transparent 1.5px), ${bg}`;
-    bgSize = bgSize === 'auto' ? '6px 6px, 100% 100%' : `6px 6px, ${bgSize}`;
-  }
-  if (stripes > 0) {
-    bg = `repeating-linear-gradient(45deg, rgba(255,255,255,${stripes/100}), rgba(255,255,255,${stripes/100}) 4px, transparent 4px, transparent 8px), ${bg}`;
-  }
-  if (gloss > 0) {
-    const gl = gloss / 100;
-    bg = `radial-gradient(ellipse at 50% 25%, rgba(255,255,255,${gl * 0.9}) 0%, transparent 60%), 
-          linear-gradient(to bottom, rgba(255,255,255,${gl * 0.3}) 0%, transparent 50%, rgba(0,0,0,${gl * 0.4}) 100%), ${bg}`;
-  }
-
-  return `background: ${bg}; background-size: ${bgSize};`;
+  return `background-image: ${bgImg}; background-color: ${color}; background-size: auto;`;
 }
 
 // Modal Handlers
@@ -216,24 +199,32 @@ function updateModalPreview(color) {
   preview.style.cssText = getStyleString(color, currentAdvStyle);
 }
 
-// Initialize Sliders
-['gloss', 'stripes', 'dots'].forEach(key => {
-  const range = document.getElementById(`range-${key}`);
-  const val = document.getElementById(`val-${key}`);
-  range.oninput = () => {
-    currentAdvStyle[key] = range.value;
-    val.textContent = range.value + '%';
-    const color = styleModalTarget === 'group' ? document.getElementById('group-color').value : document.getElementById('sku-color').value;
-    updateModalPreview(color);
-  };
-});
-
-// Texture Buttons
+// Texture Buttons with Intensity Cycling
 document.querySelectorAll('.texture-btn').forEach(btn => {
   btn.onclick = () => {
-    document.querySelectorAll('.texture-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    currentAdvStyle.texture = btn.dataset.texture;
+    const tex = btn.dataset.texture;
+    if (currentAdvStyle.texture === tex) {
+      // Cycle intensity: 0 -> 33 -> 66 -> 100 -> 0
+      if (currentAdvStyle.intensity === 0) currentAdvStyle.intensity = 33;
+      else if (currentAdvStyle.intensity === 33) currentAdvStyle.intensity = 66;
+      else if (currentAdvStyle.intensity === 66) currentAdvStyle.intensity = 100;
+      else currentAdvStyle.intensity = 0;
+    } else {
+      currentAdvStyle.texture = tex;
+      currentAdvStyle.intensity = (tex === 'solid') ? 0 : 33;
+    }
+
+    // Visual feedback
+    document.querySelectorAll('.texture-btn').forEach(b => {
+      const isThis = b === btn;
+      const t = b.dataset.texture;
+      b.classList.toggle('active', isThis && currentAdvStyle.intensity > 0);
+      b.textContent = t.charAt(0).toUpperCase() + t.slice(1);
+      if (isThis && currentAdvStyle.intensity > 0) {
+        b.textContent += ` (${currentAdvStyle.intensity}%)`;
+      }
+    });
+
     const color = styleModalTarget === 'group' ? document.getElementById('group-color').value : document.getElementById('sku-color').value;
     updateModalPreview(color);
   };
@@ -251,23 +242,26 @@ document.querySelectorAll('.open-style-btn').forEach(btn => {
      // Load existing style if editing
      if (btn.dataset.target === 'group' && editingGroupId) {
        const g = findFolder(editingGroupId);
-       if (g.advStyle) Object.assign(currentAdvStyle, g.advStyle);
+       if (g.advStyle) currentAdvStyle = { ...g.advStyle };
+       else currentAdvStyle = { texture: 'solid', intensity: 0 };
      } else if (btn.dataset.target === 'sku' && editingSkuIdx !== null) {
        const f = findFolder(activeParentId);
        const s = f.skus[editingSkuIdx];
-       if (s.advStyle) Object.assign(currentAdvStyle, s.advStyle);
+       if (s.advStyle) currentAdvStyle = { ...s.advStyle };
+       else currentAdvStyle = { texture: 'solid', intensity: 0 };
      } else {
-       // Reset for new
-       currentAdvStyle = { texture: 'solid', gloss: 0, stripes: 0, dots: 0 };
+       currentAdvStyle = { texture: 'solid', intensity: 0 };
      }
      
-     // Sync sliders UI
-     ['gloss', 'stripes', 'dots'].forEach(k => {
-       document.getElementById(`range-${k}`).value = currentAdvStyle[k];
-       document.getElementById(`val-${k}`).textContent = currentAdvStyle[k] + '%';
-     });
+     // Sync UI
      document.querySelectorAll('.texture-btn').forEach(b => {
-       b.classList.toggle('active', b.dataset.texture === currentAdvStyle.texture);
+       const t = b.dataset.texture;
+       const isActive = b.dataset.texture === currentAdvStyle.texture && (currentAdvStyle.intensity > 0 || t === 'solid');
+       b.classList.toggle('active', isActive);
+       b.textContent = t.charAt(0).toUpperCase() + t.slice(1);
+       if (isActive && currentAdvStyle.intensity > 0) {
+         b.textContent += ` (${currentAdvStyle.intensity}%)`;
+       }
      });
 
      openStyleModal(btn.dataset.target);

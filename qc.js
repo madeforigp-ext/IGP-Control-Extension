@@ -70,6 +70,26 @@
     return skus;
   };
 
+  const getStyleString = (color, adv) => {
+    const { texture = 'solid', intensity = 0 } = adv || {};
+    const alpha = (intensity || 0) / 100;
+    let bgImg = 'none';
+
+    if (alpha > 0) {
+      if (texture === 'wood') {
+        bgImg = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='20'%3E%3Cpath d='M0 10 Q25 5 50 10 Q75 15 100 10' stroke='rgba(0,0,0,${0.12 * alpha})' stroke-width='1.5' fill='none'/%3E%3Cpath d='M0 16 Q25 11 50 16 Q75 21 100 16' stroke='rgba(0,0,0,${0.07 * alpha})' stroke-width='1' fill='none'/%3E%3C/svg%3E")`;
+      } else if (texture === 'metal') {
+        bgImg = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Cline x1='0' y1='40' x2='40' y2='0' stroke='rgba(255,255,255,${0.15 * alpha})' stroke-width='2'/%3E%3Cline x1='-10' y1='40' x2='30' y2='0' stroke='rgba(255,255,255,${0.07 * alpha})' stroke-width='1'/%3E%3C/svg%3E")`;
+      } else if (texture === 'honey') {
+        bgImg = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='24'%3E%3Cpolygon points='14,2 26,8 26,16 14,22 2,16 2,8' stroke='rgba(0,0,0,${0.15 * alpha})' stroke-width='1.2' fill='none'/%3E%3C/svg%3E")`;
+      } else if (texture === 'glass') {
+        bgImg = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Crect width='60' height='60' fill='rgba(255,255,255,${0.08 * alpha})'/%3E%3Cline x1='0' y1='0' x2='60' y2='60' stroke='rgba(255,255,255,${0.2 * alpha})' stroke-width='6'/%3E%3C/svg%3E")`;
+      }
+    }
+
+    return `background-image: ${bgImg}; background-color: ${color}; background-size: auto;`;
+  };
+
   const getContext = () => {
     const url = window.location.href;
     const isQCScannerPath = url.includes('qc-panel') || url.includes('/qc/');
@@ -114,10 +134,13 @@
 
   const forceUpdate = (el, val) => {
     if (!el) return;
-    el.focus(); el.value = ''; el.select();
-    const ok = document.execCommand('insertText', false, val);
-    if (!ok) el.value = val;
-    ['input', 'change', 'blur', 'keyup', 'keydown'].forEach(evt => el.dispatchEvent(new Event(evt, { bubbles: true })));
+    el.focus();
+    el.value = '';
+    el.select();
+    document.execCommand('insertText', false, val);
+    ['input', 'change', 'blur', 'keyup', 'keydown'].forEach(evt =>
+      el.dispatchEvent(new Event(evt, { bubbles: true }))
+    );
   };
 
   const triggerSearch = (field) => {
@@ -272,6 +295,7 @@
       let prefix = '';
       for (let j = 0; j < depth; j++) prefix += `<span style="font-family:monospace; color:#cbd5e1; width:10px; display:inline-block;">${isLastArray[j] ? '&nbsp;' : '│'}</span>&nbsp;`;
       const connector = `<span style="font-family:monospace; color:#cbd5e1;">${isLast ? '└─' : '├─'}</span>`;
+      const groupDotStyle = getStyleString(g.color || '#334155', g.advStyle || { texture: 'solid', intensity: 0 });
 
       html += `
         <div class="igp-tree-node" data-id="${g.id}" style="margin-bottom: 2px;">
@@ -279,7 +303,7 @@
             <span style="display:flex; align-items:center; gap:4px; overflow:hidden;">
               <span style="white-space:nowrap;">${prefix}${connector}</span>
               <span style="font-size:7px; color:#94a3b8; transform: ${isExpanded ? 'rotate(180deg)' : 'rotate(90deg)'};">▲</span>
-              <span style="width:7px; height:7px; border-radius:2px; background:${g.color || '#334155'}; flex-shrink:0;"></span>
+              <span style="width:8px; height:8px; border-radius:2px; ${groupDotStyle} flex-shrink:0; border:1px solid rgba(0,0,0,0.05);"></span>
               <span style="font-weight:600; font-size:11px; color:#1e293b; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${g.name}</span>
             </span>
             <span style="font-size:10px; font-weight:800; color:${g.color || '#334155'};">${g._total}</span>
@@ -294,11 +318,14 @@
       let prefix = '';
       for (let j = 0; j < depth; j++) prefix += `<span style="font-family:monospace; color:#cbd5e1; width:10px; display:inline-block;">${isLastArray[j] ? '&nbsp;' : '│'}</span>&nbsp;`;
       const connector = `<span style="font-family:monospace; color:#cbd5e1;">${isLast ? '└─' : '├─'}</span>`;
+      
+      const dotStyle = getStyleString(s.color || '#3498db', s.advStyle || { texture: 'solid', intensity: 0 });
+
       html += `
         <div class="igp-sku-node" data-sku="${s.sku}" style="display:flex; align-items:center; justify-content:space-between; font-size:11px; color:#334155; padding: 4px; cursor:pointer; margin: 1px 0; transition: background 0.1s;">
           <span style="display:flex; align-items:center; gap:4px; overflow:hidden;">
             <span style="white-space:nowrap;">${prefix}${connector}</span>
-            <span style="width:4px; height:4px; border-radius:50%; background:${s.color || '#3498db'}; flex-shrink:0;"></span>
+            <span style="width:8px; height:8px; border-radius:50%; ${dotStyle} flex-shrink:0; border:1px solid rgba(0,0,0,0.05);"></span>
             <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:500;">${s.name}</span>
           </span>
           <span style="font-weight:800; color:#1e293b; background:#f1f5f9; padding:0 4px; border-radius:3px;">${skuCounts[s.sku]}</span>
@@ -409,11 +436,15 @@
           if (state.settings.sku_styling_enabled !== false) {
             const pColor = (match.parent && match.parent.color) ? match.parent.color : (state.skuTree.color || '#334155');
             const tColor = match.color || '#3498db';
+            const adv = match.advStyle || { texture: 'solid', intensity: 0 };
+            const style = getStyleString(tColor, adv);
+            const bgImgMatch = style.match(/background-image:\s*([^;]+)/);
+            const bgImg = bgImgMatch ? bgImgMatch[1] : 'none';
             
-            // 50/50 split with solid flat colors
+            // Layered: Parent Color (Left) + SKU Texture (Right)
             taskIdEl.setAttribute('style', `
-              background: linear-gradient(to right, ${pColor} 50%, ${tColor} 50%) !important;
-              background-color: transparent !important;
+              background-image: linear-gradient(to right, ${pColor} 50%, transparent 50%), ${bgImg} !important;
+              background-color: ${tColor} !important;
               background-size: auto !important;
               color: #fff !important;
               padding: 2px 8px !important;
