@@ -48,8 +48,15 @@ function setupToggle(id, storageKey) {
   if (!el) return;
   chrome.storage.local.get([storageKey], (data) => { el.checked = data[storageKey] !== false; });
   el.addEventListener('change', () => {
-    chrome.storage.local.set({ [storageKey]: el.checked });
-    setStatus(`${storageKey.replace('_enabled','').toUpperCase()} UPDATED`, 'success');
+    const val = el.checked;
+    chrome.storage.local.set({ [storageKey]: val }, () => {
+      setStatus(`${storageKey.replace('_enabled','').toUpperCase()} UPDATED`, 'success');
+      chrome.tabs.query({}, (tabs) => {
+        tabs.forEach(tab => {
+          chrome.tabs.sendMessage(tab.id, { action: 'settings-sync', key: storageKey, value: val }).catch(() => {});
+        });
+      });
+    });
   });
 }
 setupToggle('toggle-qc', 'qc_enabled');
@@ -59,6 +66,8 @@ setupToggle('toggle-qc-global', 'qc_global_enabled');
 setupToggle('toggle-qc-autologin', 'qc_autologin_enabled');
 setupToggle('toggle-qc-paste', 'qc_paste_routing_enabled');
 setupToggle('toggle-intermesh-routing', 'intermesh_routing_enabled');
+setupToggle('intermesh-scan-routing-toggle', 'intermesh_routing_enabled');
+setupToggle('intermesh-global-toggle', 'intermesh_global_enabled');
 setupToggle('toggle-intermesh-autologin', 'intermesh_autologin_enabled');
 setupToggle('toggle-sku-styling', 'sku_styling_enabled');
 setupToggle('toggle-sku-pending', 'sku_pending_enabled');

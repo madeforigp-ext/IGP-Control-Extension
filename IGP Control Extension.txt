@@ -231,14 +231,22 @@ HISTORY
 			x 1)OID/PKID scan routes to their respected feild and tray feild so the search fails
 			+ 2)Sqc double input bug (got fixed auto)
 			
-09 50 am 3/6/26
+09 50 am 4/6/26
 	{
 			1)Added style elements in Sku tracker
 			3)reworked style element
 			2)Added Toogles for skutracker and pending task independent.
 
 	}
-		TODOh
+		TODO
 			x 1)Add SQC
 			+ 2)Add Advance Styling Way in sku tracking
+			
+03 44 am 5/6/26
+	{
+			1)removed/simplified Styling
+			2)styling bug fixed
+	}
+		TODO
+			x 1)Add SQC
 			
