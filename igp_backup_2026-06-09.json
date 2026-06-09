@@ -23,14 +23,14 @@
     }
   },
   "skuTree": {
-    "_total": 0,
+    "_total": 8,
     "groups": [
       {
-        "_total": 0,
+        "_total": 8,
         "color": "#ff958a",
         "groups": [
           {
-            "_total": 0,
+            "_total": 8,
             "color": "#b1957b",
             "groups": [],
             "id": "f1780131131220",
@@ -175,9 +175,15 @@
                 "sku": "JVS1427550"
               },
               {
-                "color": "#9a0602",
+                "advStyle": {
+                  "dots": 0,
+                  "gloss": 0,
+                  "stripes": 0,
+                  "texture": "solid"
+                },
+                "color": "#9A0602",
                 "name": "Partners In Crime Personalized Caricature",
-                "note": "",
+                "note": "\" Partners In Crime \"",
                 "sku": "JVS1267465"
               },
               {
@@ -191,6 +197,42 @@
                 "name": "Personalized Lawsome Lawyer Caricature For Women",
                 "note": "",
                 "sku": "JVS1301377"
+              },
+              {
+                "advStyle": {
+                  "dots": 0,
+                  "gloss": 0,
+                  "stripes": 0,
+                  "texture": "solid"
+                },
+                "color": "#3498DB",
+                "name": "Personalized Lawsome Lawyer Caricature For Men",
+                "note": "\" Lawsome Lawyer \"",
+                "sku": "JVS1301376"
+              },
+              {
+                "advStyle": {
+                  "dots": 0,
+                  "gloss": 0,
+                  "stripes": 0,
+                  "texture": "solid"
+                },
+                "color": "#3498DB",
+                "name": "Loving Family Personalized Caricature Stand",
+                "note": "\" Family where life begins and love never ends \"",
+                "sku": "J11140549"
+              },
+              {
+                "advStyle": {
+                  "dots": 0,
+                  "gloss": 0,
+                  "stripes": 0,
+                  "texture": "solid"
+                },
+                "color": "#3498DB",
+                "name": "Personalized Mom Son Caricature",
+                "note": "\"   \"",
+                "sku": "JVS1451269"
               }
             ]
           },
@@ -749,6 +791,18 @@
         "name": "Personalized Penguin Love Mug",
         "note": "",
         "sku": "JVS1438823"
+      },
+      {
+        "advStyle": {
+          "dots": 0,
+          "gloss": 0,
+          "stripes": 0,
+          "texture": "solid"
+        },
+        "color": "#3498DB",
+        "name": "Father's Day Personalized Jabardast Papa Caricature",
+        "note": "\" Jabardast Papa \"",
+        "sku": "JVS1223482"
       }
     ]
   }
