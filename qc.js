@@ -43,6 +43,7 @@
 
   let qcEnabled = true;
   let processTimer = null;
+  let globalRoutingTimeout = null;
 
   // ─── UTILS ─────────────────────────────────────────────────────────────────
 
@@ -590,6 +591,24 @@
     }
   }, true);
 
+  document.addEventListener('input', (e) => {
+    if (!qcEnabled) return;
+    const ctx = getContext();
+    if (!ctx.isActive || !ctx.isScannerPath) return;
+
+    const target = e.target;
+    if (target) {
+      const f = findFields();
+      if (target === f.tray) {
+        const val = target.value.trim();
+        if (/^\d{4}$/.test(val)) {
+          console.log(`[IGP] Tray field reached 4 digits: ${val}. Triggering search...`);
+          triggerSearch(target);
+        }
+      }
+    }
+  }, true);
+
   window.addEventListener('keydown', (e) => {
     if (!qcEnabled || e.ctrlKey || e.altKey || e.metaKey) return;
     const ctx = getContext();
@@ -597,6 +616,14 @@
     const now = Date.now(), gap = now - state.lastKeyTime;
     state.lastKeyTime = now;
     if (gap > CONFIG.TYPING_GAP_THRESHOLD) { state.scanBuffer = ''; state.isRedirected = false; }
+
+    if (e.key === 'Enter' || !/^\d$/.test(e.key)) {
+      if (globalRoutingTimeout) {
+        clearTimeout(globalRoutingTimeout);
+        globalRoutingTimeout = null;
+      }
+    }
+
     if (e.key === 'Enter') {
       if (now - state.lastAutoSearchTime < CONFIG.SHIELD_TIME) { e.preventDefault(); e.stopImmediatePropagation(); return; }
       if (!ctx.routingEnabled) { state.scanBuffer = ''; state.isRedirected = false; return; }
@@ -613,17 +640,39 @@
       state.scanBuffer = ''; state.isRedirected = false;
     } else if (e.key.length === 1) {
       const activeTag = document.activeElement.tagName;
-      if ((activeTag === 'INPUT' || activeTag === 'TEXTAREA') && gap > 150) { state.scanBuffer = ''; state.isRedirected = false; }
+      const isInputFocused = ['INPUT', 'TEXTAREA'].includes(activeTag);
+
+      if (ctx.globalEnabled && !isInputFocused && /^\d$/.test(e.key)) {
+        if (globalRoutingTimeout) {
+          clearTimeout(globalRoutingTimeout);
+          globalRoutingTimeout = null;
+        }
+        if (gap > 150) { state.scanBuffer = ''; }
+        state.scanBuffer += e.key;
+
+        globalRoutingTimeout = setTimeout(() => {
+          const val = state.scanBuffer.trim().toUpperCase();
+          const type = identify(val) || 'tray';
+          const f = findFields(), target = f[type];
+          if (target) {
+            forceUpdate(target, val);
+            if (type === 'tray' && /^\d{4}$/.test(val)) {
+              triggerSearch(target);
+            } else if (type !== 'tray') {
+              triggerSearch(target);
+            }
+            state.isRedirected = true;
+          }
+          globalRoutingTimeout = null;
+        }, 50);
+
+        e.preventDefault();
+        return;
+      }
+
+      if (isInputFocused && gap > 150) { state.scanBuffer = ''; state.isRedirected = false; }
       if (e.key === ' ' && state.scanBuffer.length === 0) return;
       state.scanBuffer += e.key;
-      if (ctx.globalEnabled && !state.isRedirected && state.scanBuffer.length === 4 && /^\d{4}$/.test(state.scanBuffer)) {
-          const f = findFields(), target = f['tray'];
-          if (target && document.activeElement !== target) {
-            target.focus(); target.value = state.scanBuffer;
-            if (target.setSelectionRange) target.setSelectionRange(4, 4);
-            state.isRedirected = true; e.preventDefault();
-          }
-      }
     }
   }, true);
 

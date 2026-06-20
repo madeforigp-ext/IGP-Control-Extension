@@ -730,7 +730,19 @@ setupAccordion('data-management-accordion', 'data-management-content', 'data-acc
 const exportBtn = document.getElementById('exportDataBtn');
 if (exportBtn) {
   exportBtn.onclick = () => {
-    chrome.storage.local.get(['skuTree', 'patterns', 'expandedFolders'], (data) => {
+    const keysToExport = [
+      'skuTree', 
+      'patterns', 
+      'expandedFolders', 
+      'qc_user', 
+      'qc_pass', 
+      'intermesh_user', 
+      'intermesh_assoc', 
+      'intermesh_pass', 
+      'protectedTitles',
+      'tabguard_enabled'
+    ];
+    chrome.storage.local.get(keysToExport, (data) => {
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -758,11 +770,26 @@ if (importBtn && importFile) {
           chrome.storage.local.set(data, () => {
             skuTree = data.skuTree;
             if (data.expandedFolders) expandedFolders = new Set(data.expandedFolders);
+            if (data.protectedTitles) protectedTitles = data.protectedTitles;
+            
+            // Refresh UI components
             renderTree();
             loadPatterns(); 
+            renderTabGuard();
+            
+            // Refresh toggle UI state
+            ['qc_enabled', 'qc_rightclick_enabled', 'qc_routing_enabled', 'qc_global_enabled', 'qc_autologin_enabled', 'qc_paste_routing_enabled', 'intermesh_routing_enabled', 'intermesh_global_enabled', 'intermesh_autologin_enabled', 'sku_styling_enabled', 'sku_pending_enabled', 'tabguard_enabled'].forEach(key => {
+              const el = document.getElementById(key.startsWith('qc') ? `toggle-${key.replace('_enabled','')}` : (key.startsWith('intermesh') ? `toggle-${key.replace('_enabled','')}` : `toggle-${key.replace('_enabled','')}`));
+              if (el && data[key] !== undefined) el.checked = data[key] !== false;
+            });
+
             chrome.tabs.query({}, (tabs) => {
               tabs.forEach(tab => {
-                chrome.tabs.sendMessage(tab.id, { action: 'sku-sync', data: data.skuTree, patterns: data.patterns }).catch(() => {});
+                chrome.tabs.sendMessage(tab.id, { 
+                  action: 'sku-sync', 
+                  data: data.skuTree, 
+                  patterns: data.patterns 
+                }).catch(() => {});
               });
             });
             setStatus('DATA IMPORTED ✅', 'success');
