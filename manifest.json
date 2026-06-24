@@ -29,6 +29,11 @@
       "matches": ["*://admin.indiangiftsportal.com/*"],
       "js": ["intermesh.js"],
       "run_at": "document_idle"
+    },
+    {
+      "matches": ["*://admin.joinventures.com/*"],
+      "js": ["hotkeys.js"],
+      "run_at": "document_idle"
     }
   ],
   "background": {
