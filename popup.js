@@ -723,6 +723,7 @@ setupAccordion('qc-cred-accordion', 'qc-cred-content', 'qc-accordion-icon');
 setupAccordion('intermesh-cred-accordion', 'intermesh-cred-content', 'intermesh-accordion-icon');
 setupAccordion('sku-tracking-accordion', 'sku-tracking-content', 'sku-accordion-icon');
 setupAccordion('patterns-accordion', 'patterns-content', 'patterns-accordion-icon');
+setupAccordion('hotkeys-accordion', 'hotkeys-content', 'hotkeys-accordion-icon');
 setupAccordion('data-management-accordion', 'data-management-content', 'data-accordion-icon');
 
 // ─── DATA MANAGEMENT (Export/Import) ────────────────────────────────────────
@@ -826,3 +827,100 @@ bindEnter(['intermesh-assoc', 'intermesh-user', 'intermesh-pass'], 'saveIntermes
 bindEnter(['titleInput'], 'addBtn');
 bindEnter(['group-name'], 'addGroupBtnSimple');
 bindEnter(['sku-input', 'sku-display-name', 'sku-custom-note'], 'saveSkuBtn');
+
+// ─── HOTKEYS SECTION ────────────────────────────────────────────────────────
+
+const HK_FIELDS = ['oid', 'pkid', 'sku', 'barcode', 'filter'];
+const HK_BUTTONS = ['search', 'clear', 'trolley_complete', 'view_trolley', 'assembly'];
+
+function loadHotkeys() {
+  chrome.storage.local.get(['hotkey_fields', 'hotkey_buttons'], (data) => {
+    const defaultFields = { oid: 'o', pkid: 'p', sku: 'k', barcode: 'b', filter: 'l' };
+    const defaultButtons = { search: 's', clear: 'x', trolley_complete: 't', view_trolley: 'v', assembly: 'a' };
+
+    const fields = { ...defaultFields, ...(data.hotkey_fields || {}) };
+    const buttons = { ...defaultButtons, ...(data.hotkey_buttons || {}) };
+
+    HK_FIELDS.forEach(f => {
+      const el = document.getElementById(`hk-field-${f}`);
+      if (el) el.value = fields[f] || '';
+    });
+
+    HK_BUTTONS.forEach(b => {
+      const el = document.getElementById(`hk-btn-${b}`);
+      if (el) el.value = buttons[b] || '';
+    });
+  });
+}
+
+const saveHotkeysBtn = document.getElementById('saveHotkeysBtn');
+if (saveHotkeysBtn) {
+  saveHotkeysBtn.onclick = () => {
+    const fields = {};
+    const buttons = {};
+
+    HK_FIELDS.forEach(f => {
+      const el = document.getElementById(`hk-field-${f}`);
+      if (el) fields[f] = el.value.trim().toLowerCase();
+    });
+
+    HK_BUTTONS.forEach(b => {
+      const el = document.getElementById(`hk-btn-${b}`);
+      if (el) buttons[b] = el.value.trim().toLowerCase();
+    });
+
+    chrome.storage.local.set({ hotkey_fields: fields, hotkey_buttons: buttons }, () => {
+      setStatus('HOTKEYS SAVED', 'success');
+      
+      // Reload on extension pages/background
+      chrome.runtime.sendMessage({ action: 'hotkeys-reload' });
+
+      // Reload in content scripts
+      chrome.tabs.query({}, (tabs) => {
+        tabs.forEach(tab => {
+          chrome.tabs.sendMessage(tab.id, { action: 'hotkeys-reload' }).catch(() => {});
+        });
+      });
+    });
+  };
+}
+
+// Subsection switcher for hotkeys
+const switchFields = document.getElementById('hotkeys-switch-fields');
+const switchButtons = document.getElementById('hotkeys-switch-buttons');
+const fieldsSub = document.getElementById('hotkeys-fields-sub');
+const buttonsSub = document.getElementById('hotkeys-buttons-sub');
+
+if (switchFields && switchButtons && fieldsSub && buttonsSub) {
+  switchFields.onclick = () => {
+    switchFields.classList.add('active');
+    switchButtons.classList.remove('active');
+    fieldsSub.style.display = 'block';
+    buttonsSub.style.display = 'none';
+  };
+  switchButtons.onclick = () => {
+    switchButtons.classList.add('active');
+    switchFields.classList.remove('active');
+    buttonsSub.style.display = 'block';
+    fieldsSub.style.display = 'none';
+  };
+}
+
+// Set up master toggle
+setupToggle('hotkeys-toggle', 'hotkeys_enabled');
+
+// Additional listener for the toggle to trigger hotkeys reload immediately
+const hkToggle = document.getElementById('hotkeys-toggle');
+if (hkToggle) {
+  hkToggle.addEventListener('change', () => {
+    chrome.runtime.sendMessage({ action: 'hotkeys-reload' });
+    chrome.tabs.query({}, (tabs) => {
+      tabs.forEach(tab => {
+        chrome.tabs.sendMessage(tab.id, { action: 'hotkeys-reload' }).catch(() => {});
+      });
+    });
+  });
+}
+
+// Load initial values
+loadHotkeys();
