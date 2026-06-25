@@ -69,6 +69,7 @@ setupToggle('toggle-intermesh-routing', 'intermesh_routing_enabled');
 setupToggle('intermesh-scan-routing-toggle', 'intermesh_routing_enabled');
 setupToggle('intermesh-global-toggle', 'intermesh_global_enabled');
 setupToggle('toggle-intermesh-autologin', 'intermesh_autologin_enabled');
+setupToggle('toggle-intermesh-pers', 'intermesh_pers_enabled');
 setupToggle('toggle-sku-styling', 'sku_styling_enabled');
 setupToggle('toggle-sku-pending', 'sku_pending_enabled');
 setupToggle('toggle-tabguard', 'tabguard_enabled');
@@ -848,7 +849,63 @@ function loadHotkeys() {
 
     HK_BUTTONS.forEach(b => {
       const el = document.getElementById(`hk-btn-${b}`);
-      if (el) el.value = buttons[b] || '';
+      if (el) el.value = typeof buttons[b] === 'object' ? buttons[b].key : (buttons[b] || '');
+    });
+
+    // Load and render custom buttons
+    document.querySelectorAll('.hk-custom-item').forEach(el => el.remove());
+    const grid = document.querySelector('.hotkeys-grid');
+    if (grid) {
+      Object.entries(buttons).forEach(([id, val]) => {
+        if (id.startsWith('custom_') && val && typeof val === 'object') {
+          const span = document.createElement('span');
+          span.className = 'hk-custom-item';
+          span.style.cssText = 'font-size: 12px; color: var(--text-muted); font-weight: 500;';
+          span.textContent = val.label;
+
+          const div = document.createElement('div');
+          div.className = 'hk-custom-item';
+          div.style.cssText = 'display: flex; align-items: center; gap: 4px;';
+
+          const input = document.createElement('input');
+          input.className = 'input hk-custom-input';
+          input.id = `hk-custom-btn-${id}`;
+          input.dataset.id = id;
+          input.type = 'text';
+          input.maxLength = 1;
+          input.style.cssText = 'width: 36px !important; text-align: center !important; padding: 6px !important; margin-bottom: 0 !important;';
+          input.value = val.key || '';
+
+          const delBtn = document.createElement('button');
+          delBtn.className = 'tag-remove';
+          delBtn.style.cssText = 'font-size: 14px; cursor: pointer; background: none; border: none; color: #94a3b8; padding: 0; line-height: 1;';
+          delBtn.textContent = '✕';
+          delBtn.onclick = () => deleteCustomHotkey(id);
+
+          div.appendChild(input);
+          div.appendChild(delBtn);
+
+          grid.appendChild(span);
+          grid.appendChild(div);
+        }
+      });
+    }
+  });
+}
+
+function deleteCustomHotkey(id) {
+  chrome.storage.local.get(['hotkey_buttons'], (data) => {
+    const buttons = data.hotkey_buttons || {};
+    delete buttons[id];
+    chrome.storage.local.set({ hotkey_buttons: buttons }, () => {
+      setStatus('HOTKEY REMOVED', 'success');
+      chrome.runtime.sendMessage({ action: 'hotkeys-reload' });
+      chrome.tabs.query({}, (tabs) => {
+        tabs.forEach(tab => {
+          chrome.tabs.sendMessage(tab.id, { action: 'hotkeys-reload' }).catch(() => {});
+        });
+      });
+      loadHotkeys();
     });
   });
 }
@@ -866,45 +923,115 @@ if (saveHotkeysBtn) {
 
     HK_BUTTONS.forEach(b => {
       const el = document.getElementById(`hk-btn-${b}`);
-      if (el) buttons[b] = el.value.trim().toLowerCase();
+      if (el) {
+        buttons[b] = el.value.trim().toLowerCase();
+      }
     });
 
-    chrome.storage.local.set({ hotkey_fields: fields, hotkey_buttons: buttons }, () => {
-      setStatus('HOTKEYS SAVED', 'success');
-      
-      // Reload on extension pages/background
-      chrome.runtime.sendMessage({ action: 'hotkeys-reload' });
+    // Merge key updates from custom inputs
+    chrome.storage.local.get(['hotkey_buttons'], (data) => {
+      const currentButtons = data.hotkey_buttons || {};
+      document.querySelectorAll('.hk-custom-input').forEach(input => {
+        const id = input.dataset.id;
+        if (currentButtons[id]) {
+          currentButtons[id].key = input.value.trim().toLowerCase();
+        }
+      });
 
-      // Reload in content scripts
-      chrome.tabs.query({}, (tabs) => {
-        tabs.forEach(tab => {
-          chrome.tabs.sendMessage(tab.id, { action: 'hotkeys-reload' }).catch(() => {});
+      // Maintain full object structure in hotkey_buttons in storage
+      const mergedButtons = { ...currentButtons, ...buttons };
+
+      chrome.storage.local.set({ hotkey_fields: fields, hotkey_buttons: mergedButtons }, () => {
+        setStatus('HOTKEYS SAVED', 'success');
+        
+        // Reload on extension pages/background
+        chrome.runtime.sendMessage({ action: 'hotkeys-reload' });
+
+        // Reload in content scripts
+        chrome.tabs.query({}, (tabs) => {
+          tabs.forEach(tab => {
+            chrome.tabs.sendMessage(tab.id, { action: 'hotkeys-reload' }).catch(() => {});
+          });
         });
       });
     });
   };
 }
 
-// Subsection switcher for hotkeys
-const switchFields = document.getElementById('hotkeys-switch-fields');
-const switchButtons = document.getElementById('hotkeys-switch-buttons');
-const fieldsSub = document.getElementById('hotkeys-fields-sub');
-const buttonsSub = document.getElementById('hotkeys-buttons-sub');
-
-if (switchFields && switchButtons && fieldsSub && buttonsSub) {
-  switchFields.onclick = () => {
-    switchFields.classList.add('active');
-    switchButtons.classList.remove('active');
-    fieldsSub.style.display = 'block';
-    buttonsSub.style.display = 'none';
-  };
-  switchButtons.onclick = () => {
-    switchButtons.classList.add('active');
-    switchFields.classList.remove('active');
-    buttonsSub.style.display = 'block';
-    fieldsSub.style.display = 'none';
+// Add Custom button handler
+const addCustomHotkeyBtn = document.getElementById('addCustomHotkeyBtn');
+if (addCustomHotkeyBtn) {
+  addCustomHotkeyBtn.onclick = () => {
+    chrome.runtime.sendMessage({ action: 'start-picking' });
+    window.close();
   };
 }
+
+// Check for picked element on load
+chrome.runtime.sendMessage({ action: 'get-picked' }, (data) => {
+  if (data && data.capturedSelector) {
+    const form = document.getElementById('custom-hk-form');
+    const labelInput = document.getElementById('custom-hk-label');
+    const keyInput = document.getElementById('custom-hk-key');
+    
+    if (form && labelInput && keyInput) {
+      form.style.display = 'block';
+      labelInput.value = data.capturedLabel || '';
+      keyInput.value = '';
+      keyInput.focus();
+      
+      // Expand the hotkeys accordion so the user sees the form
+      const content = document.getElementById('hotkeys-content');
+      const icon = document.getElementById('hotkeys-accordion-icon');
+      const header = document.getElementById('hotkeys-accordion');
+      if (content && content.style.display !== 'block') {
+        content.style.display = 'block';
+        if (icon) icon.textContent = '▲';
+        if (header) header.style.color = 'var(--primary)';
+      }
+
+      // Add click handler for Save Custom
+      const saveBtn = document.getElementById('saveCustomHkBtn');
+      if (saveBtn) {
+        saveBtn.onclick = () => {
+          const key = keyInput.value.trim().toLowerCase();
+          const label = labelInput.value.trim();
+          if (!key || !label) {
+            setStatus('FILL ALL FIELDS', 'error');
+            return;
+          }
+          
+          chrome.storage.local.get(['hotkey_buttons'], (storeData) => {
+            const buttons = storeData.hotkey_buttons || { search: 's', clear: 'x', trolley_complete: 't', view_trolley: 'v', assembly: 'a' };
+            const id = `custom_${Date.now()}`;
+            buttons[id] = { key, label, selector: data.capturedSelector };
+            
+            chrome.storage.local.set({ hotkey_buttons: buttons }, () => {
+              setStatus('CUSTOM HOTKEY ADDED', 'success');
+              chrome.runtime.sendMessage({ action: 'hotkeys-reload' });
+              chrome.tabs.query({}, (tabs) => {
+                tabs.forEach(tab => {
+                  chrome.tabs.sendMessage(tab.id, { action: 'hotkeys-reload' }).catch(() => {});
+                });
+              });
+              
+              form.style.display = 'none';
+              loadHotkeys();
+            });
+          });
+        };
+      }
+
+      // Add click handler for Cancel Custom
+      const cancelBtn = document.getElementById('cancelCustomHkBtn');
+      if (cancelBtn) {
+        cancelBtn.onclick = () => {
+          form.style.display = 'none';
+        };
+      }
+    }
+  }
+});
 
 // Set up master toggle
 setupToggle('hotkeys-toggle', 'hotkeys_enabled');

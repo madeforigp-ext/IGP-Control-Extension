@@ -587,6 +587,19 @@
       color: #fff;
       box-shadow: 0 4px 10px rgba(192, 57, 43, 0.2);
     }
+    .hotkeys-grid {
+      display: grid !important;
+      grid-template-columns: 1fr auto 1fr auto !important;
+      gap: 6px 12px !important;
+      align-items: center !important;
+      margin-bottom: 12px !important;
+    }
+    .hotkeys-grid .input {
+      width: 36px !important;
+      text-align: center !important;
+      padding: 6px !important;
+      margin-bottom: 0 !important;
+    }
   </style>
 </head>
 <body>
@@ -805,60 +818,59 @@
           <label class="toggle small"><input type="checkbox" id="hotkeys-toggle" checked><span class="slider"></span></label>
         </div>
 
-        <div class="switcher-container" style="margin-bottom: 12px;">
-          <button class="switcher-btn active" id="hotkeys-switch-fields" type="button">Fields</button>
-          <button class="switcher-btn" id="hotkeys-switch-buttons" type="button">Buttons</button>
-        </div>
+        <div class="hotkeys-grid" style="display: grid !important; grid-template-columns: 1fr auto 1fr auto !important; gap: 6px 12px !important; align-items: center !important; margin-bottom: 12px !important;">
+          <!-- Row 1 -->
+          <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">Order ID</span>
+          <input class="input" id="hk-field-oid" type="text" maxlength="1" style="width: 36px !important; text-align: center !important; padding: 6px !important; margin-bottom: 0 !important;" />
+          <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">Search</span>
+          <input class="input" id="hk-btn-search" type="text" maxlength="1" style="width: 36px !important; text-align: center !important; padding: 6px !important; margin-bottom: 0 !important;" />
 
-        <!-- Fields Subsection -->
-        <div id="hotkeys-fields-sub">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-            <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">Order ID</span>
-            <input class="input" id="hk-field-oid" type="text" maxlength="1" style="width: 40px; text-align: center; padding: 6px; margin-bottom: 0;" />
-          </div>
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-            <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">Packet ID</span>
-            <input class="input" id="hk-field-pkid" type="text" maxlength="1" style="width: 40px; text-align: center; padding: 6px; margin-bottom: 0;" />
-          </div>
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-            <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">SKU</span>
-            <input class="input" id="hk-field-sku" type="text" maxlength="1" style="width: 40px; text-align: center; padding: 6px; margin-bottom: 0;" />
-          </div>
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-            <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">Barcode</span>
-            <input class="input" id="hk-field-barcode" type="text" maxlength="1" style="width: 40px; text-align: center; padding: 6px; margin-bottom: 0;" />
-          </div>
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-            <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">Filter</span>
-            <input class="input" id="hk-field-filter" type="text" maxlength="1" style="width: 40px; text-align: center; padding: 6px; margin-bottom: 0;" />
-          </div>
-        </div>
+          <!-- Row 2 -->
+          <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">Packet ID</span>
+          <input class="input" id="hk-field-pkid" type="text" maxlength="1" style="width: 36px !important; text-align: center !important; padding: 6px !important; margin-bottom: 0 !important;" />
+          <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">Clear</span>
+          <input class="input" id="hk-btn-clear" type="text" maxlength="1" style="width: 36px !important; text-align: center !important; padding: 6px !important; margin-bottom: 0 !important;" />
 
-        <!-- Buttons Subsection -->
-        <div id="hotkeys-buttons-sub" style="display: none;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-            <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">Search</span>
-            <input class="input" id="hk-btn-search" type="text" maxlength="1" style="width: 40px; text-align: center; padding: 6px; margin-bottom: 0;" />
-          </div>
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-            <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">Clear</span>
-            <input class="input" id="hk-btn-clear" type="text" maxlength="1" style="width: 40px; text-align: center; padding: 6px; margin-bottom: 0;" />
-          </div>
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-            <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">Trolley</span>
-            <input class="input" id="hk-btn-trolley_complete" type="text" maxlength="1" style="width: 40px; text-align: center; padding: 6px; margin-bottom: 0;" />
-          </div>
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-            <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">View Trolley</span>
-            <input class="input" id="hk-btn-view_trolley" type="text" maxlength="1" style="width: 40px; text-align: center; padding: 6px; margin-bottom: 0;" />
-          </div>
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-            <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">Assembly</span>
-            <input class="input" id="hk-btn-assembly" type="text" maxlength="1" style="width: 40px; text-align: center; padding: 6px; margin-bottom: 0;" />
-          </div>
+          <!-- Row 3 -->
+          <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">SKU</span>
+          <input class="input" id="hk-field-sku" type="text" maxlength="1" style="width: 36px !important; text-align: center !important; padding: 6px !important; margin-bottom: 0 !important;" />
+          <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">Trolley</span>
+          <input class="input" id="hk-btn-trolley_complete" type="text" maxlength="1" style="width: 36px !important; text-align: center !important; padding: 6px !important; margin-bottom: 0 !important;" />
+
+          <!-- Row 4 -->
+          <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">Barcode</span>
+          <input class="input" id="hk-field-barcode" type="text" maxlength="1" style="width: 36px !important; text-align: center !important; padding: 6px !important; margin-bottom: 0 !important;" />
+          <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">View Trolley</span>
+          <input class="input" id="hk-btn-view_trolley" type="text" maxlength="1" style="width: 36px !important; text-align: center !important; padding: 6px !important; margin-bottom: 0 !important;" />
+
+          <!-- Row 5 -->
+          <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">Filter</span>
+          <input class="input" id="hk-field-filter" type="text" maxlength="1" style="width: 36px !important; text-align: center !important; padding: 6px !important; margin-bottom: 0 !important;" />
+          <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">Assembly</span>
+          <input class="input" id="hk-btn-assembly" type="text" maxlength="1" style="width: 36px !important; text-align: center !important; padding: 6px !important; margin-bottom: 0 !important;" />
         </div>
 
         <button class="btn btn-primary btn-small" id="saveHotkeysBtn" style="margin-top: 10px; width: 100%;">Save Hotkeys</button>
+        <button class="btn btn-outline" id="addCustomHotkeyBtn" style="margin-top: 8px; width: 100%;">➕ Add Custom</button>
+
+        <!-- Custom Hotkey Form (hidden by default) -->
+        <div id="custom-hk-form" style="display: none; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 12px;">
+          <div style="font-size: 10px; font-weight: 700; color: var(--primary); text-transform: uppercase; margin-bottom: 8px;">New Custom Hotkey</div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div>
+              <span style="font-size: 10px; font-weight: 600; color: #64748b; display: block; margin-bottom: 4px;">Label</span>
+              <input class="input" id="custom-hk-label" type="text" style="font-size: 11px; padding: 6px; margin-bottom: 0;" />
+            </div>
+            <div>
+              <span style="font-size: 10px; font-weight: 600; color: #64748b; display: block; margin-bottom: 4px;">Key</span>
+              <input class="input" id="custom-hk-key" type="text" maxlength="1" style="width: 36px; text-align: center; padding: 6px; margin-bottom: 0;" />
+            </div>
+            <div style="display: flex; gap: 6px; margin-top: 4px;">
+              <button class="btn btn-outline btn-small" id="cancelCustomHkBtn" style="flex: 1; margin-top: 0; padding: 6px; font-size: 10px;">Cancel</button>
+              <button class="btn btn-primary btn-small" id="saveCustomHkBtn" style="flex: 2; padding: 6px; font-size: 10px;">Add</button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Data Management -->
@@ -898,6 +910,11 @@
         <div class="toggle-row" style="margin-bottom: 8px;">
           <span class="toggle-label">Type Detection <i class="info-icon" data-tooltip="Allows you to start typing an ID from anywhere on the page to jump directly to the correct field.">i</i></span>
           <label class="toggle small"><input type="checkbox" id="intermesh-global-toggle" checked><span class="slider"></span></label>
+        </div>
+
+        <div class="toggle-row" style="margin-bottom: 8px;">
+          <span class="toggle-label">Pers Info Keys <i class="info-icon" data-tooltip="Open Personalized Info links using Shift + 1-5 keys.">i</i></span>
+          <label class="toggle small"><input type="checkbox" id="toggle-intermesh-pers" checked><span class="slider"></span></label>
         </div>
 
         <div class="accordion-header" id="intermesh-cred-accordion">

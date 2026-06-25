@@ -90,3 +90,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     chrome.tabs.remove(sender.tab.id);
   }
 });
+
+let pickingState = { active: false, capturedSelector: null, capturedLabel: null };
+
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg.action === 'start-picking') {
+    pickingState = { active: true, capturedSelector: null, capturedLabel: null };
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      chrome.tabs.sendMessage(tabs[0].id, { action: 'enable-picker' });
+    });
+  }
+  if (msg.action === 'element-picked') {
+    pickingState = { active: false, capturedSelector: msg.selector, capturedLabel: msg.label };
+  }
+  if (msg.action === 'get-picked') {
+    sendResponse(pickingState);
+    pickingState = { active: false, capturedSelector: null, capturedLabel: null };
+    return true;
+  }
+});

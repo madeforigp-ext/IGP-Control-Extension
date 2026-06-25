@@ -184,6 +184,41 @@
         }
       }, true);
     });
+
+    let numpadPlusHeld = false;
+    let persBuffer = [];
+    let persTimeout = null;
+
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'NumpadAdd') { numpadPlusHeld = true; e.preventDefault(); return; }
+      if (!numpadPlusHeld) return;
+      const numCodes = ['Digit1','Digit2','Digit3','Digit4','Digit5','Numpad1','Numpad2','Numpad3','Numpad4','Numpad5'];
+      if (!numCodes.includes(e.code)) return;
+      const activeTag = document.activeElement?.tagName.toUpperCase();
+      if (activeTag === 'INPUT' || activeTag === 'TEXTAREA') return;
+      e.preventDefault();
+      chrome.storage.local.get(['intermesh_pers_enabled'], (data) => {
+        if (data.intermesh_pers_enabled === false) return;
+        const idx = parseInt(e.code.replace('Numpad','').replace('Digit','')) - 1;
+        if (!persBuffer.includes(idx)) persBuffer.push(idx);
+        if (persTimeout) clearTimeout(persTimeout);
+        persTimeout = setTimeout(() => {
+          const persLinks = Array.from(document.querySelectorAll('a')).filter(a => a.innerText.trim() === 'Personalized Info');
+          if (persBuffer.length === 1) {
+            if (persLinks[persBuffer[0]]) window.open(persLinks[persBuffer[0]].href, '_blank');
+          } else {
+            persBuffer.forEach(i => {
+              if (persLinks[i]) window.open(persLinks[i].href, '_blank');
+            });
+          }
+          persBuffer = [];
+        }, 500);
+      });
+    }, true);
+
+    window.addEventListener('keyup', (e) => {
+      if (e.code === 'NumpadAdd') numpadPlusHeld = false;
+    }, true);
   }
 
   // Run on index.php or root domain
