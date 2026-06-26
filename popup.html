@@ -122,7 +122,17 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 3px 0;
+      background: #fff;
+      border-radius: 8px;
+      padding: 8px 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      transition: all 0.2s ease;
+      margin-bottom: 8px;
+    }
+
+    .toggle-row:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.12);
     }
 
     .toggle-label {
@@ -357,16 +367,22 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: #f1f5f9;
+      background: white;
       padding: 10px 12px;
-      margin-bottom: 8px;
+      margin-bottom: -4px;
       font-size: 12px;
       color: var(--text-main);
       border-radius: 8px;
-      transition: transform 0.15s;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      transition: all 0.2s ease;
+      position: relative;
     }
 
-    .tag:hover { transform: translateX(2px); }
+    .tag:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      z-index: 10;
+    }
 
     .tag span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; font-weight: 500; }
 
@@ -376,11 +392,33 @@
       color: #94a3b8;
       cursor: pointer;
       font-size: 16px;
-      transition: color 0.2s;
+      transition: color 0.2s, opacity 0.2s ease;
       line-height: 1;
+      opacity: 0;
     }
 
     .tag-remove:hover { color: var(--primary); }
+
+    .tag:hover .tag-remove {
+      opacity: 1;
+    }
+
+    .cred-card {
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 10px 12px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    .cred-card.active {
+      border-color: #27ae60;
+      box-shadow: 0 0 0 2px rgba(39, 174, 96, 0.15);
+    }
+    .cred-card:hover {
+      box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+    }
 
     .empty-state {
       font-size: 11px;
@@ -433,55 +471,63 @@
     }
 
     /* TOOLTIP */
-    .info-icon {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: #e2e8f0;
-      color: #64748b;
-      font-size: 9px;
-      font-weight: 700;
-      font-style: italic;
-      margin-left: 6px;
-      cursor: help;
+    [data-tooltip] {
       position: relative;
     }
 
-    .info-icon:hover {
-      background: var(--primary);
-      color: #fff;
-    }
-
-    .info-icon::after {
+    [data-tooltip]::after {
       content: attr(data-tooltip);
       position: absolute;
-      bottom: 125%;
+      top: 100%;
       left: 50%;
-      transform: translateX(-50%);
-      background: #334155;
+      transform: translateX(-50%) translateY(6px);
+      background: #1e1e1e;
       color: #fff;
       padding: 6px 10px;
       border-radius: 6px;
-      font-size: 10px;
-      white-space: normal;
-      width: 180px;
+      font-size: 11px;
+      width: max-content;
+      max-width: 200px;
       line-height: 1.4;
+      text-transform: none;
+      text-align: center;
+      white-space: normal;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 10000;
       opacity: 0;
+      pointer-events: none;
       visibility: hidden;
-      transition: all 0.2s;
-      z-index: 1000;
-      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+      transition-delay: 0.5s;
       font-weight: 400;
       font-style: normal;
     }
 
-    .info-icon:hover::after {
+    [data-tooltip]::before {
+      content: "";
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%) translateY(1px);
+      border-width: 5px;
+      border-style: solid;
+      border-color: transparent transparent #1e1e1e transparent;
+      z-index: 10000;
+      opacity: 0;
+      pointer-events: none;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+      transition-delay: 0.5s;
+    }
+
+    [data-tooltip]:hover::after {
       opacity: 1;
       visibility: visible;
-      bottom: 150%;
+    }
+
+    [data-tooltip]:hover::before {
+      opacity: 1;
+      visibility: visible;
     }
 
     /* TREE UI v6 */
@@ -653,28 +699,28 @@
 
     <div id="qc-section">
       <div class="section-title">
-        <span>QC Panel <i class="info-icon" data-tooltip="Master toggle for all QC-related automation features.">i</i></span>
+        <span>QC Panel</span>
         <label class="toggle"><input type="checkbox" id="toggle-qc" checked><span class="slider"></span></label>
       </div>
 
       <div class="toggle-row">
-        <span class="toggle-label">Scan Route<i class="info-icon" data-tooltip="Automatically focuses search fields and triggers searches when a tray or packet ID is scanned.">i</i></span>
+        <span class="toggle-label">Scan Route</span>
         <label class="toggle small"><input type="checkbox" id="toggle-qc-routing" checked><span class="slider"></span></label>
       </div>
       <div class="toggle-row">
-        <span class="toggle-label">Image Right-Click <i class="info-icon" data-tooltip="Right-click any product image to open high-quality version. Works on QC, SQC, and Intermesh panels.">i</i></span>
+        <span class="toggle-label">Image Right-Click</span>
         <label class="toggle small"><input type="checkbox" id="toggle-qc-rightclick" checked><span class="slider"></span></label>
       </div>
       <div class="toggle-row">
-        <span class="toggle-label">Type Detection <i class="info-icon" data-tooltip="Allows you to start typing a tray number from anywhere on the page to jump directly to the tray field.">i</i></span>
+        <span class="toggle-label">Type Detection</span>
         <label class="toggle small"><input type="checkbox" id="toggle-qc-global" checked><span class="slider"></span></label>
       </div>
       <div class="toggle-row">
-        <span class="toggle-label">Auto-Login<i class="info-icon" data-tooltip="Automatically fills credentials and clicks sign-in on the JoinVentures login page.">i</i></span>
+        <span class="toggle-label">Auto-Login</span>
         <label class="toggle small"><input type="checkbox" id="toggle-qc-autologin" checked><span class="slider"></span></label>
       </div>
       <div class="toggle-row">
-        <span class="toggle-label">Paste Route <i class="info-icon" data-tooltip="When you paste an ID anywhere on the page, it automatically fills the correct field and searches.">i</i></span>
+        <span class="toggle-label">Paste Route</span>
         <label class="toggle small"><input type="checkbox" id="toggle-qc-paste" checked><span class="slider"></span></label>
       </div>
 
@@ -684,13 +730,13 @@
       </div>
       <div id="sku-tracking-content" class="accordion-content">
         
-        <div class="toggle-row" style="margin-bottom: 6px;">
-          <span class="toggle-label">SKU Styling <i class="info-icon" data-tooltip="Enable colors and realistic textures for Task IDs on the QC page.">i</i></span>
+        <div class="toggle-row">
+          <span class="toggle-label">SKU Styling</span>
           <label class="toggle small"><input type="checkbox" id="toggle-sku-styling" checked><span class="slider"></span></label>
         </div>
 
-        <div class="toggle-row" style="margin-bottom: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
-          <span class="toggle-label">Pending Task Tracking <i class="info-icon" data-tooltip="Show the floating 'Task Tracker' widget on the left side of the QC page.">i</i></span>
+        <div class="toggle-row">
+          <span class="toggle-label">Pending Task Tracking</span>
           <label class="toggle small"><input type="checkbox" id="toggle-sku-pending" checked><span class="slider"></span></label>
         </div>
 
@@ -757,9 +803,17 @@
         <span id="qc-accordion-icon">▼</span>
       </div>
       <div id="qc-cred-content" class="accordion-content">
-        <input class="input" id="qc-user" type="text" placeholder="Email / Username" />
-        <input class="input" id="qc-pass" type="password" placeholder="Password" />
-        <button class="btn btn-primary" id="saveQCCredBtn">Save</button>
+        <div class="creds-list" id="qcCredsList" style="margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px;"></div>
+        <button class="btn btn-outline btn-small" id="qcAddNewBtn" style="margin-bottom: 8px; width: 100%;">➕ Add New</button>
+        <div id="qcCredsForm" style="display: none; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 10px; flex-direction: column; gap: 6px;">
+          <input class="input" id="qc-label-input" type="text" placeholder="Account Label" style="margin-bottom: 4px;" />
+          <input class="input" id="qc-user-input" type="text" placeholder="Email / Username" style="margin-bottom: 4px;" />
+          <input class="input" id="qc-pass-input" type="password" placeholder="Password" style="margin-bottom: 4px;" />
+          <div style="display: flex; gap: 6px;">
+            <button class="btn btn-primary btn-small" id="qcSaveCredBtn" style="flex: 1;">Save</button>
+            <button class="btn btn-outline btn-small" id="qcCancelCredBtn" style="flex: 1;">Cancel</button>
+          </div>
+        </div>
       </div>
 
       <div class="accordion-header" id="patterns-accordion">
@@ -813,7 +867,7 @@
         <span id="hotkeys-accordion-icon">▼</span>
       </div>
       <div id="hotkeys-content" class="accordion-content">
-        <div class="toggle-row" style="margin-bottom: 10px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+        <div class="toggle-row">
           <span class="toggle-label" style="font-weight: 600;">Enable Hotkeys</span>
           <label class="toggle small"><input type="checkbox" id="hotkeys-toggle" checked><span class="slider"></span></label>
         </div>
@@ -891,29 +945,29 @@
     <!-- Intermesh Section -->
     <div id="intermesh-section" style="display: none;">
       
-      <div class="toggle-row" style="margin-bottom: 6px;">
-        <span class="toggle-label">Paste Route <i class="info-icon" data-tooltip="Auto-fills and searches IDs on the Intermesh vendor page.">i</i></span>
+      <div class="toggle-row">
+        <span class="toggle-label">Paste Route</span>
         <label class="toggle small"><input type="checkbox" id="toggle-intermesh-routing" checked><span class="slider"></span></label>
       </div>
 
-      <div class="toggle-row" style="margin-bottom: 12px;">
-        <span class="toggle-label">Auto-Login<i class="info-icon" data-tooltip="Automatically fills credentials and clicks sign-in on the Intermesh login page.">i</i></span>
+      <div class="toggle-row">
+        <span class="toggle-label">Auto-Login</span>
         <label class="toggle small"><input type="checkbox" id="toggle-intermesh-autologin" checked><span class="slider"></span></label>
       </div>
 
       <div id="intermesh-controls">
         <div class="toggle-row">
-          <span class="toggle-label">Scan Route<i class="info-icon" data-tooltip="Automatically focuses search fields and triggers searches when a packet or order ID is scanned.">i</i></span>
+          <span class="toggle-label">Scan Route</span>
           <label class="toggle small"><input type="checkbox" id="intermesh-scan-routing-toggle" checked><span class="slider"></span></label>
         </div>
 
-        <div class="toggle-row" style="margin-bottom: 8px;">
-          <span class="toggle-label">Type Detection <i class="info-icon" data-tooltip="Allows you to start typing an ID from anywhere on the page to jump directly to the correct field.">i</i></span>
+        <div class="toggle-row">
+          <span class="toggle-label">Type Detection</span>
           <label class="toggle small"><input type="checkbox" id="intermesh-global-toggle" checked><span class="slider"></span></label>
         </div>
 
-        <div class="toggle-row" style="margin-bottom: 8px;">
-          <span class="toggle-label">Pers Info Keys <i class="info-icon" data-tooltip="Open Personalized Info links using Shift + 1-5 keys.">i</i></span>
+        <div class="toggle-row">
+          <span class="toggle-label">Pers Info Keys</span>
           <label class="toggle small"><input type="checkbox" id="toggle-intermesh-pers" checked><span class="slider"></span></label>
         </div>
 
@@ -922,10 +976,18 @@
           <span id="intermesh-accordion-icon">▼</span>
         </div>
         <div id="intermesh-cred-content" class="accordion-content">
-          <input class="input" id="intermesh-assoc" type="text" placeholder="Associate Name" />
-          <input class="input" id="intermesh-user" type="text" placeholder="Username" />
-          <input class="input" id="intermesh-pass" type="password" placeholder="Password" />
-          <button class="btn btn-primary" id="saveIntermeshCredBtn">Save</button>
+          <div class="creds-list" id="intermeshCredsList" style="margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px;"></div>
+          <button class="btn btn-outline btn-small" id="intermeshAddNewBtn" style="margin-bottom: 8px; width: 100%;">➕ Add New</button>
+          <div id="intermeshCredsForm" style="display: none; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 10px; flex-direction: column; gap: 6px;">
+            <input class="input" id="intermesh-label-input" type="text" placeholder="Account Label" style="margin-bottom: 4px;" />
+            <input class="input" id="intermesh-assoc-input" type="text" placeholder="Associate Name" style="margin-bottom: 4px;" />
+            <input class="input" id="intermesh-user-input" type="text" placeholder="Username" style="margin-bottom: 4px;" />
+            <input class="input" id="intermesh-pass-input" type="password" placeholder="Password" style="margin-bottom: 4px;" />
+            <div style="display: flex; gap: 6px;">
+              <button class="btn btn-primary btn-small" id="intermeshSaveCredBtn" style="flex: 1;">Save</button>
+              <button class="btn btn-outline btn-small" id="intermeshCancelCredBtn" style="flex: 1;">Cancel</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -938,18 +1000,16 @@
 <div class="tab-content" id="tab-tabguard">
 
   <div class="card">
-    <div class="section-title">
-      <span>Tab Guard <i class="info-icon" data-tooltip="Protects specific tabs from accidental closure. Use the shortcut Alt+Shift+X to close all unprotected tabs.">i</i></span>
+    <div class="section-title" data-tooltip="Protects specific tabs from accidental closure. CONFIGURE CLOSE SHORTCUT AT chrome://extensions/shortcuts">
+      <span>Tab Guard</span>
       <label class="toggle"><input type="checkbox" id="toggle-tabguard" checked><span class="slider"></span></label>
     </div>
-    
-    <div class="shortcut-hint">⌨️ Alt + Shift + G to Protect Tab</div>
-    <div class="shortcut-hint">⚙️ Configure TAB Closing shortcut in Extensions settings</div>
+    <hr>
 
     <div class="protected-list" id="protectedList">
       <div class="empty-state" id="emptyState">No tabs protected</div>
     </div>
-
+    <hr  style="margin-bottom: 15px;margin-top:10px; border: 0; border-top: 2px solid #ccc;">
     <div class="input-row">
       <input class="input" id="titleInput" type="text" placeholder="Tab title pattern..." />
       <button class="btn btn-primary btn-small" id="addBtn">Add</button>

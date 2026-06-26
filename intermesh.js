@@ -13,11 +13,14 @@
   };
 
   const attemptLogin = () => {
-    chrome.storage.local.get(['intermesh_user', 'intermesh_assoc', 'intermesh_pass', 'intermesh_autologin_enabled'], (data) => {
+    chrome.storage.local.get(['intermesh_creds', 'intermesh_autologin_enabled'], (data) => {
       if (data.intermesh_autologin_enabled === false) return; // Strictly respect OFF state
 
-      const { intermesh_user, intermesh_assoc, intermesh_pass } = data;
-      if (!intermesh_user || !intermesh_assoc || !intermesh_pass) return;
+      const creds = data.intermesh_creds || [];
+      const activeCard = creds.find(c => c.active === true);
+      if (!activeCard || !activeCard.user || !activeCard.assoc || !activeCard.pass) return;
+
+      const { user: intermesh_user, assoc: intermesh_assoc, pass: intermesh_pass } = activeCard;
 
       const vName = document.querySelector('input[name="v_name"], input[name="vendor_name"]');
       const usrName = document.querySelector('input[name="usr_name"], input[name="username"], input[name="user_name"]');

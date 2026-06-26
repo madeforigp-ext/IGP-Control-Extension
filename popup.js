@@ -76,44 +76,248 @@ setupToggle('toggle-tabguard', 'tabguard_enabled');
 
 // ─── QC CREDENTIALS ────────────────────────────────────────────────────────
 
-chrome.storage.local.get(['qc_user', 'qc_pass'], (data) => {
-  const u = document.getElementById('qc-user');
-  const p = document.getElementById('qc-pass');
-  if (u && data.qc_user) u.value = data.qc_user;
-  if (p && data.qc_pass) p.value = data.qc_pass;
+let qcCreds = [];
+const unmaskedQC = new Set();
+
+function renderQCCreds() {
+  const list = document.getElementById('qcCredsList');
+  if (!list) return;
+  list.innerHTML = qcCreds.length === 0 ? '<div class="empty-state">No credentials saved</div>' : '';
+  qcCreds.forEach(c => {
+    const card = document.createElement('div');
+    card.className = 'cred-card' + (c.active ? ' active' : '');
+    const isUnmasked = unmaskedQC.has(c.id);
+    const displayUser = isUnmasked ? c.user : '••••••';
+    card.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+        <div>
+          <div style="font-weight: 600; font-size: 12px; color: #1e293b;">${c.label}</div>
+          <div style="font-size: 11px; color: #64748b; display: flex; align-items: center; gap: 6px; margin-top: 2px;">
+            <span>User: <span class="user-text">${displayUser}</span></span>
+            <span class="eye-toggle" style="cursor: pointer; font-size: 11px;" title="Toggle Mask">${isUnmasked ? '🙈' : '👁️'}</span>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          ${c.active ? '<span style="background: #27ae60; color: #fff; font-size: 8px; padding: 2px 6px; border-radius: 4px; font-weight: 700; letter-spacing: 0.5px;">ACTIVE</span>' : ''}
+          <button class="delete-btn" style="background: none; border: none; cursor: pointer; color: #94a3b8; font-size: 14px; padding: 0 4px;">✕</button>
+        </div>
+      </div>
+      <div style="margin-top: 6px; display: flex; justify-content: space-between; align-items: center;">
+        ${!c.active ? '<button class="btn btn-outline set-active-btn" style="padding: 2px 8px; font-size: 10px; margin: 0; width: auto; height: 20px;">Set Active</button>' : '<div></div>'}
+      </div>
+    `;
+
+    card.querySelector('.eye-toggle').onclick = () => {
+      if (unmaskedQC.has(c.id)) unmaskedQC.delete(c.id);
+      else unmaskedQC.add(c.id);
+      renderQCCreds();
+    };
+
+    card.querySelector('.delete-btn').onclick = () => {
+      qcCreds = qcCreds.filter(x => x.id !== c.id);
+      if (c.active && qcCreds.length > 0) {
+        qcCreds[0].active = true;
+      }
+      chrome.storage.local.set({ qc_creds: qcCreds }, renderQCCreds);
+    };
+
+    const setActiveBtn = card.querySelector('.set-active-btn');
+    if (setActiveBtn) {
+      setActiveBtn.onclick = () => {
+        qcCreds.forEach(x => x.active = (x.id === c.id));
+        chrome.storage.local.set({ qc_creds: qcCreds }, renderQCCreds);
+      };
+    }
+
+    list.appendChild(card);
+  });
+}
+
+chrome.storage.local.get(['qc_creds', 'qc_user', 'qc_pass'], (data) => {
+  qcCreds = data.qc_creds || [];
+  if (qcCreds.length === 0 && (data.qc_user || data.qc_pass)) {
+    qcCreds = [{
+      id: 'qc_' + Date.now(),
+      label: 'Default Account',
+      user: data.qc_user || '',
+      pass: data.qc_pass || '',
+      active: true
+    }];
+    chrome.storage.local.set({ qc_creds: qcCreds }, renderQCCreds);
+  } else {
+    renderQCCreds();
+  }
 });
 
-const saveQCCredBtn = document.getElementById('saveQCCredBtn');
-if (saveQCCredBtn) {
-  saveQCCredBtn.onclick = () => {
-    const data = {
-      qc_user: document.getElementById('qc-user').value.trim(),
-      qc_pass: document.getElementById('qc-pass').value.trim()
+const qcAddNewBtn = document.getElementById('qcAddNewBtn');
+const qcCredsForm = document.getElementById('qcCredsForm');
+const qcCancelCredBtn = document.getElementById('qcCancelCredBtn');
+const qcSaveCredBtn = document.getElementById('qcSaveCredBtn');
+
+if (qcAddNewBtn && qcCredsForm) {
+  qcAddNewBtn.onclick = () => {
+    qcCredsForm.style.display = 'flex';
+    qcAddNewBtn.style.display = 'none';
+  };
+}
+if (qcCancelCredBtn && qcCredsForm && qcAddNewBtn) {
+  qcCancelCredBtn.onclick = () => {
+    qcCredsForm.style.display = 'none';
+    qcAddNewBtn.style.display = 'block';
+    document.getElementById('qc-label-input').value = '';
+    document.getElementById('qc-user-input').value = '';
+    document.getElementById('qc-pass-input').value = '';
+  };
+}
+if (qcSaveCredBtn) {
+  qcSaveCredBtn.onclick = () => {
+    const label = document.getElementById('qc-label-input').value.trim() || 'Account';
+    const user = document.getElementById('qc-user-input').value.trim();
+    const pass = document.getElementById('qc-pass-input').value.trim();
+    if (!user || !pass) {
+      setStatus('User and Password required', 'error');
+      return;
+    }
+    const newCred = {
+      id: 'qc_' + Date.now(),
+      label,
+      user,
+      pass,
+      active: qcCreds.length === 0
     };
-    chrome.storage.local.set(data, () => setStatus('QC credentials saved ✅', 'success'));
+    qcCreds.push(newCred);
+    chrome.storage.local.set({ qc_creds: qcCreds }, () => {
+      renderQCCreds();
+      qcCancelCredBtn.click();
+      setStatus('QC Credential Added ✅', 'success');
+    });
   };
 }
 
 // ─── INTERMESH CREDENTIALS ──────────────────────────────────────────────────
 
-chrome.storage.local.get(['intermesh_user', 'intermesh_assoc', 'intermesh_pass'], (data) => {
-  const a = document.getElementById('intermesh-assoc');
-  const u = document.getElementById('intermesh-user');
-  const p = document.getElementById('intermesh-pass');
-  if (a && data.intermesh_assoc) a.value = data.intermesh_assoc;
-  if (u && data.intermesh_user) u.value = data.intermesh_user;
-  if (p && data.intermesh_pass) p.value = data.intermesh_pass;
+let intermeshCreds = [];
+const unmaskedInt = new Set();
+
+function renderIntermeshCreds() {
+  const list = document.getElementById('intermeshCredsList');
+  if (!list) return;
+  list.innerHTML = intermeshCreds.length === 0 ? '<div class="empty-state">No credentials saved</div>' : '';
+  intermeshCreds.forEach(c => {
+    const card = document.createElement('div');
+    card.className = 'cred-card' + (c.active ? ' active' : '');
+    const isUnmasked = unmaskedInt.has(c.id);
+    const displayUser = isUnmasked ? c.user : '••••••';
+    card.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+        <div>
+          <div style="font-weight: 600; font-size: 12px; color: #1e293b;">${c.label}</div>
+          <div style="font-size: 11px; color: #64748b; margin-top: 2px;">
+            <div>Assoc: ${c.assoc}</div>
+            <div style="display: flex; align-items: center; gap: 6px; margin-top: 1px;">
+              <span>User: <span class="user-text">${displayUser}</span></span>
+              <span class="eye-toggle" style="cursor: pointer; font-size: 11px;" title="Toggle Mask">${isUnmasked ? '🙈' : '👁️'}</span>
+            </div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          ${c.active ? '<span style="background: #27ae60; color: #fff; font-size: 8px; padding: 2px 6px; border-radius: 4px; font-weight: 700; letter-spacing: 0.5px;">ACTIVE</span>' : ''}
+          <button class="delete-btn" style="background: none; border: none; cursor: pointer; color: #94a3b8; font-size: 14px; padding: 0 4px;">✕</button>
+        </div>
+      </div>
+      <div style="margin-top: 6px; display: flex; justify-content: space-between; align-items: center;">
+        ${!c.active ? '<button class="btn btn-outline set-active-btn" style="padding: 2px 8px; font-size: 10px; margin: 0; width: auto; height: 20px;">Set Active</button>' : '<div></div>'}
+      </div>
+    `;
+
+    card.querySelector('.eye-toggle').onclick = () => {
+      if (unmaskedInt.has(c.id)) unmaskedInt.delete(c.id);
+      else unmaskedInt.add(c.id);
+      renderIntermeshCreds();
+    };
+
+    card.querySelector('.delete-btn').onclick = () => {
+      intermeshCreds = intermeshCreds.filter(x => x.id !== c.id);
+      if (c.active && intermeshCreds.length > 0) {
+        intermeshCreds[0].active = true;
+      }
+      chrome.storage.local.set({ intermesh_creds: intermeshCreds }, renderIntermeshCreds);
+    };
+
+    const setActiveBtn = card.querySelector('.set-active-btn');
+    if (setActiveBtn) {
+      setActiveBtn.onclick = () => {
+        intermeshCreds.forEach(x => x.active = (x.id === c.id));
+        chrome.storage.local.set({ intermesh_creds: intermeshCreds }, renderIntermeshCreds);
+      };
+    }
+
+    list.appendChild(card);
+  });
+}
+
+chrome.storage.local.get(['intermesh_creds', 'intermesh_user', 'intermesh_assoc', 'intermesh_pass'], (data) => {
+  intermeshCreds = data.intermesh_creds || [];
+  if (intermeshCreds.length === 0 && (data.intermesh_user || data.intermesh_assoc || data.intermesh_pass)) {
+    intermeshCreds = [{
+      id: 'int_' + Date.now(),
+      label: 'Default Account',
+      assoc: data.intermesh_assoc || '',
+      user: data.intermesh_user || '',
+      pass: data.intermesh_pass || '',
+      active: true
+    }];
+    chrome.storage.local.set({ intermesh_creds: intermeshCreds }, renderIntermeshCreds);
+  } else {
+    renderIntermeshCreds();
+  }
 });
 
-const saveIntermeshBtn = document.getElementById('saveIntermeshCredBtn');
-if (saveIntermeshBtn) {
-  saveIntermeshBtn.onclick = () => {
-    const data = {
-      intermesh_assoc: document.getElementById('intermesh-assoc').value.trim(),
-      intermesh_user: document.getElementById('intermesh-user').value.trim(),
-      intermesh_pass: document.getElementById('intermesh-pass').value.trim()
+const intermeshAddNewBtn = document.getElementById('intermeshAddNewBtn');
+const intermeshCredsForm = document.getElementById('intermeshCredsForm');
+const intermeshCancelCredBtn = document.getElementById('intermeshCancelCredBtn');
+const intermeshSaveCredBtn = document.getElementById('intermeshSaveCredBtn');
+
+if (intermeshAddNewBtn && intermeshCredsForm) {
+  intermeshAddNewBtn.onclick = () => {
+    intermeshCredsForm.style.display = 'flex';
+    intermeshAddNewBtn.style.display = 'none';
+  };
+}
+if (intermeshCancelCredBtn && intermeshCredsForm && intermeshAddNewBtn) {
+  intermeshCancelCredBtn.onclick = () => {
+    intermeshCredsForm.style.display = 'none';
+    intermeshAddNewBtn.style.display = 'block';
+    document.getElementById('intermesh-label-input').value = '';
+    document.getElementById('intermesh-assoc-input').value = '';
+    document.getElementById('intermesh-user-input').value = '';
+    document.getElementById('intermesh-pass-input').value = '';
+  };
+}
+if (intermeshSaveCredBtn) {
+  intermeshSaveCredBtn.onclick = () => {
+    const label = document.getElementById('intermesh-label-input').value.trim() || 'Account';
+    const assoc = document.getElementById('intermesh-assoc-input').value.trim();
+    const user = document.getElementById('intermesh-user-input').value.trim();
+    const pass = document.getElementById('intermesh-pass-input').value.trim();
+    if (!user || !pass || !assoc) {
+      setStatus('All fields are required', 'error');
+      return;
+    }
+    const newCred = {
+      id: 'int_' + Date.now(),
+      label,
+      assoc,
+      user,
+      pass,
+      active: intermeshCreds.length === 0
     };
-    chrome.storage.local.set(data, () => setStatus('Intermesh credentials saved ✅', 'success'));
+    intermeshCreds.push(newCred);
+    chrome.storage.local.set({ intermesh_creds: intermeshCreds }, () => {
+      renderIntermeshCreds();
+      intermeshCancelCredBtn.click();
+      setStatus('Intermesh Credential Added ✅', 'success');
+    });
   };
 }
 
@@ -823,8 +1027,8 @@ const bindEnter = (ids, bId) => ids.forEach(id => {
     }
   }; 
 });
-bindEnter(['qc-user', 'qc-pass'], 'saveQCCredBtn');
-bindEnter(['intermesh-assoc', 'intermesh-user', 'intermesh-pass'], 'saveIntermeshCredBtn');
+bindEnter(['qc-label-input', 'qc-user-input', 'qc-pass-input'], 'qcSaveCredBtn');
+bindEnter(['intermesh-label-input', 'intermesh-assoc-input', 'intermesh-user-input', 'intermesh-pass-input'], 'intermeshSaveCredBtn');
 bindEnter(['titleInput'], 'addBtn');
 bindEnter(['group-name'], 'addGroupBtnSimple');
 bindEnter(['sku-input', 'sku-display-name', 'sku-custom-note'], 'saveSkuBtn');

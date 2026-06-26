@@ -44,6 +44,7 @@
   let qcEnabled = true;
   let processTimer = null;
   let globalRoutingTimeout = null;
+  let autoScrapeTimer = null;
 
   // ─── UTILS ─────────────────────────────────────────────────────────────────
 
@@ -194,7 +195,18 @@
     const rows = document.querySelectorAll('mat-row');
     let addedCount = 0;
     const currentSkus = new Set(Object.keys(state.skuLookup));
-    const newSkus = [];
+    let treeChanged = false;
+
+    const findMatchingFolder = (node, skuName) => {
+      if (!node.groups) return null;
+      for (const group of node.groups) {
+        if (skuName.toLowerCase().includes(group.name.toLowerCase())) return group;
+        const nested = findMatchingFolder(group, skuName);
+        if (nested) return nested;
+      }
+      return null;
+    };
+
     rows.forEach(row => {
       const taskIdEl = row.querySelector('.task-id');
       if (!taskIdEl) return;
@@ -215,12 +227,23 @@
         if (nameCell) skuName = nameCell.textContent.trim();
       }
       if (!currentSkus.has(skuVal)) {
-        newSkus.push({ sku: skuVal, name: skuName, color: '#3498db', note: '' });
+        const newSku = { sku: skuVal, name: skuName, color: '#3498db', note: '' };
+        const skuTree = state.skuTree;
+        const cand = { name: skuName };
+
+        const targetFolder = findMatchingFolder(skuTree, cand.name);
+        if (targetFolder) {
+          if (!targetFolder.skus) targetFolder.skus = [];
+          targetFolder.skus.push(newSku);
+        } else {
+          skuTree.skus.push(newSku);
+        }
+
         currentSkus.add(skuVal); addedCount++;
+        treeChanged = true;
       }
     });
-    if (newSkus.length > 0) {
-      state.skuTree.skus.push(...newSkus);
+    if (treeChanged) {
       chrome.storage.local.set({ skuTree: state.skuTree }, () => {
         state.skuLookup = flattenTree(state.skuTree);
         processSKUs();
@@ -234,8 +257,10 @@
     const ctx = getContext();
     if (!ctx.autoLoginEnabled) return;
 
-    chrome.storage.local.get(['qc_user', 'qc_pass'], (data) => {
-      if (!data.qc_user || !data.qc_pass) return;
+    chrome.storage.local.get(['qc_creds'], (data) => {
+      const creds = data.qc_creds || [];
+      const activeCard = creds.find(c => c.active === true);
+      if (!activeCard || !activeCard.user || !activeCard.pass) return;
 
       const attempt = () => {
         if (state.isProcessing) return;
@@ -247,11 +272,11 @@
         });
 
         if (user && pass && btn) {
-          if (user.value === data.qc_user && pass.value === data.qc_pass) return;
+          if (user.value === activeCard.user && pass.value === activeCard.pass) return;
           state.isProcessing = true;
           console.log('[IGP] Auto-Login: Filling credentials...');
-          forceUpdate(user, data.qc_user);
-          forceUpdate(pass, data.qc_pass);
+          forceUpdate(user, activeCard.user);
+          forceUpdate(pass, activeCard.pass);
           setTimeout(() => {
             if (!btn.disabled) {
               console.log('[IGP] Auto-Login: Clicking button...');
@@ -517,7 +542,7 @@
 
   const initSettings = () => {
     if (typeof chrome === 'undefined' || !chrome.storage) return;
-    chrome.storage.local.get([...Object.keys(state.settings), 'skuTree', 'patterns', 'qc_user', 'qc_pass'], (data) => {
+    chrome.storage.local.get([...Object.keys(state.settings), 'skuTree', 'patterns', 'qc_creds'], (data) => {
       for (let k in state.settings) if (data[k] !== undefined) state.settings[k] = data[k];
       if (data.skuTree) { state.skuTree = data.skuTree; state.skuLookup = flattenTree(state.skuTree); }
       if (data.patterns) state.patterns = { ...state.patterns, ...data.patterns };
@@ -536,7 +561,7 @@
           state.skuLookup = flattenTree(state.skuTree); refresh = true;
         }
         if (key === 'patterns') { state.patterns = { ...state.patterns, ...(changes[key].newValue || {}) }; refresh = true; }
-        if (key === 'qc_user' || key === 'qc_pass') { handleAutoLogin(); }
+        if (key === 'qc_creds') { handleAutoLogin(); }
       }
       if (refresh) processSKUs();
     });
@@ -678,11 +703,16 @@
 
   const obs = new MutationObserver((mutations) => {
     const hasNew = mutations.some(m => Array.from(m.addedNodes).some(n => n.nodeName === 'MAT-ROW' || (n.querySelectorAll && n.querySelectorAll('mat-row').length > 0)));
-    if (hasNew) debouncedProcess();
+    if (hasNew) {
+      debouncedProcess();
+      clearTimeout(autoScrapeTimer);
+      autoScrapeTimer = setTimeout(scrapePageTasks, 1500);
+    }
   });
   
   obs.observe(document.body, { childList: true, subtree: true });
   setInterval(debouncedProcess, CONFIG.SKU_REFRESH_INTERVAL);
   initSettings();
+  setTimeout(scrapePageTasks, 2500);
 
 })();
