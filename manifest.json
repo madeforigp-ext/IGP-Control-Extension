@@ -26,7 +26,10 @@
       "all_frames": true
     },
     {
-      "matches": ["*://admin.indiangiftsportal.com/*"],
+      "matches": [
+        "*://admin.indiangiftsportal.com/*",
+        "http://admin.indiangiftsportal.com/home.php*"
+      ],
       "js": ["intermesh.js"],
       "run_at": "document_idle"
     },

@@ -42,6 +42,9 @@
           if (!submitBtn.disabled) {
             console.log('[IGP] Intermesh Auto-Login: Clicking submit...');
             submitBtn.click();
+            setTimeout(() => {
+              window.location.href = 'http://admin.indiangiftsportal.com/orders_vendor.php';
+            }, 2000);
           }
         }, 800); // Wait a bit for framework to digest the values
       } else {
@@ -227,5 +230,12 @@
   // Run on index.php or root domain
   if (window.location.href.includes('admin.indiangiftsportal.com/index.php') || window.location.pathname === '/' || window.location.pathname === '') {
     attemptLogin();
+  }
+
+  if (window.location.href.includes('admin.indiangiftsportal.com/home.php')) {
+    setTimeout(() => {
+      const ordersLink = Array.from(document.querySelectorAll('a')).find(a => a.textContent.trim() === 'Orders Search');
+      if (ordersLink) ordersLink.click();
+    }, 1500);
   }
 })();
