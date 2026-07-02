@@ -159,6 +159,13 @@
     }
   }, true); // Capture phase to intercept reliably
 
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.activeElement && ['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) {
+      document.activeElement.blur();
+      e.preventDefault();
+    }
+  }, true);
+
   chrome.runtime.onMessage.addListener((msg) => {
     if (msg.action === 'enable-picker') {
       document.body.style.cursor = 'crosshair';
